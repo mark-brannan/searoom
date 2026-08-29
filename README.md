@@ -31,3 +31,11 @@ once they earn a second consumer.
 
 Searoom is a study tool. It is not navigation equipment and must not be
 used to make collision-avoidance decisions at sea.
+
+## License
+
+AGPL-3.0. The layered licensing is deliberate: the data
+([colregs](https://github.com/mark-brannan/colregs), MIT) and the evaluator
+stay permissive so the ecosystem can build on them; the app and renderer are
+AGPL so derivatives stay open. The rules of the road themselves are public
+law and carry no copyright claim here.
