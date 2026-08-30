@@ -1,17 +1,33 @@
-# Nav-lights educational app — product design + roadmap (2026-08-29)
+# Searoom — product design + roadmap
 
-The second named consumer of the [colregs](https://github.com/mark-brannan/colregs)
-data package takes shape. Follows
-[2026-08-28-nav-lights-plugin-design.md](2026-08-28-nav-lights-plugin-design.md)
-and [2026-08-28-nav-lights-data-schema.md](2026-08-28-nav-lights-data-schema.md).
-This doc is the design feedback front-loaded: it seeds the new repo, and the
-two prompts at the bottom are the handoff.
+This is the living design document for **[searoom](https://github.com/mark-brannan/searoom)**,
+the COLREGS navigation-lights educational app — the second named consumer of
+the [colregs](https://github.com/mark-brannan/colregs) data package. Originally
+written 2026-08-29 (dated log:
+[2026-08-29-navlights-edu-app-design.md](https://github.com/mark-brannan/claude_prompts_scratch/blob/main/state/global/log/2026-08-29-navlights-edu-app-design.md),
+private repo) under the working name "nav-lights edu app," before naming was
+settled. Unlike the dated log this doc lives in, **this file is meant to be
+kept current** — edit it in place as decisions land; the dated logs are
+history and don't get rewritten.
 
-## Decisions taken this session (Mark's calls)
+## Naming — settled 2026-08-29
 
-- **New repo, new distinctive name.** A naming/branding workshop session runs
-  *before* the design goes further, so no placeholder name calcifies.
-  Prompt A below.
+Branding workshop output (session `navlights-branding-workshop-0885d7`):
+
+- **App: `searoom`** — this repo. "See the rules of the road."
+- **Renderer (extracted from in-app code once proven): [`nav-wright`](https://github.com/mark-brannan/nav-wright)**
+- **Evaluator (extracted from in-app code once proven): [`colregs-engine`](https://github.com/mark-brannan/colregs-engine)**
+
+Both nav-wright and colregs-engine are built *inside* this repo first and
+extracted later, once the interfaces have proven themselves against a real
+consumer — not designed as standalone packages up front.
+
+Still separate and **unsettled**: the SignalK *switching plugin*'s name and
+repo siting (a different artifact — the runtime plugin, not this educational
+app). Tracked on the global board, blocked on research into SignalK plugin
+discoverability conventions.
+
+## Decisions taken 2026-08-29 (Mark's calls)
 - **Audience bar: recreational + exam prep**, aiming eventually at all four
   audiences (rec, exam candidates, professional watchkeepers, package
   evaluators). The reasoning: devs are impressed *by* a high pedagogical bar,
@@ -282,7 +298,10 @@ the package's live documentation.
 
 ## Handoff prompts
 
-### Prompt A — naming/branding workshop (launch now)
+### Prompt A — naming/branding workshop (done, 2026-08-29)
+
+**Ran.** Output: `searoom` (app, this repo), `nav-wright` (renderer),
+`colregs-engine` (evaluator). Kept below for the record.
 
 **Model: Opus 5 · interactive session, Mark present · difficulty: low-medium,
 one sitting.** Paste as-is:
@@ -333,15 +352,15 @@ Then, same session, after I confirm the name:
 Do not start building the app; that's the next session's prompt.
 ```
 
-### Prompt B — sprint 1, the autonomous build (launch once the repo exists)
+### Prompt B — sprint 1, the autonomous build (repo exists — ready to launch)
 
 **Model: Fable 5 (Opus 5 acceptable) · high effort · difficulty: high — a
 long autonomous run, heavy token spend; cloud session or dispatch chain
-both fit. Sub-agents/workflows encouraged inside the run.** Fill in
-`<REPO>` from the naming session, then paste:
+both fit. Sub-agents/workflows encouraged inside the run.** `<REPO>` =
+`searoom`. Paste:
 
 ```text
-Build the first full demo of <REPO>, the COLREGS navigation-lights
+Build the first full demo of searoom, the COLREGS navigation-lights
 educational app. You have the whole sprint; I will not be reviewing
 mid-flight. Treat me as the exec: I front-loaded my feedback into the
 design doc, and I expect a finished, live, excellent demo at the end.
