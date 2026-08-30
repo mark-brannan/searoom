@@ -1,0 +1,33 @@
+{
+  "name": "searoom",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "See the rules of the road — interactive COLREGS navigation-lights study tool",
+  "license": "AGPL-3.0",
+  "scripts": {
+    "dev": "vite",
+    "prebuild": "node scripts/copy-rule-images.mjs",
+    "build": "tsc -b && vite build",
+    "predev": "node scripts/copy-rule-images.mjs",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "screenshots": "node scripts/screenshots.mjs"
+  },
+  "dependencies": {
+    "colregs": "github:mark-brannan/colregs#756501fd81ea338ebf6161b2fa075445c99ac401",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-intl": "^6.8.9"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "playwright": "^1.62.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7",
+    "vitest": "^3.2.7"
+  }
+}

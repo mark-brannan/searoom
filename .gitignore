@@ -1,0 +1,4 @@
+node_modules/
+dist/
+public/rule-images/
+tsconfig.tsbuildinfo
