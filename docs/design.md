@@ -176,54 +176,171 @@ The USCG diagrams from `images/` appear alongside their paragraphs.
 
 Mark's explicit call: show the full aimed-at scope in the UI now, even where
 the data isn't loaded yet. Dead ends beat a demo scoped to what sailors
-already know.
+already know. The signposts are only worth looking at if they carry the
+scope colregs has *actually* established, so each one below names what that
+repo has measured, what it hasn't, and what the blocker is by name.
 
-- **Jurisdiction picker** shows the taxonomy from REQ-SCOPE-2:
-  International · US Inland · Canada (inland) · EU CEVNI · Germany
-  (Binnenschifffahrtsstraßen) — with International live and the rest
-  present but *signposted*. Great Lakes / Western Rivers / special anchorage
-  areas appear under US Inland as geography facts, not jurisdictions
-  (REQ-SCOPE-5).
-- **Day/night toggle**, night live, day signposted (shapes are modeled for,
-  REQ-PART-2, not yet in data).
-- **Sound signals (Part D)** as a visible mode stub.
+**Jurisdiction picker** shows the taxonomy from REQ-SCOPE-2 and the work
+queue from colregs ADR 0001. International is live; the rest are signposted
+with their measured delta and their blocker.
+
+- **International (`intl`) — live.** 40 applicability entries, 100 rule-text
+  paragraphs, 10 light definitions, 53 fixture cases. Part C (Rules 20–31),
+  night only. Five omissions are recorded *in the data*
+  (`known_omissions`: 24(d), the 24(f)–(i) pushed/towed-group family, 27(c),
+  27(g)'s under-12 m exemption, and Rule 31 seaplanes/WIG) — the app should
+  surface those as first-class gaps, not silence, since colregs already
+  states them.
+- **US Inland (`us/inland`, 33 CFR 83–90) — delta measured, blocked on
+  Q-11.** Diffed paragraph-by-paragraph against eCFR on 2026-08-30: of 90
+  Part C paths, **15 are same-path-different-text** — the dangerous case,
+  where the citation you'd copy across means something else (22(a)/(b)/(c),
+  24(c)/(d)/(f)/(g)/(i), 25(d)(i)/(ii), 25(e), 26(d), 27(c), 30(e)). One
+  structural path mismatch (`23(d)(i)` has no Inland counterpart path — the
+  content sits at bare `83.23(d)`). One whole-rule clean absence: **Rule 28
+  is "[Reserved]"** — constrained-by-draught is not an Inland concept at
+  all. Two clean intl-only absences (`23(d)(ii)`/`(iii)`). Roughly 71 of 90
+  paths are citation-compatible. Plus **one new light** — 83.21(g), the
+  special flashing light (yellow, 50–70 flashes/min, forward, 180–225° arc)
+  — which propagates into the 22(a)/(b)/(c) range table and 24(f). And six
+  Inland-only insertion blocks: 23(e) Great Lakes substitution, 24(j)
+  Western Rivers pushing/towing, 26(f) fishing-proximity signals lifted
+  inline from Annex II, 27(d)(iv) dredge pipelines, and the large 30(g)–(l)
+  anchorage block. *Blocker*: Q-11 — REQ-SCOPE-3's inherit-by-absence is
+  verified unsafe (silence at Rule 28 would assert international law on
+  inland waters), so no non-`intl` jurisdiction lands until an explicit
+  suppression mechanism — tombstones — exists. It is decided in one
+  "second-jurisdiction bundle" with the GATE-1 re-take and Q-10.
+- **Canada (`ca/inland`, Collision Regulations C.R.C. c.1416) — ranked, not
+  measured.** ADR 0001 rates the delta *moderate*; no paragraph-level diff
+  has been run. *Blocker*: Q-3 — reproduction terms (Reproduction of Federal
+  Law Order) are recalled, not verified, and REQ-PROV-2 blocks the
+  jurisdiction until they're checked against the primary source. Plus Q-11,
+  as for every delta.
+- **EU CEVNI (`eu/cevni`, UNECE CEVNI / RPNR) — the interesting one, and the
+  one most likely to fail.** ADR 0001 rates it the **largest delta of any**
+  on the queue: genuinely different inland light configurations, and no
+  prior art as structured data anywhere. *Blocker*: Q-3 names CEVNI's UN
+  copyright as unclear and "the one most likely to fail" outright — this is
+  the only candidate on the list where the licence check could end the
+  jurisdiction rather than delay it. Signpost it honestly: highest value,
+  highest risk of never existing.
+- **Germany (`de/binnen`, SeeSchStrO / BinSchStrO) — ranked *large*, not
+  measured.** *Blocker*: Q-3 — §5 UrhG *amtliche Werke* is the presumed
+  basis and is unverified.
+- **UK (`uk`, SI 1996/75) and Australia (`au`, Marine Order 30) — near-zero
+  delta, cheap.** ADR 0001 keeps both on the queue precisely *because* the
+  delta is near-zero: they cost almost nothing and let the coverage
+  statement name six jurisdictions honestly. *Blocker*: Q-3 (OGL v3.0 and
+  CC BY 4.0 respectively, both unverified) and Q-11. Worth showing in the
+  picker — a near-zero delta is itself a teaching point about what
+  harmonisation means.
+
+Great Lakes, Western Rivers and special anchorage areas appear **under** US
+Inland as geography facts, not jurisdictions (REQ-SCOPE-5) — and now with
+the actual CFR paths behind them (83.23(e), 83.24(j), 83.30(g)–(l)).
+
+**Day/night toggle.** Night live; day signposted — shapes use the same entry
+model and differ only in the vocabulary they emit (REQ-PART-2), so this is
+modelled-for and unwritten, not unresolved.
+
+**Sound signals (Part D, Rules 32–37)** as a visible mode stub, signposted
+with its actual open question: Q-1 — whether Part D fits the entry model at
+all, or needs an event dimension, because signals are event-triggered rather
+than state-derived. REQ-PART-3 requires an ADR before any Part D data is
+written. Not "coming soon": *undecided, and here is the decision*.
+
+**Steering and sailing rules (Part B)** are deliberately **out of scope and
+may never be modelled** (REQ-PART-4) — they govern conduct between two
+vessels, and colregs' fact record is single-vessel by construction. A dead
+end that is a dead end on purpose is the most honest signpost in the app,
+and it explains the shape of everything else.
 
 A signposted dead end is not a greyed-out mystery. Selecting one shows a
-panel: what this jurisdiction/part covers, its status ("modeled for, data
-not yet landed"), what the delta looks like (US Inland: four deltas and one
-new light, already measured), and a link to the roadmap. The dead end *is*
-content — it tells users and evaluators what the product is becoming, and
-it's honest (REQ-SCOPE-6's spirit at the UI layer).
+panel: what this jurisdiction/part covers, its status, the measured delta
+where colregs has one, the named blocker (Q-3 licence, Q-11 suppression,
+Q-1 event model) and a link to the roadmap. The dead end *is* content — it
+tells users and evaluators what the product is becoming, and it is honest
+(REQ-SCOPE-6's spirit at the UI layer). Where colregs has genuinely not
+scoped something, the panel says "not yet scoped" rather than inventing a
+status.
 
 ### Languages — i18n-first
 
-Mirrors colregs#4's split exactly. Two string planes, never mixed:
+Mirrors colregs ADR 0003 exactly. Two string planes, never mixed:
 
-- **Display catalogs** — UI chrome, light names, fact-value labels,
-  modality labels. App-side message catalogs plus the package's
-  `data/i18n/` catalogs once those exist (REQ-LANG-6). Translatable by the
-  community, reviewed for idiom.
+- **Display catalogs** — UI chrome, light names, fact-value labels, modality
+  labels. App-side message catalogs for now: `data/i18n/` **does not exist
+  yet** (REQ-LANG-6 is unimplemented; catalog extraction is step 2 of ADR
+  0003's sequencing). Static strings only — no interpolation, plurals or
+  gender grammar in the package; message composition is ours (REQ-LANG-6).
 - **Rule-text corpora** — legal text, rendered *only* from package data,
-  never translated app-side. Each render shows its corpus's tier and
-  source beside the modality badge — today's English is the *national*-tier
-  USCG text, not the authentic treaty English, and surfacing that is itself
-  a teaching point.
+  never translated app-side. Each render shows its corpus's tier and source
+  beside the modality badge.
 
-The locale picker joins the signposted-breadth pattern: English live,
-Finnish first target, Swedish/French/Russian/German signposted with status.
+**What exists today: exactly one corpus**, and the app should say so. The
+shipped English is the **USCG amalgamated rendition — `national` tier,
+`en-US`**, not the authentic treaty English ("maneuver" where the authentic
+text reads "manoeuvre"). It also carries four known transcription defects
+against its own declared source (21(a), 21(b), 23(b), 29(b) — colregs issue
+[#6](https://github.com/mark-brannan/colregs/issues/6), open). Surfacing
+both facts is itself the teaching point.
+
+The locale picker joins the signposted-breadth pattern, and each entry
+carries its **tier** (REQ-LANG-3) and its **named blocker**:
+
+| Corpus | Tier | Status |
+|---|---|---|
+| `en-US` / USCG | `national` | **Live.** The only corpus. Four transcription defects open (#6). |
+| `en` / UNTS original | `authentic` | Article IX verified 2026-08-30: English and French are equally authentic. Addable beside the USCG text; not yet scheduled. |
+| `fr` / UNTS | `authentic` | Front of the queue with Finnish (ADR 0003 step 3). Blocked on Q-7 — the UNTS deposit's reproduction terms are unchecked. |
+| `fi` / Finlex | `national` | ADR 0003's other front-runner, chosen for SignalK's heavily Finnish contributor base. Blocked on Q-7 (Finlex terms). |
+| `es` / BOE-or-deposit | `official` | Deposited official translation, verified against Article IX. Source is the problem, not the text: IMO's consolidated editions are **sold publications and probably not reproducible**; a national gazette is the likely lawful route. Q-7. |
+| `ru` | `official` | Same as `es`. An IMO Russian edition is catalogued (ISBN 9789280141078) — and catalogued means *for sale*. Q-7. |
+| `zh` | `official` | Mechanism verified (IMO's six official languages); Chinese edition catalogued (ISBN 9789280160512). Q-7. |
+| `ar` | `official` | Mechanism verified; the Arabic edition is **the one sub-claim colregs flags as not confirmed to the same standard** — its product page returned 403 to the verification pass. Q-7, and a verification gap besides. |
+| `de` | `national` | Named in ADR 0003 as a state gazetting a binding translation; no source or terms identified. Not yet scoped. |
+| Anything `community`-tier | `community` | No corpus exists and none is named. REQ-LANG-8: a named human producer and reviewer are mandatory; machine translation without named review is not accepted. |
+
+Two things the picker should say out loud, because they are colregs' actual
+decisions and they are more interesting than a progress bar:
+
+- **Licence, not translation effort, is what sequences this** (Q-7). The
+  work is not blocked on finding translators; it is blocked on establishing
+  that a lawful, reproducible source exists for each text. And Q-7 is
+  answerable **per language** — clearing one source unblocks that corpus
+  alone, which is the cheap path if a demo needs a specific language early.
+- **The first non-English corpus is a gate, not just a file** (GATE-2).
+  Landing translation #1 forces colregs to re-take the
+  instrument → edition → corpus layering decision, because a French text of
+  `intl` is the second corpus of `intl`. So the locale picker's first new
+  entry is a design event upstream, and the app can say that.
+
 REQ-LANG-7 puts fallback on the consumer, so the app owns an explicit
-fallback UX: "this paragraph isn't in the Finnish corpus yet — showing
-en-US (USCG)" — the signpost pattern again, never silent substitution.
+fallback UX: "this paragraph isn't in the Finnish corpus yet — showing en-US
+(USCG, `national`)" — the signpost pattern again, never silent substitution.
+A mixed-corpus rendering is never a single authoritative edition, and the app
+must say so wherever it assembles one.
+
+**Amendment state is a signpost too.** REQ-LANG-10 is unimplemented — the
+shipped ruleset declares no amendment state — but the history is now verified
+(colregs, 2026-08-30): seven amendment resolutions since 1972, two of which
+renumbered Part C. `23(c)` meant the small-vessel alternative until 2003,
+when the WIG-craft paragraph took that path and displaced it to `23(d)`;
+A.464(XII) relettered `24(g)`→`24(h)`. A rules browser that shows which
+consolidation it is quoting — and that a citation's meaning has moved before
+— is teaching the single most citation-relevant fact in the corpus.
 
 The engine never notices locale: ids are language-neutral (REQ-LANG-2), so
 switching language changes no quiz answer and no entry set.
 
 **Credibility rule:** no unreviewed machine translation presented as
-finished. A draft Finnish catalog may ship behind a visible "draft —
-awaiting native review" label so the mechanism demos end-to-end; before any
-public showing a named native reviewer signs off. Recruiting that reviewer
-from the SignalK community *is* the goodwill move, not a chore ahead of it.
-A wrong nautical term would burn exactly the credibility this buys.
+finished — this is REQ-LANG-8, not just our own taste. A draft Finnish
+catalog may ship behind a visible "draft — awaiting native review" label so
+the mechanism demos end-to-end; before any public showing a named native
+reviewer signs off. Recruiting that reviewer from the SignalK community *is*
+the goodwill move, not a chore ahead of it. A wrong nautical term would burn
+exactly the credibility this buys.
 
 ### The data drawer
 
@@ -274,8 +391,11 @@ the package's live documentation.
   (named native reviewer, recruited via the SignalK community) land here.
   Prompts written then, shaped by the feedback.
 - **Phase 3 — data expansion in colregs** (separate sessions, separate
-  repo): `us/inland` (measured: 23(e), 24(f)+21(g) special flashing, 24(j),
-  30(g)), then day shapes, and the first non-English rule-text corpora as
+  repo): `us/inland` — measured 2026-08-30 (15 same-path-different-text of
+  90 Part C paths, Rule 28 "[Reserved]", the 83.21(g) special flashing
+  light, six Inland-only insertion blocks), gated upstream on colregs Q-11's
+  delta-suppression mechanism — then day shapes, and the first non-English
+  rule-text corpora as
   Q-6/Q-7 licence checks clear — French (UNTS, authentic) and Finnish
   (Finlex, national) are the likely front of the queue per ADR 0003. The
   app lights up its dead ends by bumping a dependency — that's the payoff
@@ -355,9 +475,9 @@ Do not start building the app; that's the next session's prompt.
 ### Prompt B — sprint 1, the autonomous build (repo exists — ready to launch)
 
 **Model: Fable 5 (Opus 5 acceptable) · high effort · difficulty: high — a
-long autonomous run, heavy token spend; cloud session or dispatch chain
-both fit. Sub-agents/workflows encouraged inside the run.** `<REPO>` =
-`searoom`. Paste:
+long autonomous run, heavy token spend; cloud session or dispatch chain both
+fit. Sub-agents/workflows encouraged inside the run.** `<REPO>` = `searoom`.
+Paste:
 
 ```text
 Build the first full demo of searoom, the COLREGS navigation-lights
@@ -367,15 +487,21 @@ design doc, and I expect a finished, live, excellent demo at the end.
 
 Read first, in order:
 1. docs/design.md in this repo -- the product design; its decisions stand.
-2. The colregs package: README, docs/requirements.md, data/*.json,
+   Read "Breadth-first surface" and "Languages -- i18n-first" twice: they
+   carry per-jurisdiction and per-corpus specifics (measured deltas, tiers,
+   named blockers) that are the literal content of the signpost panels. Do
+   not paraphrase them into a generic "coming soon" taxonomy.
+2. The colregs package: README, docs/requirements.md, docs/adr/0001 and
+   0003, docs/verification/2026-08-30-q6-q8.md, data/*.json,
    fixtures/applicability-fixtures.json (colregs@latest on npm;
    https://github.com/mark-brannan/colregs). It is data-only; you
    implement evaluation.
 
 Scope -- all of it, this sprint:
 - Engine: TypeScript evaluator (predicates -> entries -> relations ->
-  lawful displays), with the colregs fixture file replayed verbatim in CI.
-  Alternatives stay unresolved: the engine returns every lawful display.
+  lawful displays), with the colregs fixture file replayed verbatim in CI
+  (all 53 cases). Alternatives stay unresolved: the engine returns every
+  lawful display.
 - Renderer: SVG. Profile, bearing (draggable theta, lights-only on black),
   and plan (arc sectors) views. Hybrid model per the design doc: a small
   curated set of base vessel drawings, lights rendered dynamically on top.
@@ -386,23 +512,81 @@ Scope -- all of it, this sprint:
   guide), Quiz v1 (forward + reverse, distractors from near-miss entries,
   never hand-written), Rules reference (paragraph-keyed, deep-linkable,
   USCG diagrams inline).
-- Breadth shell: jurisdiction picker showing International (live), US
-  Inland, Canada, EU CEVNI, Germany (signposted); day/night toggle (day
-  signposted); Part D stub. A signpost is a content panel -- status, what
-  the delta covers, roadmap -- never a bare disabled control.
-- URL-encoded app state (shareable configurations).
+- Breadth shell -- this is a headline deliverable this sprint, not a
+  placeholder. Build the signpost panel as a real content surface, driven
+  by a small structured file in this repo (one record per signposted
+  jurisdiction/part/corpus: status, measured delta, blocker id + one-line
+  blocker text, link). Populate it verbatim from design.md's two sections:
+    * Jurisdictions: International (live: 40 entries, 100 paragraphs, 10
+      lights, 53 fixtures, Part C night-only, five recorded
+      known_omissions); US Inland (delta measured 2026-08-30 -- 15 of 90
+      paths same-spelling-different-text, one structural path mismatch at
+      23(d)(i), Rule 28 "[Reserved]", two clean intl-only absences, ~71
+      citation-compatible, one new light at 83.21(g) special flashing, six
+      Inland-only insertion blocks; blocked on colregs Q-11 delta
+      suppression); Canada (ranked moderate, unmeasured; blocked on Q-3
+      licence); EU CEVNI (largest delta of any, no prior art as structured
+      data; Q-3 flags it the likeliest licence failure outright); Germany
+      (ranked large, unmeasured; Q-3, §5 UrhG); UK and Australia (near-zero
+      delta, cheap, on the queue for that reason; Q-3).
+    * Great Lakes / Western Rivers / special anchorage sit UNDER US Inland
+      as geography facts, not jurisdictions (REQ-SCOPE-5), with their CFR
+      paths (83.23(e), 83.24(j), 83.30(g)-(l)).
+    * Day/night toggle: night live, day signposted (REQ-PART-2 -- modelled
+      for, unwritten).
+    * Part D sound signals: a mode stub signposted with colregs Q-1, the
+      actual open question (event-triggered vs state-derived; REQ-PART-3
+      needs an ADR first).
+    * Part B steering and sailing: signposted as permanently out of scope
+      (REQ-PART-4, single-vessel fact record). A deliberate dead end.
+  Every panel names its blocker by id. Where colregs has not scoped
+  something, the panel says "not yet scoped" -- that is a legitimate
+  status, not a gap to fill.
+- URL-encoded app state (shareable configurations), including which
+  signpost panel is open.
 - i18n-first: every UI string in a message catalog from the first commit
   (pick one boring, standard library -- react-intl or Lingui -- and stay
-  with it). Locale switcher in the shell: English live; Finnish present as
-  a draft catalog behind a visible "draft -- awaiting native review" label
-  (use terminology from Finnish maritime sources where you can find them,
-  and leave the reviewer a glossary note); Swedish/French/Russian/German
-  signposted with status. Rule text renders only from package corpora,
-  with tier + source shown beside the modality badge (today: national /
-  USCG / en-US -- colregs PR #4 / ADR 0003 defines the tiers). When a
-  paragraph is missing from the chosen corpus, say so explicitly and show
-  the fallback -- REQ-LANG-7 makes fallback the consumer's job; never
-  substitute silently.
+  with it). Locale switcher in the shell, built on the same signpost
+  component, each entry carrying its colregs tier and blocker:
+    * English live -- and label it honestly: the shipped corpus is the
+      USCG amalgamated rendition, national tier, en-US, NOT the authentic
+      treaty English. It also carries four known transcription defects
+      (21(a), 21(b), 23(b), 29(b) -- colregs issue #6, open). Surface both.
+    * Finnish present as a draft catalog behind a visible "draft --
+      awaiting native review" label (use terminology from Finnish maritime
+      sources where you can find them, and leave the reviewer a glossary
+      note). Note it is a DISPLAY CATALOG only: the Finnish rule-text
+      corpus (Finlex, national tier) is blocked on colregs Q-7.
+    * Signposted corpora with tier and blocker: fr (authentic, UNTS --
+      front of queue, Q-7); en/UNTS (authentic, addable beside the USCG
+      text, unscheduled); es and ru (official, deposited -- IMO's
+      consolidated editions are sold publications and probably not
+      reproducible, so a national gazette is the likely lawful route);
+      zh (official, mechanism verified); ar (official, and the one
+      sub-claim colregs flags as unconfirmed -- its source page 403'd the
+      verification pass); de (national, no source or terms identified --
+      not yet scoped).
+    * Do NOT list Swedish. colregs has never scoped it; an earlier draft
+      of design.md named it in error.
+    * Say the two upstream facts out loud somewhere in the picker: licence
+      (not translation effort) is what sequences this work, and it is
+      answerable per language; and the first non-English corpus is itself a
+      design gate upstream (colregs GATE-2).
+  Rule text renders only from package corpora, with tier + source shown
+  beside the modality badge. When a paragraph is missing from the chosen
+  corpus, say so explicitly and show the fallback -- REQ-LANG-7 makes
+  fallback the consumer's job; never substitute silently, and never present
+  a mixed-corpus view as a single authoritative edition.
+  Note that colregs data/i18n/ does NOT exist yet (REQ-LANG-6 unimplemented)
+  -- app-side catalogs are all there is; structure yours so package catalogs
+  can supersede them without a rewrite.
+- Amendment-state teaching point in the rules reference: colregs verified
+  (2026-08-30) that two of seven IMO amendments renumbered Part C -- 23(c)
+  meant the small-vessel alternative until 2003, when WIG took that path and
+  displaced it to 23(d); A.464(XII) relettered 24(g)->24(h). Show which
+  consolidation is being quoted, and that a citation's meaning has moved
+  before. REQ-LANG-10 is unimplemented upstream, so this is app-side prose
+  citing colregs' verification doc, not data.
 - Data drawer: raw fired entries, ids, cites, package version.
 - Deploy: GitHub Pages via Actions on merge to main; CI runs typecheck,
   tests, build. The demo URL must be live before you finish.
@@ -410,7 +594,12 @@ Scope -- all of it, this sprint:
 Hard boundaries:
 - Never edit colregs data. A data gap or bug becomes a colregs issue with
   the failing fact record; the app renders only what the data says.
-- No invented rule content for signposted jurisdictions. Honest dead ends.
+- No invented rule content for signposted jurisdictions. The US Inland
+  panel may state the measured shape of the delta; it must not render
+  Inland light configurations, because that data does not exist. Same for
+  every other signpost.
+- Do not restate or resolve colregs' open questions. Q-1, Q-3, Q-7, Q-11
+  are surfaced as "open, blocks X" in UI copy, never argued or answered.
 - Legal rule text is never translated app-side, and no machine translation
   is ever presented as finished -- draft catalogs stay visibly labeled
   draft.
@@ -434,14 +623,20 @@ Definition of excellent (acceptance bar):
   check 20 by hand against rule text before shipping.
 - Switching locale changes no quiz answer, no entry set, no scene -- proof
   the engine is language-neutral (REQ-LANG-2) and only strings moved.
+- Every signpost panel is specific: an evaluator clicking EU CEVNI learns
+  it is the largest delta on the queue and that its licence may block it
+  outright, not that it is "coming soon". No panel is content-free.
+- colregs' five recorded known_omissions are visible somewhere as gaps,
+  not silently absent.
 - A stranger with an RYA/USCG study guide could check their answers
   against this app and find no contradiction.
 
 Finish with: the live URL; a screenshots/ set (dark colorScheme, per my
-Playwright rules) covering every mode; a self-review doc (what's weak,
-what you'd do in sprint 2, any colregs issues filed); and a board update.
-Verify the deployed site itself before calling it done -- load it, click
-through every mode, run the fixture spot-checks against production.
+Playwright rules) covering every mode and at least three signpost panels; a
+self-review doc (what's weak, what you'd do in sprint 2, any colregs issues
+filed); and a board update. Verify the deployed site itself before calling
+it done -- load it, click through every mode, run the fixture spot-checks
+against production.
 ```
 
 ### Phase 2+ prompts
