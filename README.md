@@ -9,9 +9,10 @@ shapes, sound signals, conduct rules, and eventually scenario ("ROR sim")
 training. International rules first; US Inland, Canada, and EU CEVNI are
 modelled for and land as the data does.
 
-**Status: pre-build.** The product design is settled — see
-[docs/design.md](docs/design.md) — and the first sprint (sandbox, identify,
-quiz, rules reference, live demo) is next.
+**Live demo: <https://mark-brannan.github.io/searoom/>** — sandbox,
+identify, quiz, rules reference, and the signposted breadth surface, from
+sprint 1. The product design is [docs/design.md](docs/design.md); the
+sprint's own notes are [docs/self-review.md](docs/self-review.md).
 
 ## The family
 
