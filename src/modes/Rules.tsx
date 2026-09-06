@@ -107,7 +107,7 @@ export function Rules({
         <p className="elim">
           <FormattedMessage id="rules.knownOmissions.intro" />
         </p>
-        {applicability.known_omissions.map((o) => (
+        {(applicability.known_omissions ?? []).map((o) => (
           <div className="entry" key={o.cite}>
             <div className="entry-head">
               <strong>{o.cite}</strong>
@@ -183,7 +183,7 @@ export function Rules({
                 </div>
               );
             })}
-            {rules.gaps
+            {(rules.gaps ?? [])
               .filter((g) => ruleOf(g.path) === rule)
               .map((g) => (
                 <p key={g.path} className="corpus-line">

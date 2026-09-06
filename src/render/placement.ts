@@ -385,8 +385,11 @@ export function placeLights(
  * (lights.json bearing_convention), and 360 ≡ 0: the port sidelight's
  * 247.5–360.0 includes dead ahead. Boundaries are inclusive.
  */
-export function bearingInArc(bearing: number, arc: Arc | null): boolean {
-  if (arc === null) return true; // torch / deck lights: no prescribed arc
+export function bearingInArc(
+  bearing: number,
+  arc: Arc | null | undefined,
+): boolean {
+  if (arc == null) return true; // torch / deck lights: no prescribed arc
   const b = ((bearing % 360) + 360) % 360;
   const { from_deg: f, to_deg: t } = arc;
   let extent = t - f;

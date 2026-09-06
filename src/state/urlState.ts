@@ -2,7 +2,13 @@
 // shareable — including which signpost panel is open. Hash routing keeps
 // GitHub Pages happy. Deep-link shape for rules: #/rules/27(a)(i).
 
-import type { FactRecord } from '../engine/types';
+import type { FactRecord, FactValue } from '../engine/types';
+
+// FactRecord (from colregs-engine/schema) has no index signature — each key
+// carries its own literal type. The URL codec below reads/writes facts by a
+// key it only knows dynamically (from FACT_PARAMS), so it works over this
+// looser view and casts back to FactRecord at the boundary.
+type FactBag = Record<string, FactValue | undefined>;
 
 export type Mode = 'sandbox' | 'identify' | 'quiz' | 'rules' | 'sound';
 export type View = 'profile' | 'bearing' | 'plan';
@@ -43,11 +49,32 @@ export const DEFAULT_STATE: AppState = {
   drawer: false,
 };
 
-// short param <-> fact key
-const FACT_PARAMS: [string, string, 'enum' | 'num' | 'bool'][] = [
-  ['p', 'fact:propulsion', 'enum'],
-  ['a', 'fact:activity', 'enum'],
-  ['pos', 'fact:position', 'enum'],
+// short param <-> fact key. The 4th element, for 'enum' params, is the
+// accepted suffix set — colregs-engine's validateFacts() throws on anything
+// else, and a hand-edited or stale URL is untrusted input.
+const FACT_PARAMS: [string, string, 'enum' | 'num' | 'bool', string[]?][] = [
+  ['p', 'fact:propulsion', 'enum', ['power', 'sail', 'oars']],
+  [
+    'a',
+    'fact:activity',
+    'enum',
+    [
+      'none',
+      'fishing',
+      'trawling',
+      'towing',
+      'pushing',
+      'being_towed',
+      'nuc',
+      'ram',
+      'ram_underwater',
+      'cbd',
+      'mine',
+      'pilot',
+      'diving',
+    ],
+  ],
+  ['pos', 'fact:position', 'enum', ['underway', 'anchored', 'aground', 'moored']],
   ['mw', 'fact:making_way', 'bool'],
   ['len', 'fact:length_m', 'num'],
   ['tow', 'fact:tow_length_m', 'num'],
@@ -59,7 +86,7 @@ const FACT_PARAMS: [string, string, 'enum' | 'num' | 'bool'][] = [
   ['wns', 'fact:wig_near_surface', 'bool'],
   ['nc', 'fact:near_channel', 'bool'],
   ['ob', 'fact:obstruction_exists', 'bool'],
-  ['obs', 'fact:obstruction_side', 'enum'],
+  ['obs', 'fact:obstruction_side', 'enum', ['port', 'starboard']],
 ];
 
 // enum values travel as their suffix ("propulsion:sail" -> "sail")
@@ -74,7 +101,7 @@ function paramToEnum(key: string, v: string): string {
 export function serialize(state: AppState): string {
   const params = new URLSearchParams();
   for (const [short, key, kind] of FACT_PARAMS) {
-    const v = state.facts[key];
+    const v = (state.facts as FactBag)[key];
     if (v === undefined) continue;
     if (kind === 'enum') params.set(short, enumToParam(String(v)));
     else if (kind === 'bool') params.set(short, v ? '1' : '0');
@@ -118,18 +145,20 @@ export function deserialize(hash: string): AppState {
     state.rulePath = decodeURIComponent(segments[1]);
   }
   const params = new URLSearchParams(query);
-  const facts: FactRecord = {};
-  for (const [short, key, kind] of FACT_PARAMS) {
+  const facts: FactBag = {};
+  for (const [short, key, kind, enumValues] of FACT_PARAMS) {
     const v = params.get(short);
     if (v === null) continue;
-    if (kind === 'enum') facts[key] = paramToEnum(key, v);
-    else if (kind === 'bool') facts[key] = v === '1';
+    if (kind === 'enum') {
+      if (enumValues?.includes(v)) facts[key] = paramToEnum(key, v);
+    } else if (kind === 'bool') facts[key] = v === '1';
     else {
       const n = Number(v);
       if (Number.isFinite(n)) facts[key] = n;
     }
   }
-  if (Object.keys(facts).length > 0) state.facts = facts;
+  if (Object.keys(facts).length > 0)
+    state.facts = { ...DEFAULT_FACTS, ...facts } as FactRecord;
   const view = params.get('view');
   if (view === 'profile' || view === 'bearing' || view === 'plan')
     state.view = view;

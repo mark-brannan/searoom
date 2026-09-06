@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_STATE, deserialize, serialize } from './urlState';
+import { evaluate } from 'colregs-engine';
+import { applicability } from '../data/colregs';
+import { DEFAULT_FACTS, DEFAULT_STATE, deserialize, serialize } from './urlState';
 import type { AppState } from './urlState';
 
 describe('URL state round-trip', () => {
@@ -45,5 +47,14 @@ describe('URL state round-trip', () => {
   it('tolerates junk', () => {
     expect(deserialize('#/nonsense?th=abc&len=xyz').mode).toBe('sandbox');
     expect(deserialize('').theta).toBe(DEFAULT_STATE.theta);
+  });
+
+  it('drops an out-of-range enum param instead of producing a fact evaluate() rejects', () => {
+    // Regression for a hand-edited/stale URL like #/sandbox?p=bogus: the
+    // engine's validateFacts() throws on an unrecognized enum value, and
+    // nothing upstream (Sandbox.tsx's useMemo) catches it.
+    const state = deserialize('#/sandbox?p=bogus&pos=underway');
+    expect(state.facts['fact:propulsion']).toBe(DEFAULT_FACTS['fact:propulsion']);
+    expect(() => evaluate(applicability, state.facts)).not.toThrow();
   });
 });

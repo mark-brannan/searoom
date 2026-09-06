@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
 import { applicability } from '../data/colregs';
-import { evaluate } from './evaluate';
+import { evaluate } from 'colregs-engine';
 import type { FactRecord } from './types';
 
 interface FixtureCase {
