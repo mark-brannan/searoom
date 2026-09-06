@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { applicability } from './colregs';
-import { evaluate } from '../engine/evaluate';
+import { evaluate } from 'colregs-engine';
 import { factsForEntry, paragraphsForCite } from './cites';
 
 describe('entry reachability', () => {

@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { applicability } from '../data/colregs';
-import { evaluate } from './evaluate';
+import { evaluate } from 'colregs-engine';
 import { displaySignature, makeForward, makeReverse, visibleSignature } from './quiz';
 import { identifyCandidates } from './identify';
 

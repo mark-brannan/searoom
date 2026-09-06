@@ -8,6 +8,14 @@ import type { Patch } from '../App';
 import type { AppState } from '../state/urlState';
 import type { FactRecord, FactValue } from '../engine/types';
 
+// FactRecord (from colregs-engine/schema) types each key's value as its own
+// literal enum, with no index signature — exact for a validated record, too
+// strict for the controls below, which build a patch from a UI control's
+// plain `string`/`boolean` before it is known to be a valid fact value.
+// evaluate()/validateFacts() still gets a real FactRecord; this loosening is
+// local to how the patch is assembled.
+type FactPatch = Record<string, FactValue | undefined>;
+
 const THRESHOLDS = [7, 12, 20, 50, 100];
 const LEN_MAX = 120;
 
@@ -100,10 +108,10 @@ export function FactControls({
 }) {
   const intl = useIntl();
   const facts = state.facts;
-  const setFacts = (updates: FactRecord, remove: string[] = []) => {
-    const next = { ...facts, ...updates };
+  const setFacts = (updates: FactPatch, remove: string[] = []) => {
+    const next: FactPatch = { ...facts, ...updates };
     for (const k of remove) delete next[k];
-    patch({ facts: next, displayIndex: 0, additionsOn: [] });
+    patch({ facts: next as FactRecord, displayIndex: 0, additionsOn: [] });
   };
 
   const activity = facts['fact:activity'];
@@ -141,7 +149,7 @@ export function FactControls({
           values={ACTIVITIES}
           current={activity}
           onChange={(v) => {
-            const updates: FactRecord = { 'fact:activity': v };
+            const updates: FactPatch = { 'fact:activity': v };
             const remove: string[] = [];
             if (v !== 'activity:towing') remove.push('fact:tow_length_m');
             else if (facts['fact:tow_length_m'] === undefined)
@@ -167,7 +175,7 @@ export function FactControls({
           values={POSITIONS}
           current={position}
           onChange={(v) => {
-            const updates: FactRecord = { 'fact:position': v };
+            const updates: FactPatch = { 'fact:position': v };
             const remove: string[] = [];
             if (v !== 'position:anchored') remove.push('fact:near_channel');
             else if (facts['fact:near_channel'] === undefined)

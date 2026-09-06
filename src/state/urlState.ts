@@ -2,7 +2,13 @@
 // shareable — including which signpost panel is open. Hash routing keeps
 // GitHub Pages happy. Deep-link shape for rules: #/rules/27(a)(i).
 
-import type { FactRecord } from '../engine/types';
+import type { FactRecord, FactValue } from '../engine/types';
+
+// FactRecord (from colregs-engine/schema) has no index signature — each key
+// carries its own literal type. The URL codec below reads/writes facts by a
+// key it only knows dynamically (from FACT_PARAMS), so it works over this
+// looser view and casts back to FactRecord at the boundary.
+type FactBag = Record<string, FactValue | undefined>;
 
 export type Mode = 'sandbox' | 'identify' | 'quiz' | 'rules' | 'sound';
 export type View = 'profile' | 'bearing' | 'plan';
@@ -74,7 +80,7 @@ function paramToEnum(key: string, v: string): string {
 export function serialize(state: AppState): string {
   const params = new URLSearchParams();
   for (const [short, key, kind] of FACT_PARAMS) {
-    const v = state.facts[key];
+    const v = (state.facts as FactBag)[key];
     if (v === undefined) continue;
     if (kind === 'enum') params.set(short, enumToParam(String(v)));
     else if (kind === 'bool') params.set(short, v ? '1' : '0');
@@ -118,7 +124,7 @@ export function deserialize(hash: string): AppState {
     state.rulePath = decodeURIComponent(segments[1]);
   }
   const params = new URLSearchParams(query);
-  const facts: FactRecord = {};
+  const facts: FactBag = {};
   for (const [short, key, kind] of FACT_PARAMS) {
     const v = params.get(short);
     if (v === null) continue;
@@ -129,7 +135,7 @@ export function deserialize(hash: string): AppState {
       if (Number.isFinite(n)) facts[key] = n;
     }
   }
-  if (Object.keys(facts).length > 0) state.facts = facts;
+  if (Object.keys(facts).length > 0) state.facts = facts as FactRecord;
   const view = params.get('view');
   if (view === 'profile' || view === 'bearing' || view === 'plan')
     state.view = view;

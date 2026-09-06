@@ -1,13 +1,17 @@
 // Single import point for the colregs package data. The app renders only
 // what this data says (sprint boundary: no edits, no invented content).
 
-import applicabilityJson from 'colregs/data/applicability.json';
-import factsJson from 'colregs/data/facts.json';
-import geometryJson from 'colregs/data/geometry.json';
-import imagesJson from 'colregs/data/images.json';
-import lightsJson from 'colregs/data/lights.json';
-import rulesJson from 'colregs/data/rules.json';
-import colregsPkg from 'colregs/package.json';
+// `with { type: 'json' }` matches how colregs-engine itself imports
+// colregs/package.json and colregs/data/facts.json (src/evaluate.ts) —
+// Vite/esbuild otherwise flags the same JSON module as imported with
+// inconsistent attributes across the two packages.
+import applicabilityJson from 'colregs/data/applicability.json' with { type: 'json' };
+import factsJson from 'colregs/data/facts.json' with { type: 'json' };
+import geometryJson from 'colregs/data/geometry.json' with { type: 'json' };
+import imagesJson from 'colregs/data/images.json' with { type: 'json' };
+import lightsJson from 'colregs/data/lights.json' with { type: 'json' };
+import rulesJson from 'colregs/data/rules.json' with { type: 'json' };
+import colregsPkg from 'colregs/package.json' with { type: 'json' };
 
 import type { ApplicabilityData, LightsData, RulesData } from '../engine/types';
 

@@ -8,7 +8,7 @@ import type { Patch } from '../App';
 import { FactControls } from '../components/FactControls';
 import { RuleParagraphs } from '../components/RuleParagraphs';
 import { applicability, colregsVersion, corpus } from '../data/colregs';
-import { evaluate } from '../engine/evaluate';
+import { evaluate } from 'colregs-engine';
 import type { Display, Entry, Evaluation } from '../engine/types';
 import { selectHull } from '../render/hulls';
 import { placeLights } from '../render/placement';

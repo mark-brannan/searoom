@@ -6,7 +6,7 @@
 
 import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
 import { applicability } from '../data/colregs';
-import { evaluate } from './evaluate';
+import { evaluate } from 'colregs-engine';
 import type { Display, FactRecord } from './types';
 import { placeLights, bearingInArc } from '../render/placement';
 import { selectHull } from '../render/hulls';
@@ -103,7 +103,10 @@ export function nearMisses(facts: FactRecord): FactRecord[] {
     'activity:being_towed': ['activity:none'],
   };
   for (const a of swaps[String(activity)] ?? []) {
-    push({ ...facts, 'fact:activity': a });
+    // `a` is a plain string here (indexed out of `swaps`), not the literal
+    // union FactRecord's `fact:activity` carries — but every value in
+    // `swaps` above is itself a real activity: identifier.
+    push({ ...facts, 'fact:activity': a } as FactRecord);
   }
   const position = facts['fact:position'];
   if (position === 'position:underway') {

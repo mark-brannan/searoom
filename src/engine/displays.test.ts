@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { applicability } from '../data/colregs';
-import { evaluate } from './evaluate';
+import { evaluate } from 'colregs-engine';
 import type { FactRecord } from './types';
 
 const sloop12: FactRecord = {
@@ -259,7 +259,7 @@ describe('lawful display composition', () => {
                 'fact:length_m': len,
                 'fact:tow_length_m': 150,
                 'fact:composite_unit': false,
-              });
+              } as FactRecord);
               expect(e.displays.length).toBeGreaterThan(0);
             }
   });

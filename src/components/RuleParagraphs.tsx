@@ -9,7 +9,7 @@ import { corpus, rules } from '../data/colregs';
 
 export function RuleParagraphs({ cite }: { cite: string }) {
   const paths = paragraphsForCite(cite);
-  const gaps = rules.gaps.filter(
+  const gaps = (rules.gaps ?? []).filter(
     (g) => g.path === cite || paths.includes(g.path),
   );
   if (paths.length === 0 && gaps.length === 0) {

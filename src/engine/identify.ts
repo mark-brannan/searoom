@@ -5,7 +5,7 @@
 
 import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
 import { applicability } from '../data/colregs';
-import { evaluate } from './evaluate';
+import { evaluate } from 'colregs-engine';
 import { visibleSignature } from './quiz';
 import type { Display, FactRecord } from './types';
 
