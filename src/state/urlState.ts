@@ -49,11 +49,32 @@ export const DEFAULT_STATE: AppState = {
   drawer: false,
 };
 
-// short param <-> fact key
-const FACT_PARAMS: [string, string, 'enum' | 'num' | 'bool'][] = [
-  ['p', 'fact:propulsion', 'enum'],
-  ['a', 'fact:activity', 'enum'],
-  ['pos', 'fact:position', 'enum'],
+// short param <-> fact key. The 4th element, for 'enum' params, is the
+// accepted suffix set — colregs-engine's validateFacts() throws on anything
+// else, and a hand-edited or stale URL is untrusted input.
+const FACT_PARAMS: [string, string, 'enum' | 'num' | 'bool', string[]?][] = [
+  ['p', 'fact:propulsion', 'enum', ['power', 'sail', 'oars']],
+  [
+    'a',
+    'fact:activity',
+    'enum',
+    [
+      'none',
+      'fishing',
+      'trawling',
+      'towing',
+      'pushing',
+      'being_towed',
+      'nuc',
+      'ram',
+      'ram_underwater',
+      'cbd',
+      'mine',
+      'pilot',
+      'diving',
+    ],
+  ],
+  ['pos', 'fact:position', 'enum', ['underway', 'anchored', 'aground', 'moored']],
   ['mw', 'fact:making_way', 'bool'],
   ['len', 'fact:length_m', 'num'],
   ['tow', 'fact:tow_length_m', 'num'],
@@ -65,7 +86,7 @@ const FACT_PARAMS: [string, string, 'enum' | 'num' | 'bool'][] = [
   ['wns', 'fact:wig_near_surface', 'bool'],
   ['nc', 'fact:near_channel', 'bool'],
   ['ob', 'fact:obstruction_exists', 'bool'],
-  ['obs', 'fact:obstruction_side', 'enum'],
+  ['obs', 'fact:obstruction_side', 'enum', ['port', 'starboard']],
 ];
 
 // enum values travel as their suffix ("propulsion:sail" -> "sail")
@@ -125,17 +146,19 @@ export function deserialize(hash: string): AppState {
   }
   const params = new URLSearchParams(query);
   const facts: FactBag = {};
-  for (const [short, key, kind] of FACT_PARAMS) {
+  for (const [short, key, kind, enumValues] of FACT_PARAMS) {
     const v = params.get(short);
     if (v === null) continue;
-    if (kind === 'enum') facts[key] = paramToEnum(key, v);
-    else if (kind === 'bool') facts[key] = v === '1';
+    if (kind === 'enum') {
+      if (enumValues?.includes(v)) facts[key] = paramToEnum(key, v);
+    } else if (kind === 'bool') facts[key] = v === '1';
     else {
       const n = Number(v);
       if (Number.isFinite(n)) facts[key] = n;
     }
   }
-  if (Object.keys(facts).length > 0) state.facts = facts as FactRecord;
+  if (Object.keys(facts).length > 0)
+    state.facts = { ...DEFAULT_FACTS, ...facts } as FactRecord;
   const view = params.get('view');
   if (view === 'profile' || view === 'bearing' || view === 'plan')
     state.view = view;
