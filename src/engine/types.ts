@@ -1,5 +1,11 @@
 // Types over the colregs data files. The package is data-only (no runtime,
 // no types), so the shapes are declared here, against the published schema.
+//
+// Display, DisplayLight and Evaluation are the exception: they are the
+// evaluator's *output* shape, and the evaluator itself now lives in
+// colregs-engine (src/engine/evaluateDisplay.ts), so those three are
+// re-exported from there rather than hand-declared, to keep the app's
+// output type honest to what evaluateDisplay actually returns.
 
 export type FactValue = string | number | boolean;
 
@@ -120,46 +126,4 @@ export interface RulesData {
   paragraphs: Record<string, Paragraph>;
 }
 
-/** One light as it appears in a resolved display, with its provenance. */
-export interface DisplayLight {
-  spec: LightSpec;
-  /** Entry whose lights clause prescribes this light. */
-  sourceEntry: string;
-  /** Entry that pulled it in, when different (rel:includes / one_of import). */
-  via?: string;
-  /** Resolved modality of the component carrying this light. */
-  modality: Modality;
-}
-
-/** One complete lawful display. */
-export interface Display {
-  /** Entry ids whose lights this display shows (applied + imported). */
-  entries: string[];
-  lights: DisplayLight[];
-  /** Choice labels that distinguish this display from its siblings. */
-  chosen: string[];
-}
-
-export interface Evaluation {
-  /** Entries whose predicate matched, in data order (the fixture contract). */
-  applied: string[];
-  /** Applied entries relieved by a rel:exempts entry, with the exempting id. */
-  exempted: { id: string; by: string }[];
-  /** Applied entries suppressed by a required entry's rel:excludes. */
-  excluded: { id: string; by: string }[];
-  /** Every complete lawful display (alternatives unresolved, REQ-MODEL-8). */
-  displays: Display[];
-  /**
-   * Applied or imported 'may' components that carry no alternative
-   * relations: lawful additions that don't multiply the display set
-   * (second masthead below 50 m, deck lights below 100 m, …).
-   */
-  optionalAdditions: {
-    id: string;
-    via?: string;
-    lights: DisplayLight[];
-    cite: string;
-  }[];
-  /** Resolved modality per applied/imported entry id. */
-  modalities: Record<string, Modality>;
-}
+export type { Display, DisplayLight, DisplayEvaluation as Evaluation } from 'colregs-engine';

@@ -1,13 +1,16 @@
 // Single import point for the colregs package data. The app renders only
 // what this data says (sprint boundary: no edits, no invented content).
 
-import applicabilityJson from 'colregs/data/applicability.json';
-import factsJson from 'colregs/data/facts.json';
+// Import attributes on applicability.json, facts.json and package.json
+// must match colregs-engine's own imports of the same files (dist/evaluate.js)
+// or Vite treats them as inconsistent and warns at build time.
+import applicabilityJson from 'colregs/data/applicability.json' with { type: 'json' };
+import factsJson from 'colregs/data/facts.json' with { type: 'json' };
 import geometryJson from 'colregs/data/geometry.json';
 import imagesJson from 'colregs/data/images.json';
 import lightsJson from 'colregs/data/lights.json';
 import rulesJson from 'colregs/data/rules.json';
-import colregsPkg from 'colregs/package.json';
+import colregsPkg from 'colregs/package.json' with { type: 'json' };
 
 import type { ApplicabilityData, LightsData, RulesData } from '../engine/types';
 

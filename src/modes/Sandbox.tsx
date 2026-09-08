@@ -8,7 +8,7 @@ import type { Patch } from '../App';
 import { FactControls } from '../components/FactControls';
 import { RuleParagraphs } from '../components/RuleParagraphs';
 import { applicability, colregsVersion, corpus } from '../data/colregs';
-import { evaluate } from '../engine/evaluate';
+import { evaluateDisplay } from '../engine/evaluateDisplay';
 import type { Display, Entry, Evaluation } from '../engine/types';
 import { selectHull } from '../render/hulls';
 import { placeLights } from '../render/placement';
@@ -125,7 +125,7 @@ function DisplayChips({
           {elimination}
         </>
       )}
-      {evaln.optionalAdditions.length > 0 && (
+      {evaln.optional_additions.length > 0 && (
         <>
           <h3>
             <FormattedMessage id="sandbox.additions.title" />
@@ -134,7 +134,7 @@ function DisplayChips({
             <FormattedMessage id="sandbox.additions.explain" />
           </p>
           <div className="chips">
-            {evaln.optionalAdditions.map((a) => {
+            {evaln.optional_additions.map((a) => {
               const on = state.additionsOn.includes(a.id);
               return (
                 <button
@@ -292,10 +292,7 @@ export function Sandbox({
   patch: (p: Patch) => void;
 }) {
   const intl = useIntl();
-  const evaln = useMemo(
-    () => evaluate(applicability, state.facts),
-    [state.facts],
-  );
+  const evaln = useMemo(() => evaluateDisplay(state.facts), [state.facts]);
   const current = Math.max(
     0,
     Math.min(state.displayIndex, evaln.displays.length - 1),
@@ -308,7 +305,7 @@ export function Sandbox({
   const hull = useMemo(() => selectHull(state.facts), [state.facts]);
   const placed = useMemo(() => {
     if (!display) return [];
-    const additionLights = evaln.optionalAdditions
+    const additionLights = evaln.optional_additions
       .filter((a) => state.additionsOn.includes(a.id))
       .flatMap((a) => a.lights);
     return placeLights(

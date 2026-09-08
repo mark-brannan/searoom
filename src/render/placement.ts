@@ -77,9 +77,9 @@ export function placeLights(
 
   for (const dl of ordered) {
     const { spec } = dl;
-    const key = `${dl.sourceEntry}:${spec.light}:${spec.position ?? ''}:${spec.color ?? ''}`;
+    const key = `${dl.source_entry}:${spec.light}:${spec.position ?? ''}:${spec.color ?? ''}`;
     const base = {
-      sourceEntry: dl.sourceEntry,
+      sourceEntry: dl.source_entry,
       character: characterOf(dl),
       ifPracticable: ifPract(dl),
     };

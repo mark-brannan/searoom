@@ -4,8 +4,7 @@
 // indistinguishable from this bearing" — which is true of the real Rules.
 
 import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
-import { applicability } from '../data/colregs';
-import { evaluate } from './evaluate';
+import { evaluateDisplay } from './evaluateDisplay';
 import { visibleSignature } from './quiz';
 import type { Display, FactRecord } from './types';
 
@@ -73,7 +72,17 @@ export function identifyCandidates(seen: SeenLight[]): Candidate[] {
   const wanted = signatureOf(seen);
   const out: Candidate[] = [];
   for (const facts of pool) {
-    const evaln = evaluate(applicability, facts);
+    // The pool includes synthetic partial fact records (boundary grid,
+    // fixture facts); evaluateDisplay now validates against colregs' known
+    // fact vocabulary and throws on an unrecognized key/value, which the
+    // hand-rolled evaluator never did. Skip a fact record it rejects rather
+    // than let one bad synthetic entry crash the whole scan.
+    let evaln;
+    try {
+      evaln = evaluateDisplay(facts);
+    } catch {
+      continue;
+    }
     for (const display of evaln.displays) {
       if (display.lights.length === 0) continue;
       const thetas: number[] = [];
