@@ -16,7 +16,8 @@
     "screenshots": "node scripts/screenshots.mjs"
   },
   "dependencies": {
-    "colregs": "github:mark-brannan/colregs#756501fd81ea338ebf6161b2fa075445c99ac401",
+    "colregs": "github:mark-brannan/colregs#00273c3b26a56d5987098bd24c59b2002ff05b0f",
+    "colregs-engine": "github:mark-brannan/colregs-engine#2b8b3e56dceb33153f16b455ab547f644436a835",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-intl": "^6.8.9"
