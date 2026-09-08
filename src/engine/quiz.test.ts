@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { applicability } from '../data/colregs';
-import { evaluate } from './evaluate';
+import { evaluateDisplay } from './evaluateDisplay';
 import { displaySignature, makeForward, makeReverse, visibleSignature } from './quiz';
 import { identifyCandidates } from './identify';
 
@@ -12,7 +12,7 @@ describe('forward quiz generation', () => {
   for (let seed = 1; seed <= 25; seed++) {
     it(`seed ${seed}: correct option is lawful, distractors are not`, () => {
       const q = makeForward(seed);
-      const evaln = evaluate(applicability, q.facts);
+      const evaln = evaluateDisplay(applicability, q.facts);
       const lawful = new Set(
         evaln.displays.map((d) => displaySignature(q.facts, d)),
       );
@@ -36,7 +36,7 @@ describe('reverse quiz generation', () => {
       expect(sceneSig).not.toBe('');
       let matches = 0;
       for (const o of q.options) {
-        const evaln = evaluate(applicability, o.facts);
+        const evaln = evaluateDisplay(applicability, o.facts);
         const d = o.facts === q.facts ? q.display : evaln.displays[0];
         if (visibleSignature(o.facts, d, o.theta) === sceneSig) matches++;
       }

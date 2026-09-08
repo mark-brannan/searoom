@@ -8,7 +8,7 @@ import type { Patch } from '../App';
 import { FactControls } from '../components/FactControls';
 import { RuleParagraphs } from '../components/RuleParagraphs';
 import { applicability, colregsVersion, corpus } from '../data/colregs';
-import { evaluate } from '../engine/evaluate';
+import { evaluateDisplay } from '../engine/evaluateDisplay';
 import type { Display, Entry, Evaluation } from '../engine/types';
 import { selectHull } from '../render/hulls';
 import { placeLights } from '../render/placement';
@@ -293,7 +293,7 @@ export function Sandbox({
 }) {
   const intl = useIntl();
   const evaln = useMemo(
-    () => evaluate(applicability, state.facts),
+    () => evaluateDisplay(applicability, state.facts),
     [state.facts],
   );
   const current = Math.max(

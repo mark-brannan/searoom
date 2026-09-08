@@ -2,7 +2,7 @@
 
 colregs defines predicate semantics and the five relations, and leaves
 final composition to the consumer (REQ-CONS-3). The evaluator in
-`src/engine/evaluate.ts` implements the predicate layer exactly as the
+`src/engine/evaluateDisplay.ts` implements the predicate layer exactly as the
 colregs README states it, replaying all 53 fixture cases verbatim in CI.
 Composing applied entries into *complete lawful displays* required a
 handful of decisions the data does not make. They are recorded here so
