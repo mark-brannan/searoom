@@ -4,8 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
-import { applicability } from '../data/colregs';
-import { evaluate } from 'colregs-engine';
+import { evaluateDisplay } from 'colregs-engine';
 import type { FactRecord } from './types';
 
 interface FixtureCase {
@@ -21,12 +20,12 @@ const fixtures = fixturesJson as unknown as {
 
 describe('colregs applicability fixtures (verbatim replay)', () => {
   it('has the full fixture set', () => {
-    expect(fixtures.cases.length).toBe(53);
+    expect(fixtures.cases.length).toBe(55);
   });
 
   for (const c of fixtures.cases) {
     it(c.name, () => {
-      const result = evaluate(applicability, c.facts);
+      const result = evaluateDisplay(c.facts);
       expect([...result.applied].sort()).toEqual([...c.expect].sort());
     });
   }

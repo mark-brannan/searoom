@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { evaluate } from 'colregs-engine';
-import { applicability } from '../data/colregs';
+import { evaluateDisplay } from 'colregs-engine';
 import { DEFAULT_FACTS, DEFAULT_STATE, deserialize, serialize } from './urlState';
 import type { AppState } from './urlState';
 
@@ -55,6 +54,6 @@ describe('URL state round-trip', () => {
     // nothing upstream (Sandbox.tsx's useMemo) catches it.
     const state = deserialize('#/sandbox?p=bogus&pos=underway');
     expect(state.facts['fact:propulsion']).toBe(DEFAULT_FACTS['fact:propulsion']);
-    expect(() => evaluate(applicability, state.facts)).not.toThrow();
+    expect(() => evaluateDisplay(state.facts)).not.toThrow();
   });
 });
