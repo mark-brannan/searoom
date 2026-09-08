@@ -4,7 +4,7 @@
 export type {
   Display,
   DisplayLight,
-  Evaluation,
+  DisplayEvaluation,
   FactRecord,
   Modality,
 } from 'colregs-engine';

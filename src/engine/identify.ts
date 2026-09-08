@@ -4,8 +4,7 @@
 // indistinguishable from this bearing" — which is true of the real Rules.
 
 import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
-import { applicability } from '../data/colregs';
-import { evaluate } from 'colregs-engine';
+import { evaluateDisplay } from 'colregs-engine';
 import { visibleSignature } from './quiz';
 import type { Display, FactRecord } from './types';
 
@@ -73,7 +72,7 @@ export function identifyCandidates(seen: SeenLight[]): Candidate[] {
   const wanted = signatureOf(seen);
   const out: Candidate[] = [];
   for (const facts of pool) {
-    const evaln = evaluate(applicability, facts);
+    const evaln = evaluateDisplay(facts);
     for (const display of evaln.displays) {
       if (display.lights.length === 0) continue;
       const thetas: number[] = [];

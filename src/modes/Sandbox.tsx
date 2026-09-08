@@ -8,8 +8,8 @@ import type { Patch } from '../App';
 import { FactControls } from '../components/FactControls';
 import { RuleParagraphs } from '../components/RuleParagraphs';
 import { applicability, colregsVersion, corpus } from '../data/colregs';
-import { evaluate } from 'colregs-engine';
-import type { Display, Entry, Evaluation } from '../engine/types';
+import { evaluateDisplay } from 'colregs-engine';
+import type { Display, Entry, DisplayEvaluation } from '../engine/types';
 import { selectHull } from '../render/hulls';
 import { placeLights } from '../render/placement';
 import { BearingView } from '../render/BearingView';
@@ -28,7 +28,7 @@ function DisplayChips({
   state,
   patch,
 }: {
-  evaln: Evaluation;
+  evaln: DisplayEvaluation;
   state: AppState;
   patch: (p: Patch) => void;
 }) {
@@ -201,7 +201,7 @@ function DisplayChips({
   );
 }
 
-function EntryRow({ entry, evaln }: { entry: Entry; evaln: Evaluation }) {
+function EntryRow({ entry, evaln }: { entry: Entry; evaln: DisplayEvaluation }) {
   const intl = useIntl();
   const modality = evaln.modalities[entry.id] ?? entry.modality;
   return (
@@ -240,7 +240,7 @@ function DataDrawer({
   state,
   patch,
 }: {
-  evaln: Evaluation;
+  evaln: DisplayEvaluation;
   state: AppState;
   patch: (p: Patch) => void;
 }) {
@@ -293,7 +293,7 @@ export function Sandbox({
 }) {
   const intl = useIntl();
   const evaln = useMemo(
-    () => evaluate(applicability, state.facts),
+    () => evaluateDisplay(state.facts),
     [state.facts],
   );
   const current = Math.max(
