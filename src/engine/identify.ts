@@ -5,7 +5,7 @@
 
 import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
 import { applicability } from '../data/colregs';
-import { evaluateDisplay } from './evaluateDisplay';
+import { evaluate } from './evaluate';
 import { visibleSignature } from './quiz';
 import type { Display, FactRecord } from './types';
 
@@ -73,7 +73,7 @@ export function identifyCandidates(seen: SeenLight[]): Candidate[] {
   const wanted = signatureOf(seen);
   const out: Candidate[] = [];
   for (const facts of pool) {
-    const evaln = evaluateDisplay(applicability, facts);
+    const evaln = evaluate(applicability, facts);
     for (const display of evaln.displays) {
       if (display.lights.length === 0) continue;
       const thetas: number[] = [];

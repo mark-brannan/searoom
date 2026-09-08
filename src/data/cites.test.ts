@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { applicability } from './colregs';
-import { evaluateDisplay } from '../engine/evaluateDisplay';
+import { evaluate } from '../engine/evaluate';
 import { factsForEntry, paragraphsForCite } from './cites';
 
 describe('entry reachability', () => {
@@ -12,7 +12,7 @@ describe('entry reachability', () => {
     it(`${entry.id} has a fixture fact record that fires it`, () => {
       const facts = factsForEntry(entry.id);
       expect(facts).toBeDefined();
-      const evaln = evaluateDisplay(applicability, facts!);
+      const evaln = evaluate(applicability, facts!);
       expect(evaln.applied).toContain(entry.id);
     });
   }

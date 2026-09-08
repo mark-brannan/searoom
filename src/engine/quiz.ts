@@ -6,7 +6,7 @@
 
 import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
 import { applicability } from '../data/colregs';
-import { evaluateDisplay } from './evaluateDisplay';
+import { evaluate } from './evaluate';
 import type { Display, FactRecord } from './types';
 import { placeLights, bearingInArc } from '../render/placement';
 import { selectHull } from '../render/hulls';
@@ -176,7 +176,7 @@ export function makeForward(seed: number): ForwardQuestion {
   for (let attempt = 0; attempt < 40; attempt++) {
     const fixture =
       scenarioPool[Math.floor(rng() * scenarioPool.length)];
-    const evaln = evaluateDisplay(applicability, fixture.facts);
+    const evaln = evaluate(applicability, fixture.facts);
     if (evaln.displays.length === 0 || evaln.displays[0].lights.length === 0)
       continue;
     const correct =
@@ -187,7 +187,7 @@ export function makeForward(seed: number): ForwardQuestion {
     const distractors: { display: Display; facts: FactRecord }[] = [];
     const seen = new Set<string>();
     for (const miss of nearMisses(fixture.facts)) {
-      const missEval = evaluateDisplay(applicability, miss);
+      const missEval = evaluate(applicability, miss);
       for (const d of missEval.displays) {
         if (d.lights.length === 0) continue;
         const sig = displaySignature(miss, d);
@@ -228,7 +228,7 @@ export function makeReverse(seed: number): ReverseQuestion {
   for (let attempt = 0; attempt < 60; attempt++) {
     const fixture =
       scenarioPool[Math.floor(rng() * scenarioPool.length)];
-    const evaln = evaluateDisplay(applicability, fixture.facts);
+    const evaln = evaluate(applicability, fixture.facts);
     if (evaln.displays.length === 0) continue;
     const display =
       evaln.displays[Math.floor(rng() * evaln.displays.length)];
@@ -242,7 +242,7 @@ export function makeReverse(seed: number): ReverseQuestion {
     ];
     for (const miss of nearMisses(fixture.facts)) {
       if (options.length >= 4) break;
-      const missEval = evaluateDisplay(applicability, miss);
+      const missEval = evaluate(applicability, miss);
       if (missEval.displays.length === 0) continue;
       const d = missEval.displays[0];
       const missTheta = THETAS[Math.floor(rng() * THETAS.length)];

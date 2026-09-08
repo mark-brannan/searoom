@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { applicability } from '../data/colregs';
-import { evaluateDisplay } from './evaluateDisplay';
+import { evaluate } from './evaluate';
 import type { FactRecord } from './types';
 
 const sloop12: FactRecord = {
@@ -15,7 +15,7 @@ const sloop12: FactRecord = {
 };
 
 function displayEntrySets(facts: FactRecord): string[][] {
-  return evaluateDisplay(applicability, facts)
+  return evaluate(applicability, facts)
     .displays.map((d) => d.entries)
     .sort((a, b) => a.join().localeCompare(b.join()));
 }
@@ -30,7 +30,7 @@ describe('lawful display composition', () => {
   });
 
   it('tricolor and red-over-green never co-occur (rel:excludes)', () => {
-    for (const d of evaluateDisplay(applicability, sloop12).displays) {
+    for (const d of evaluate(applicability, sloop12).displays) {
       expect(d.entries.includes('25b') && d.entries.includes('25c')).toBe(
         false,
       );
@@ -38,7 +38,7 @@ describe('lawful display composition', () => {
   });
 
   it('second masthead is an optional addition below 50 m, required at 50 m', () => {
-    const below = evaluateDisplay(applicability, {
+    const below = evaluate(applicability, {
       'fact:propulsion': 'propulsion:power',
       'fact:activity': 'activity:none',
       'fact:position': 'position:underway',
@@ -47,7 +47,7 @@ describe('lawful display composition', () => {
     expect(below.optionalAdditions.map((a) => a.id)).toContain('23a2');
     expect(below.modalities['23a2']).toBe('may');
 
-    const above = evaluateDisplay(applicability, {
+    const above = evaluate(applicability, {
       'fact:propulsion': 'propulsion:power',
       'fact:activity': 'activity:none',
       'fact:position': 'position:underway',
@@ -66,13 +66,13 @@ describe('lawful display composition', () => {
       'fact:position': 'position:underway',
       'fact:length_m': 30,
     };
-    const making = evaluateDisplay(applicability, { ...base, 'fact:making_way': true });
-    const drifting = evaluateDisplay(applicability, {
+    const making = evaluate(applicability, { ...base, 'fact:making_way': true });
+    const drifting = evaluate(applicability, {
       ...base,
       'fact:making_way': false,
     });
 
-    const lightsOf = (e: ReturnType<typeof evaluateDisplay>) =>
+    const lightsOf = (e: ReturnType<typeof evaluate>) =>
       e.displays[0].lights.map((l) => l.spec.light);
 
     expect(making.displays).toHaveLength(1);
@@ -85,7 +85,7 @@ describe('lawful display composition', () => {
   });
 
   it('small power boat: all-round white alternative replaces masthead scheme', () => {
-    const e = evaluateDisplay(applicability, {
+    const e = evaluate(applicability, {
       'fact:propulsion': 'propulsion:power',
       'fact:activity': 'activity:none',
       'fact:position': 'position:underway',
@@ -98,7 +98,7 @@ describe('lawful display composition', () => {
   });
 
   it('vessel under oars: torch, or sailing lights, or tricolor', () => {
-    const e = evaluateDisplay(applicability, {
+    const e = evaluate(applicability, {
       'fact:propulsion': 'propulsion:oars',
       'fact:activity': 'activity:none',
       'fact:position': 'position:underway',
@@ -112,7 +112,7 @@ describe('lawful display composition', () => {
   });
 
   it('aground 15 m: anchor lights via 30(a) or 30(b), plus two reds', () => {
-    const e = evaluateDisplay(applicability, {
+    const e = evaluate(applicability, {
       'fact:propulsion': 'propulsion:power',
       'fact:activity': 'activity:none',
       'fact:position': 'position:aground',
@@ -128,7 +128,7 @@ describe('lawful display composition', () => {
   });
 
   it('aground 60 m: 30(b) single anchor light unavailable at that length', () => {
-    const e = evaluateDisplay(applicability, {
+    const e = evaluate(applicability, {
       'fact:propulsion': 'propulsion:power',
       'fact:activity': 'activity:none',
       'fact:position': 'position:aground',
@@ -139,7 +139,7 @@ describe('lawful display composition', () => {
   });
 
   it('trawler at anchor: Rule 30 anchor lights suppressed by 26(a)', () => {
-    const e = evaluateDisplay(applicability, {
+    const e = evaluate(applicability, {
       'fact:propulsion': 'propulsion:power',
       'fact:activity': 'activity:trawling',
       'fact:position': 'position:anchored',
@@ -153,7 +153,7 @@ describe('lawful display composition', () => {
   });
 
   it('anchored 6 m clear of a channel: exempted, nothing required', () => {
-    const e = evaluateDisplay(applicability, {
+    const e = evaluate(applicability, {
       'fact:propulsion': 'propulsion:power',
       'fact:activity': 'activity:none',
       'fact:position': 'position:anchored',
@@ -166,7 +166,7 @@ describe('lawful display composition', () => {
   });
 
   it('mine clearance at anchor: Rule 30 lights, no imported running lights', () => {
-    const e = evaluateDisplay(applicability, {
+    const e = evaluate(applicability, {
       'fact:propulsion': 'propulsion:power',
       'fact:activity': 'activity:mine',
       'fact:position': 'position:anchored',
@@ -181,7 +181,7 @@ describe('lawful display composition', () => {
   });
 
   it('pilot vessel underway: white-over-red with sidelights/sternlight, no masthead', () => {
-    const e = evaluateDisplay(applicability, {
+    const e = evaluate(applicability, {
       'fact:propulsion': 'propulsion:power',
       'fact:activity': 'activity:pilot',
       'fact:position': 'position:underway',
@@ -195,7 +195,7 @@ describe('lawful display composition', () => {
   });
 
   it('constrained by draught: Rule 23 lights required, three reds optional', () => {
-    const e = evaluateDisplay(applicability, {
+    const e = evaluate(applicability, {
       'fact:propulsion': 'propulsion:power',
       'fact:activity': 'activity:cbd',
       'fact:position': 'position:underway',
@@ -208,7 +208,7 @@ describe('lawful display composition', () => {
   });
 
   it('towing, tow 300 m: three mastheads in lieu, towing light over stern', () => {
-    const e = evaluateDisplay(applicability, {
+    const e = evaluate(applicability, {
       'fact:propulsion': 'propulsion:power',
       'fact:activity': 'activity:towing',
       'fact:position': 'position:underway',
@@ -251,7 +251,7 @@ describe('lawful display composition', () => {
         for (const pos of positions)
           for (const len of [5, 15, 60])
             for (const mw of [true, false]) {
-              const e = evaluateDisplay(applicability, {
+              const e = evaluate(applicability, {
                 'fact:propulsion': p,
                 'fact:activity': a,
                 'fact:position': pos,
