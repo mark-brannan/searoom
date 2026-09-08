@@ -130,7 +130,7 @@ function displayLights(node: Node): DisplayLight[] {
   }));
 }
 
-export function evaluateDisplay(
+export function evaluate(
   data: ApplicabilityData,
   facts: FactRecord,
 ): Evaluation {
