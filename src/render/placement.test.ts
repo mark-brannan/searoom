@@ -2,10 +2,19 @@
 // lights.json, and visibility through a full sweep must match them.
 
 import { describe, expect, it } from 'vitest';
-import { lights } from '../data/colregs';
 import { bearingInArc } from './placement';
 
-const arc = (id: string) => lights.lights[id].arc;
+// Inline fixture: the exam-faithful arcs (verbatim from colregs' lights.json)
+// this suite exercises. placement.ts no longer imports app data, so the
+// test doesn't either.
+const arcs: Record<string, { from_deg: number; to_deg: number }> = {
+  'light:sidelight_starboard': { from_deg: 0.0, to_deg: 112.5 },
+  'light:sidelight_port': { from_deg: 247.5, to_deg: 360.0 },
+  'light:masthead': { from_deg: 247.5, to_deg: 112.5 },
+  'light:sternlight': { from_deg: 112.5, to_deg: 247.5 },
+  'light:all_round': { from_deg: 0.0, to_deg: 360.0 },
+};
+const arc = (id: string) => arcs[id];
 
 describe('bearing arcs (lights.json, verbatim)', () => {
   it('sidelight cutoffs sit at 112.5 degrees abaft the beam', () => {
