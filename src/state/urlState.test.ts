@@ -22,6 +22,7 @@ describe('URL state round-trip', () => {
       },
       view: 'bearing',
       theta: 292,
+      tilt: 35,
       displayIndex: 1,
       additionsOn: ['26b-mast'],
       signpost: 'eu-cevni',
@@ -46,6 +47,13 @@ describe('URL state round-trip', () => {
   it('tolerates junk', () => {
     expect(deserialize('#/nonsense?th=abc&len=xyz').mode).toBe('sandbox');
     expect(deserialize('').theta).toBe(DEFAULT_STATE.theta);
+    expect(deserialize('#/sandbox?tl=abc').tilt).toBe(DEFAULT_STATE.tilt);
+  });
+
+  it('keeps the tilt between the waterline and overhead', () => {
+    expect(deserialize('#/sandbox?tl=-20').tilt).toBe(0);
+    expect(deserialize('#/sandbox?tl=200').tilt).toBe(85);
+    expect(serialize({ ...DEFAULT_STATE, tilt: 40, view: 'benchy' })).toContain('tl=40');
   });
 
   it('drops an out-of-range enum param instead of producing a fact evaluate() rejects', () => {

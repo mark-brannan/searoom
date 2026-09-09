@@ -12,7 +12,9 @@ import type { PlacedLight } from './placement';
 import type { SceneLabels } from './labels';
 import { defaultSceneLabels } from './labels';
 import { ProfileView } from './ProfileView';
+import { DEFAULT_TILT } from '../state/urlState';
 import { ThetaControl } from './ThetaControl';
+import { TiltControl } from './TiltControl';
 
 // Lazy: three.js (and the model) only ship to a browser that actually
 // opens this view, so the 2D views' bundle is untouched.
@@ -26,6 +28,8 @@ export function BenchyView({
   facts,
   theta,
   onTheta,
+  tilt = DEFAULT_TILT,
+  onTilt,
   labels = defaultSceneLabels,
 }: {
   hull: Hull;
@@ -33,6 +37,9 @@ export function BenchyView({
   facts: FactRecord;
   theta: number;
   onTheta: (t: number) => void;
+  /** Camera elevation above the waterline, degrees; see TiltControl. */
+  tilt?: number;
+  onTilt?: (t: number) => void;
   labels?: SceneLabels;
 }): ReactElement {
   // A failed model load degrades to the 2D profile rather than to a blank
@@ -61,6 +68,9 @@ export function BenchyView({
               anchored={facts['fact:position'] === 'position:anchored'}
               theta={theta}
               onTheta={onTheta}
+              tilt={tilt}
+              onTilt={onTilt}
+              hull={hull.spec}
               label={labels.benchyAlt}
               fallback={<div className="scene-3d" aria-hidden="true" />}
               onError={() => setModelFailed(true)}
@@ -68,6 +78,7 @@ export function BenchyView({
           </Suspense>
         </div>
         <ThetaControl theta={theta} onTheta={onTheta} labels={labels} />
+        {onTilt && <TiltControl tilt={tilt} onTilt={onTilt} labels={labels} />}
       </div>
     </ModelErrorBoundary>
   );
