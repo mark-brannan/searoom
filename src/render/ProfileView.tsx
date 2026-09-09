@@ -1,29 +1,31 @@
 // The boat from abeam (starboard side), lights glowing in place.
 
 import type { ReactElement } from 'react';
-import { useIntl } from 'react-intl';
 import type { FactRecord } from '../engine/types';
 import type { Hull } from './hulls';
 import { PX, PZ } from './hulls';
 import type { PlacedLight } from './placement';
+import type { SceneLabels } from './labels';
+import { defaultSceneLabels } from './labels';
 import { Glow } from './svg';
 
 export function ProfileView({
   hull,
   placed,
   facts,
+  labels = defaultSceneLabels,
 }: {
   hull: Hull;
   placed: PlacedLight[];
   facts: FactRecord;
+  labels?: SceneLabels;
 }): ReactElement {
-  const intl = useIntl();
   const anchored = facts['fact:position'] === 'position:anchored';
   return (
     <svg
       viewBox="0 0 440 240"
       role="img"
-      aria-label={intl.formatMessage({ id: 'scene.profile.alt' })}
+      aria-label={labels.profileAlt}
       className="scene-svg"
     >
       <rect width="440" height="240" fill="var(--sea-night)" />

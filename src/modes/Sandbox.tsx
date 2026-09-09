@@ -15,7 +15,19 @@ import { placeLights } from '../render/placement';
 import { BearingView } from '../render/BearingView';
 import { PlanView } from '../render/PlanView';
 import { ProfileView } from '../render/ProfileView';
+import type { Aspect, SceneLabels } from '../render/labels';
 import type { AppState, View } from '../state/urlState';
+
+const ASPECTS: Aspect[] = [
+  'ahead',
+  'starboard-bow',
+  'starboard-beam',
+  'starboard-quarter',
+  'astern',
+  'port-quarter',
+  'port-beam',
+  'port-bow',
+];
 
 const entryById = new Map(applicability.entries.map((e) => [e.id, e]));
 
@@ -304,6 +316,23 @@ export function Sandbox({
     if (state.displayIndex !== current) patch({ displayIndex: current });
   }, [state.displayIndex, current, patch]);
 
+  const sceneLabels: SceneLabels = useMemo(
+    () => ({
+      bearingAlt: (theta) =>
+        intl.formatMessage({ id: 'scene.bearing.alt' }, { theta }),
+      bearingNoLights: intl.formatMessage({ id: 'scene.bearing.noLights' }),
+      bearingThetaLabel: intl.formatMessage({ id: 'scene.bearing.thetaLabel' }),
+      bearingThetaValue: (theta, aspect) =>
+        intl.formatMessage({ id: 'scene.bearing.thetaValue' }, { theta, aspect }),
+      aspect: Object.fromEntries(
+        ASPECTS.map((a) => [a, intl.formatMessage({ id: `aspect.${a}` })]),
+      ) as Record<Aspect, string>,
+      planAlt: intl.formatMessage({ id: 'scene.plan.alt' }),
+      profileAlt: intl.formatMessage({ id: 'scene.profile.alt' }),
+    }),
+    [intl],
+  );
+
   const display = evaln.displays[current];
   const hull = useMemo(() => selectHull(state.facts), [state.facts]);
   const placed = useMemo(() => {
@@ -350,7 +379,12 @@ export function Sandbox({
             )}
           </div>
           {state.view === 'profile' && (
-            <ProfileView hull={hull} placed={placed} facts={state.facts} />
+            <ProfileView
+              hull={hull}
+              placed={placed}
+              facts={state.facts}
+              labels={sceneLabels}
+            />
           )}
           {state.view === 'bearing' && (
             <BearingView
@@ -359,6 +393,7 @@ export function Sandbox({
               theta={state.theta}
               onTheta={(t) => patch({ theta: t })}
               hullHint={state.hullHint}
+              labels={sceneLabels}
             />
           )}
           {state.view === 'plan' && (
@@ -367,6 +402,7 @@ export function Sandbox({
               placed={placed}
               theta={state.theta}
               onTheta={(t) => patch({ theta: t })}
+              labels={sceneLabels}
             />
           )}
         </div>
