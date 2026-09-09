@@ -137,14 +137,14 @@ describe('lawful display composition', () => {
     expect(e.displays[0].entries).toContain('30a');
   });
 
-  it('trawler at anchor: Rule 30 anchor lights suppressed by 26(a)', () => {
+  it('trawler at anchor: Rule 30 anchor lights overridden by 26(a)', () => {
     const e = evaluateDisplay({
       'fact:propulsion': 'propulsion:power',
       'fact:activity': 'activity:trawling',
       'fact:position': 'position:anchored',
       'fact:length_m': 30,
     });
-    expect(e.excluded.map((x) => x.id).sort()).toEqual(['30a', '30b']);
+    expect(e.overridden.map((x) => x.id).sort()).toEqual(['30a', '30b']);
     for (const d of e.displays) {
       expect(d.entries).not.toContain('30a');
       expect(d.entries).not.toContain('30b');

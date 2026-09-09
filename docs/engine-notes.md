@@ -27,14 +27,12 @@ they can be reviewed as decisions, not archaeology. Each is tested in
    reported as exempted. The UI shows it struck through, not silently
    absent.
 
-2. **A required entry's `rel:excludes` suppresses.** 26(b)(i) is
-   `shall` and excludes 30(a)/30(b): the anchor lights are removed from
-   composition and reported as excluded, with the excluder named — that
-   is Rule 26(a)'s "only the lights prescribed in this Rule". The same
-   bar applies to one_of import options (a fishing vessel aground does
-   not import the Rule 30 anchor lights 26(a) forbids). When the
-   excluder is itself an alternative (25(b) vs 25(c)), exclusion is a
-   co-occurrence constraint between displays instead.
+2. **A required entry's `rel:overrides` displaces.** 26(b)(i) is
+   `shall` and overrides 30(a)/30(b): the anchor lights are removed from
+   composition and reported as overridden, with the overriding id named
+   — that is Rule 26(a)'s "only the lights prescribed in this Rule".
+   `rel:excludes` stays a co-occurrence constraint between alternatives
+   (25(b) vs 25(c)), never a removal.
 
 3. **Alternatives branch.** An applied entry whose `rel:in_lieu_of`
    references applied entries is a choice: in a display it replaces its
@@ -45,11 +43,11 @@ they can be reviewed as decisions, not archaeology. Each is tested in
 
 4. **`rel:includes` imports stand on their own.** An import's carrier
    gates only its own lights: Rule 28's three reds are `may`, but the
-   Rule 23 lights it imports stay `shall` (the data's own note). An
-   import whose source entry names a contradicting `fact:position` is
-   skipped — 27(f)'s include of the Rule 23 running lights reads "as
-   appropriate" in the rule text, and a mine-clearance vessel at anchor
-   shows Rule 30 lights, not mastheads.
+   Rule 23 lights it imports stay `shall` (the data's own note). 27(f)'s
+   "as appropriate" branch between the Rule 23 running lights and the
+   Rule 30 anchor lights is colregs' own `rel:conditional_includes` as
+   of 0.2.0 — the import itself is gated by `fact:position` in the data,
+   not by a composition decision here.
 
 5. **`one_of` chooses exactly one** (30(d): anchor lights per 30(a) *or*
    30(b)) — or none, when the carrier is `may` (25(d)(ii): sailing
