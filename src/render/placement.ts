@@ -4,8 +4,7 @@
 // placement is fine per the design doc; arcs come verbatim from
 // lights.json and are the exam-faithful part.
 
-import { lights as lightsData } from '../data/colregs';
-import type { Arc, DisplayLight, FactRecord } from '../engine/types';
+import type { Arc, DisplayLight, FactRecord, LightsData } from '../engine/types';
 import type { HullSpec } from './hulls';
 
 export interface PlacedLight {
@@ -24,11 +23,14 @@ export interface PlacedLight {
 
 const STACK_DZ = 0.13;
 
-function arcOf(lightId: string): Arc | null {
+function arcOf(lightsData: LightsData, lightId: string): Arc | null {
   return lightsData.lights[lightId]?.arc ?? null;
 }
 
-function characterOf(dl: DisplayLight): 'steady' | 'flashing' {
+function characterOf(
+  lightsData: LightsData,
+  dl: DisplayLight,
+): 'steady' | 'flashing' {
   const c = dl.spec.character ?? lightsData.lights[dl.spec.light]?.character;
   return c === 'flashing' ? 'flashing' : 'steady';
 }
@@ -41,6 +43,7 @@ export function placeLights(
   displayLights: DisplayLight[],
   hull: HullSpec,
   facts: FactRecord,
+  lightsData: LightsData,
 ): PlacedLight[] {
   const placed: PlacedLight[] = [];
   // all-round stacks share the mast; track occupancy so 27(b)(i)'s
@@ -80,7 +83,7 @@ export function placeLights(
     const key = `${dl.sourceEntry}:${spec.light}:${spec.position ?? ''}:${spec.color ?? ''}`;
     const base = {
       sourceEntry: dl.sourceEntry,
-      character: characterOf(dl),
+      character: characterOf(lightsData, dl),
       ifPracticable: ifPract(dl),
     };
 
@@ -94,7 +97,7 @@ export function placeLights(
               key: key + ':stbd',
               lightId: 'light:sidelight_starboard',
               color: 'green',
-              arc: arcOf('light:sidelight_starboard'),
+              arc: arcOf(lightsData, 'light:sidelight_starboard'),
               fx: hull.mastX,
               py: 0.02,
               z: hull.mastTopZ + 0.06,
@@ -105,7 +108,7 @@ export function placeLights(
               key: key + ':port',
               lightId: 'light:sidelight_port',
               color: 'red',
-              arc: arcOf('light:sidelight_port'),
+              arc: arcOf(lightsData, 'light:sidelight_port'),
               fx: hull.mastX,
               py: -0.02,
               z: hull.mastTopZ + 0.06,
@@ -119,7 +122,7 @@ export function placeLights(
               key: key + ':stbd',
               lightId: 'light:sidelight_starboard',
               color: 'green',
-              arc: arcOf('light:sidelight_starboard'),
+              arc: arcOf(lightsData, 'light:sidelight_starboard'),
               fx: hull.sideLightX,
               py: hull.beam,
               z: hull.sideLightZ,
@@ -129,7 +132,7 @@ export function placeLights(
               key: key + ':port',
               lightId: 'light:sidelight_port',
               color: 'red',
-              arc: arcOf('light:sidelight_port'),
+              arc: arcOf(lightsData, 'light:sidelight_port'),
               fx: hull.sideLightX,
               py: -hull.beam,
               z: hull.sideLightZ,
@@ -146,7 +149,7 @@ export function placeLights(
           key,
           lightId: 'light:sternlight',
           color: 'white',
-          arc: arcOf('light:sternlight'),
+          arc: arcOf(lightsData, 'light:sternlight'),
           fx: combined ? hull.mastX : hull.sternX,
           py: 0,
           z: combined ? hull.mastTopZ + 0.06 : hull.sternZ,
@@ -161,7 +164,7 @@ export function placeLights(
           key,
           lightId: 'light:towing',
           color: 'yellow',
-          arc: arcOf('light:towing'),
+          arc: arcOf(lightsData, 'light:towing'),
           fx: hull.sternX,
           py: 0,
           z: hull.sternZ + STACK_DZ,
@@ -178,7 +181,7 @@ export function placeLights(
             key,
             lightId: 'light:masthead',
             color: 'white',
-            arc: arcOf('light:masthead'),
+            arc: arcOf(lightsData, 'light:masthead'),
             fx: hull.aftMastX,
             py: 0,
             z: hull.aftMastTopZ,
@@ -191,7 +194,7 @@ export function placeLights(
               key: `${key}:${i}`,
               lightId: 'light:masthead',
               color: 'white',
-              arc: arcOf('light:masthead'),
+              arc: arcOf(lightsData, 'light:masthead'),
               fx: hull.mastX,
               py: 0,
               z: hull.mastTopZ - i * STACK_DZ,
@@ -208,7 +211,7 @@ export function placeLights(
       case 'light:all_round': {
         const count = spec.count ?? 1;
         const pos = spec.position ?? '';
-        const arc = arcOf('light:all_round');
+        const arc = arcOf(lightsData, 'light:all_round');
         if (pos.includes('side on which')) {
           // 27(d): pairs on the obstruction / clear side
           const obstructionPort =
@@ -331,7 +334,7 @@ export function placeLights(
           key,
           lightId: 'light:flashing',
           color: spec.color ?? 'white',
-          arc: arcOf('light:flashing'),
+          arc: arcOf(lightsData, 'light:flashing'),
           fx: hull.mastX,
           py: 0,
           z: mastStackTop,
