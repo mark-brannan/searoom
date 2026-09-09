@@ -2,9 +2,10 @@
 // hull — the view that explains why the bearing view changes.
 
 import type { ReactElement } from 'react';
-import { useIntl } from 'react-intl';
 import type { Hull } from './hulls';
 import type { PlacedLight } from './placement';
+import type { SceneLabels } from './labels';
+import { defaultSceneLabels } from './labels';
 import { Glow, lightFill, polar, sectorPath } from './svg';
 
 const C = 220;
@@ -15,13 +16,14 @@ export function PlanView({
   placed,
   theta,
   onTheta,
+  labels = defaultSceneLabels,
 }: {
   hull: Hull;
   placed: PlacedLight[];
   theta: number;
   onTheta: (t: number) => void;
+  labels?: SceneLabels;
 }): ReactElement {
-  const intl = useIntl();
   // one ring radius per distinct light arc+color, staggered outward
   const arcLights = placed.filter((l) => l.arc !== null);
   const ringKeys: string[] = [];
@@ -62,7 +64,7 @@ export function PlanView({
     <svg
       viewBox="0 0 440 440"
       role="img"
-      aria-label={intl.formatMessage({ id: 'scene.plan.alt' })}
+      aria-label={labels.planAlt}
       className="scene-svg plan-svg"
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
