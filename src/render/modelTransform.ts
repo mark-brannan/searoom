@@ -68,3 +68,33 @@ export function placeHullModel(
     position: [-centreX, -keelY, -centreZ],
   };
 }
+
+/**
+ * Where a placed light sits in the 3D scene, in the same world the hull
+ * model is placed into: bow on +X, up on +Y, starboard on +Z. (Bow and up
+ * fix the third axis: in a right-handed frame X x Y = Z is east when X is
+ * north and Y is up, so +Z is starboard. Get this backwards and the
+ * sidelights swap sides, which is the one error this app cannot make.)
+ *
+ * `placeLights` works in hull-relative fractions (fx fore-aft, py
+ * athwartships, z height) that the SVG profile scales by PX/PZ. The ratio
+ * of those two scales (150 vertical to 185 half-length) is what keeps a
+ * masthead light at the same relative height here as it is in the 2D
+ * views; anything else and the same light would sit at two different
+ * heights depending on which tab you were on.
+ */
+export const LIGHT_Z_TO_X = 150 / 185;
+
+export function lightPosition(
+  light: { fx: number; py: number; z: number },
+  lengthMeters: number,
+): [number, number, number] {
+  // fx and py share one scale — the plan view plots both against
+  // HULL_SCALE — so athwartships needs no separate beam figure.
+  const halfLength = lengthMeters / 2;
+  return [
+    light.fx * halfLength,
+    light.z * halfLength * LIGHT_Z_TO_X,
+    light.py * halfLength,
+  ];
+}

@@ -15,6 +15,7 @@
   "view.profile": "Sivulta",
   "view.bearing": "Suuntima",
   "view.plan": "Sektorit",
+  "view.benchy": "Benchy",
   "view.label": "Näkymä",
 
   "fact.propulsion": "Kulkutapa",
@@ -86,6 +87,7 @@
   "scene.bearing.noLights": "Tästä suuntimasta ei näy valoja",
   "scene.bearing.thetaLabel": "Suhteellinen suuntima θ",
   "scene.bearing.thetaValue": "{theta} astetta, {aspect}",
+  "scene.benchy.alt": "Benchy-näkymä: alus 3D-mallina valoineen, vapaasti käännettävissä",
   "scene.plan.alt": "Sektorinäkymä: kunkin valon näkyvyyssektori rungon ympärillä",
   "scene.hullHint": "Himmeä runkovihje",
 

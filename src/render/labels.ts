@@ -22,6 +22,7 @@ export interface SceneLabels {
   aspect: Record<Aspect, string>;
   planAlt: string;
   profileAlt: string;
+  benchyAlt: string;
 }
 
 export const defaultSceneLabels: SceneLabels = {
@@ -42,4 +43,6 @@ export const defaultSceneLabels: SceneLabels = {
   },
   planAlt: "Plan view: each light's arc of visibility around the hull",
   profileAlt: 'Profile view: the vessel from abeam with her lights',
+  benchyAlt:
+    'Benchy view: the vessel as a 3D model with her lights, free to orbit',
 };

@@ -11,7 +11,7 @@ import type { FactRecord, FactValue } from '../engine/types';
 type FactBag = Record<string, FactValue | undefined>;
 
 export type Mode = 'sandbox' | 'identify' | 'quiz' | 'rules' | 'sound';
-export type View = 'profile' | 'bearing' | 'plan';
+export type View = 'profile' | 'bearing' | 'plan' | 'benchy';
 
 export interface AppState {
   mode: Mode;
@@ -160,7 +160,7 @@ export function deserialize(hash: string): AppState {
   if (Object.keys(facts).length > 0)
     state.facts = { ...DEFAULT_FACTS, ...facts } as FactRecord;
   const view = params.get('view');
-  if (view === 'profile' || view === 'bearing' || view === 'plan')
+  if (view === 'profile' || view === 'bearing' || view === 'plan' || view === 'benchy')
     state.view = view;
   const th = Number(params.get('th'));
   if (params.has('th') && Number.isFinite(th))

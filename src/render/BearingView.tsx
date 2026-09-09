@@ -8,26 +8,13 @@ import type { PlacedLight } from './placement';
 import { bearingInArc } from './placement';
 import type { SceneLabels } from './labels';
 import { defaultSceneLabels } from './labels';
-import type { Aspect } from './labels';
+import { ThetaControl } from './ThetaControl';
 import { Glow } from './svg';
 
 const CX = 220;
 const HORIZON = 150;
 const SCALE = 150;
 const ZSCALE = 95;
-
-export function bearingLabel(theta: number): Aspect {
-  // named aspects at the conventional sector centers
-  const t = ((theta % 360) + 360) % 360;
-  if (t < 11.25 || t >= 348.75) return 'ahead';
-  if (t < 78.75) return 'starboard-bow';
-  if (t < 101.25) return 'starboard-beam';
-  if (t < 168.75) return 'starboard-quarter';
-  if (t < 191.25) return 'astern';
-  if (t < 258.75) return 'port-quarter';
-  if (t < 281.25) return 'port-beam';
-  return 'port-bow';
-}
 
 export function BearingView({
   hull,
@@ -95,26 +82,7 @@ export function BearingView({
           </text>
         )}
       </svg>
-      <div className="theta-control">
-        <label htmlFor="theta">{labels.bearingThetaLabel}</label>
-        <input
-          id="theta"
-          type="range"
-          min={0}
-          max={359}
-          step={1}
-          value={Math.round(theta)}
-          onChange={(e) => onTheta(Number(e.target.value))}
-          aria-valuetext={labels.bearingThetaValue(
-            Math.round(theta),
-            labels.aspect[bearingLabel(theta)],
-          )}
-        />
-        <span className="theta-readout">
-          {Math.round(theta)}°&ensp;
-          {labels.aspect[bearingLabel(theta)]}
-        </span>
-      </div>
+      <ThetaControl theta={theta} onTheta={onTheta} labels={labels} />
     </div>
   );
 }

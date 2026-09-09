@@ -13,6 +13,7 @@ import type { Display, Entry, DisplayEvaluation } from '../engine/types';
 import { selectHull } from '../render/hulls';
 import { placeLights } from '../render/placement';
 import { BearingView } from '../render/BearingView';
+import { BenchyView } from '../render/BenchyView';
 import { PlanView } from '../render/PlanView';
 import { ProfileView } from '../render/ProfileView';
 import type { Aspect, SceneLabels } from '../render/labels';
@@ -329,6 +330,7 @@ export function Sandbox({
       ) as Record<Aspect, string>,
       planAlt: intl.formatMessage({ id: 'scene.plan.alt' }),
       profileAlt: intl.formatMessage({ id: 'scene.profile.alt' }),
+      benchyAlt: intl.formatMessage({ id: 'scene.benchy.alt' }),
     }),
     [intl],
   );
@@ -348,7 +350,7 @@ export function Sandbox({
     );
   }, [display, evaln, hull, state.facts, state.additionsOn]);
 
-  const views: View[] = ['profile', 'bearing', 'plan'];
+  const views: View[] = ['profile', 'bearing', 'plan', 'benchy'];
 
   return (
     <div className="sandbox-grid">
@@ -393,6 +395,16 @@ export function Sandbox({
               theta={state.theta}
               onTheta={(t) => patch({ theta: t })}
               hullHint={state.hullHint}
+              labels={sceneLabels}
+            />
+          )}
+          {state.view === 'benchy' && (
+            <BenchyView
+              hull={hull}
+              placed={placed}
+              facts={state.facts}
+              theta={state.theta}
+              onTheta={(t) => patch({ theta: t })}
               labels={sceneLabels}
             />
           )}

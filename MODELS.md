@@ -3,8 +3,8 @@
 ## `public/models/3dbenchy-lowpoly.glb`
 
 3DBenchy — a small motor-cruiser-shaped calibration boat, used as the
-stand-in hull for the `power-small` vessel behind the `?render3d=1` flag
-(see [src/render/featureFlags.ts](src/render/featureFlags.ts) and
+stand-in hull for *every* vessel in the "Benchy" scene view, whatever her
+hull, size or mode of propulsion (see
 [src/render/BenchyModel.tsx](src/render/BenchyModel.tsx)).
 
 - **Source:** [CreativeTools/3DBenchy](https://github.com/CreativeTools/3DBenchy)

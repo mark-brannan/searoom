@@ -8,7 +8,7 @@ import type { Patch } from '../App';
 import { describeFacts } from '../components/factLabel';
 import { identifyCandidates } from '../engine/identify';
 import type { SeenLight } from '../engine/identify';
-import { bearingLabel } from '../render/BearingView';
+import { bearingLabel } from '../render/bearing';
 import { Glow, lightFill } from '../render/svg';
 import { DEFAULT_STATE, serialize } from '../state/urlState';
 import type { AppState } from '../state/urlState';
