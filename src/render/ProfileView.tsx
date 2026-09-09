@@ -1,12 +1,25 @@
 // The boat from abeam (starboard side), lights glowing in place.
 
+import { lazy, Suspense } from 'react';
 import type { ReactElement } from 'react';
 import { useIntl } from 'react-intl';
 import type { FactRecord } from '../engine/types';
+import { render3dEnabled } from './featureFlags';
 import type { Hull } from './hulls';
 import { PX, PZ } from './hulls';
 import type { PlacedLight } from './placement';
 import { Glow } from './svg';
+
+// Lazy: three.js only ships to a browser that actually hits the flag, so
+// the 2D-default path's bundle is untouched.
+const VesselModel3D = lazy(() =>
+  import('./VesselModel3D').then((m) => ({ default: m.VesselModel3D })),
+);
+
+// The one hull the three.js path stands in for while it's behind a flag —
+// see featureFlags.ts and MODELS.md. Every other hull keeps the SVG
+// profile regardless of the flag.
+const MODEL_3D_HULL_ID = 'power-small';
 
 export function ProfileView({
   hull,
@@ -19,6 +32,17 @@ export function ProfileView({
 }): ReactElement {
   const intl = useIntl();
   const anchored = facts['fact:position'] === 'position:anchored';
+
+  if (hull.spec.id === MODEL_3D_HULL_ID && render3dEnabled()) {
+    const lengthMeters =
+      typeof facts['fact:length_m'] === 'number' ? facts['fact:length_m'] : 12;
+    return (
+      <Suspense fallback={<div className="scene-3d" />}>
+        <VesselModel3D lengthMeters={lengthMeters} />
+      </Suspense>
+    );
+  }
+
   return (
     <svg
       viewBox="0 0 440 240"

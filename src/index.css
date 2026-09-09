@@ -321,6 +321,14 @@ select {
   border-color: #1a2436;
 }
 
+.scene-3d {
+  width: 100%;
+  aspect-ratio: 440 / 240;
+  display: block;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+}
+
 .plan-svg {
   max-width: 440px;
   margin: 0 auto;
