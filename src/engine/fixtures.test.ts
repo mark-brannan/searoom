@@ -27,11 +27,13 @@ describe('colregs applicability fixtures (verbatim replay)', () => {
   for (const c of fixtures.cases) {
     // colregs@0.2.2 (ADR 0008) gave every entry a `jurisdiction` and added
     // the first national delta, 30a-buoy/30b-buoy (`us/inland`), reached
-    // only via `fact:on_mooring_buoy`. colregs-engine has no jurisdiction
-    // parameter yet (its own open gap, not fallout of this bump), so a case
-    // that turns on jurisdiction can't be replayed verbatim: skipped,
-    // rather than silently mis-scored, until that lands.
-    if ('fact:on_mooring_buoy' in c.facts) {
+    // only via `fact:on_mooring_buoy: true`. colregs-engine has no
+    // jurisdiction parameter yet (its own open gap, not fallout of this
+    // bump), so a case that actually turns on jurisdiction can't be
+    // replayed verbatim: skipped, rather than silently mis-scored, until
+    // that lands. `fact:on_mooring_buoy: false` doesn't turn on anything —
+    // evaluateDisplay already gets it right today.
+    if (c.facts['fact:on_mooring_buoy'] === true) {
       const jurisdiction = c.jurisdiction ?? fixtures.jurisdiction;
       it.skip(`${c.name} (jurisdiction: ${jurisdiction}, not yet supported)`, () => {});
       continue;
