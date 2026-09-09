@@ -1,4 +1,4 @@
-// The relative-bearing slider, shared by the bearing view and the 3D model
+// The relative-bearing slider, shared by the bearing view and the Benchy
 // view so both drive the same angle with the same control.
 
 import type { ReactElement } from 'react';

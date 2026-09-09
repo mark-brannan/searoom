@@ -1,4 +1,4 @@
-// Renders the vessel as a 3D model, for the "3D model" scene view. Every
+// Renders the vessel as a 3D model, for the "Benchy" scene view. Every
 // vessel uses the same stand-in mesh regardless of hull, size or mode of
 // propulsion; only the length scaling varies.
 //
@@ -193,7 +193,7 @@ function OrbitRig({
   );
 }
 
-export function HullModel({
+export function BenchyModel({
   lengthMeters,
   placed,
   anchored = false,

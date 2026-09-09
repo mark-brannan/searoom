@@ -16,11 +16,11 @@ import { ThetaControl } from './ThetaControl';
 
 // Lazy: three.js (and the model) only ship to a browser that actually
 // opens this view, so the 2D views' bundle is untouched.
-const HullModel = lazy(() =>
-  import('./HullModel').then((m) => ({ default: m.HullModel })),
+const BenchyModel = lazy(() =>
+  import('./BenchyModel').then((m) => ({ default: m.BenchyModel })),
 );
 
-export function ModelView({
+export function BenchyView({
   hull,
   placed,
   facts,
@@ -49,19 +49,19 @@ export function ModelView({
     typeof facts['fact:length_m'] === 'number' ? facts['fact:length_m'] : 12;
 
   // The outer boundary catches a failed chunk load for the lazy import,
-  // which happens before HullModel's own boundary exists to catch it.
+  // which happens before BenchyModel's own boundary exists to catch it.
   return (
     <ModelErrorBoundary fallback={svgProfile} onError={() => setModelFailed(true)}>
       <div className="model-view">
-        <div className="scene-3d-stack" role="img" aria-label={labels.modelAlt}>
+        <div className="scene-3d-stack" role="img" aria-label={labels.benchyAlt}>
           <Suspense fallback={<div className="scene-3d" aria-hidden="true" />}>
-            <HullModel
+            <BenchyModel
               lengthMeters={lengthMeters}
               placed={placed}
               anchored={facts['fact:position'] === 'position:anchored'}
               theta={theta}
               onTheta={onTheta}
-              label={labels.modelAlt}
+              label={labels.benchyAlt}
               fallback={<div className="scene-3d" aria-hidden="true" />}
               onError={() => setModelFailed(true)}
             />
