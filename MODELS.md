@@ -25,4 +25,8 @@ stand-in hull for the `power-small` vessel behind the `?render3d=1` flag
   `BenchyModel` relies on this: it rotates height (`Z`) onto three.js's
   `Y`-up axis and leaves `X` alone, so the bow ends up on `+X` in the
   rendered scene — the same "bow right" convention the SVG profile view
-  uses (see [src/render/hulls.tsx](src/render/hulls.tsx)).
+  uses (see [src/render/hulls.tsx](src/render/hulls.tsx)). The scale,
+  rotation and waterline-centering arithmetic is in
+  [src/render/modelTransform.ts](src/render/modelTransform.ts), which has
+  no three.js or React in it and is unit-tested against three.js's own
+  bounding-box result.
