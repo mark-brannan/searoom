@@ -425,7 +425,10 @@ describe('anchorLights', () => {
     expect([h[0], s[0], p[0]]).toEqual([-1, -1, -1]);
     expect(s[2]).toBeCloseTo(1.6 * hb, 6);
     expect(p[2]).toBeCloseTo(-1.6 * hb, 6);
-    expect(h[1]).toBeCloseTo(6.2, 6);
+    // The lowest of the trio, the yard ends, clear the funnel; the head
+    // keeps its margin above them.
+    expect(s[1]).toBeCloseTo(6.2, 6);
+    expect(p[1]).toBeCloseTo(6.2, 6);
     expect(h[1] - s[1]).toBeCloseTo(
       lightPosition(head, L)[1] - lightPosition(yardS, L)[1],
       6,
