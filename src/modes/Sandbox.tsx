@@ -403,6 +403,8 @@ export function Sandbox({
               hull={hull}
               placed={placed}
               facts={state.facts}
+              theta={state.theta}
+              onTheta={(t) => patch({ theta: t })}
               labels={sceneLabels}
             />
           )}

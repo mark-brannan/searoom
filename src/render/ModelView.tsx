@@ -1,17 +1,18 @@
-// The same view as ProfileView — the boat from abeam with her lights — but
-// with the hull drawn as a 3D model instead of an SVG silhouette. Every
-// vessel gets the same model; nothing is gated on hull, size or propulsion.
+// The vessel as a 3D model, orbitable: drag to swing round her and tilt,
+// right-drag to pan, wheel to zoom. The horizontal angle is the same
+// relative bearing the bearing view carries, driven by the same slider, so
+// moving between the two tabs keeps you standing in the same place.
 
 import { lazy, Suspense, useState } from 'react';
 import type { ReactElement } from 'react';
 import type { FactRecord } from '../engine/types';
-import { AnchorCable, ProfileLights } from './annotations';
 import type { Hull } from './hulls';
 import { ModelErrorBoundary } from './ModelErrorBoundary';
 import type { PlacedLight } from './placement';
 import type { SceneLabels } from './labels';
 import { defaultSceneLabels } from './labels';
 import { ProfileView } from './ProfileView';
+import { ThetaControl } from './ThetaControl';
 
 // Lazy: three.js (and the model) only ship to a browser that actually
 // opens this view, so the 2D views' bundle is untouched.
@@ -23,11 +24,15 @@ export function ModelView({
   hull,
   placed,
   facts,
+  theta,
+  onTheta,
   labels = defaultSceneLabels,
 }: {
   hull: Hull;
   placed: PlacedLight[];
   facts: FactRecord;
+  theta: number;
+  onTheta: (t: number) => void;
   labels?: SceneLabels;
 }): ReactElement {
   // A failed model load degrades to the 2D profile rather than to a blank
@@ -47,27 +52,22 @@ export function ModelView({
   // which happens before HullModel's own boundary exists to catch it.
   return (
     <ModelErrorBoundary fallback={svgProfile} onError={() => setModelFailed(true)}>
-      <div className="scene-3d-stack" role="img" aria-label={labels.modelAlt}>
-        <Suspense fallback={<div className="scene-3d" aria-hidden="true" />}>
-          <HullModel
-            lengthMeters={lengthMeters}
-            label={labels.modelAlt}
-            fallback={<div className="scene-3d" aria-hidden="true" />}
-            onError={() => setModelFailed(true)}
-          />
-        </Suspense>
-        {/* Same coordinate space as the SVG profile (viewBox 0 0 440 240),
-            so the annotations sit where the 2D path puts them. The stand-in
-            model is framed by <Bounds fit>, so registration against its
-            silhouette is approximate — see searoom#22. */}
-        <svg
-          viewBox="0 0 440 240"
-          className="scene-3d-annotations"
-          aria-hidden="true"
-        >
-          <AnchorCable hull={hull} facts={facts} />
-          <ProfileLights placed={placed} />
-        </svg>
+      <div className="model-view">
+        <div className="scene-3d-stack" role="img" aria-label={labels.modelAlt}>
+          <Suspense fallback={<div className="scene-3d" aria-hidden="true" />}>
+            <HullModel
+              lengthMeters={lengthMeters}
+              placed={placed}
+              anchored={facts['fact:position'] === 'position:anchored'}
+              theta={theta}
+              onTheta={onTheta}
+              label={labels.modelAlt}
+              fallback={<div className="scene-3d" aria-hidden="true" />}
+              onError={() => setModelFailed(true)}
+            />
+          </Suspense>
+        </div>
+        <ThetaControl theta={theta} onTheta={onTheta} labels={labels} />
       </div>
     </ModelErrorBoundary>
   );

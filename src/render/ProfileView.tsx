@@ -2,12 +2,12 @@
 
 import type { ReactElement } from 'react';
 import type { FactRecord } from '../engine/types';
-import { AnchorCable, ProfileLights } from './annotations';
 import type { Hull } from './hulls';
-import { PZ } from './hulls';
+import { PX, PZ } from './hulls';
 import type { PlacedLight } from './placement';
 import type { SceneLabels } from './labels';
 import { defaultSceneLabels } from './labels';
+import { Glow } from './svg';
 
 export function ProfileView({
   hull,
@@ -20,6 +20,8 @@ export function ProfileView({
   facts: FactRecord;
   labels?: SceneLabels;
 }): ReactElement {
+  const anchored = facts['fact:position'] === 'position:anchored';
+
   return (
     <svg
       viewBox="0 0 440 240"
@@ -31,9 +33,29 @@ export function ProfileView({
       {/* horizon + waterline */}
       <line x1="0" y1={PZ(0)} x2="440" y2={PZ(0)} stroke="var(--waterline)" strokeWidth="1" />
       <rect x="0" y={PZ(0)} width="440" height={240 - PZ(0)} fill="var(--sea-below)" />
-      <AnchorCable hull={hull} facts={facts} />
+      {anchored && (
+        <line
+          x1={PX(hull.spec.bowX)}
+          y1={PZ(0.14)}
+          x2={PX(hull.spec.bowX) + 26}
+          y2={238}
+          stroke="var(--rig-stroke)"
+          strokeWidth={1}
+          strokeDasharray="3 4"
+        />
+      )}
       <hull.Profile />
-      <ProfileLights placed={placed} />
+      {placed.map((l) => (
+        <Glow
+          key={l.key}
+          x={PX(l.fx) + l.py * 10}
+          y={PZ(l.z)}
+          color={l.color}
+          flashing={l.character === 'flashing'}
+          dim={l.py < -0.05}
+          r={l.lightId === 'light:deck_lights' ? 9 : 5}
+        />
+      ))}
     </svg>
   );
 }

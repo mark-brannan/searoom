@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { MODEL_ROTATION_X, placeHullModel } from './modelTransform';
+import { MODEL_ROTATION_X, lightPosition, placeHullModel } from './modelTransform';
 import type { ModelBox } from './modelTransform';
 
 // Roughly Benchy's proportions in the source STL's millimetres, and
@@ -83,5 +83,28 @@ describe('placeHullModel', () => {
     expect(centre.x).toBeCloseTo(0, 6); // centred fore-aft
     expect(centre.z).toBeCloseTo(0, 6); // centred athwartships
     expect(box.min.y).toBeCloseTo(0, 6); // keel on the waterline
+  });
+});
+
+describe('lightPosition', () => {
+  it('puts a light on the centreline at the bow on +X', () => {
+    const [x, , z] = lightPosition({ fx: 1, py: 0, z: 0 }, 20);
+    expect(x).toBeCloseTo(10);
+    expect(z).toBeCloseTo(0);
+  });
+
+  it('puts a starboard light on +Z, on the same scale as fore-aft', () => {
+    // Right-handed with the bow on +X and up on +Y: starboard is +Z.
+    // Backwards here and green shows to port.
+    const [, , z] = lightPosition({ fx: 0, py: 0.2, z: 0 }, 20);
+    expect(z).toBeCloseTo(2);
+  });
+
+  it('keeps light height in the same ratio to length as the 2D profile', () => {
+    // PZ(z) = 185 - z*150 against PX(fx) = 220 + fx*185: one unit of z is
+    // 150/185 of a half-length. The 3D view must agree, or a masthead
+    // light moves between tabs.
+    const [, y] = lightPosition({ fx: 0, py: 0, z: 1 }, 20);
+    expect(y).toBeCloseTo(10 * (150 / 185));
   });
 });
