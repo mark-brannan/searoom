@@ -412,6 +412,26 @@ describe('anchorLights', () => {
     expect(yard[1]).toBeCloseTo(lightPosition({ fx: 0.125, py: 0, z: 0.8 }, L)[1], 6);
   });
 
+  it('takes a yard-end light on the mast to the mast, outboard in proportion', () => {
+    // 27(f): the head light and both yard ends share fx = mastX, so the
+    // whole trio rides the mast to the funnel's front edge; the yard
+    // ends keep their proportion outboard of the mast station's beam and
+    // their spacing below the head.
+    const head = { fx: hull.mastX, py: 0, z: 0.6 };
+    const yardS = { fx: hull.mastX, py: beam * 1.6, z: 0.47 };
+    const yardP = { fx: hull.mastX, py: -beam * 1.6, z: 0.47 };
+    const [h, s, p] = anchorLights([head, yardS, yardP], L, hull, profile, 0.2);
+    const hb = stationAt(profile, -1).halfBeam;
+    expect([h[0], s[0], p[0]]).toEqual([-1, -1, -1]);
+    expect(s[2]).toBeCloseTo(1.6 * hb, 6);
+    expect(p[2]).toBeCloseTo(-1.6 * hb, 6);
+    expect(h[1]).toBeCloseTo(6.2, 6);
+    expect(h[1] - s[1]).toBeCloseTo(
+      lightPosition(head, L)[1] - lightPosition(yardS, L)[1],
+      6,
+    );
+  });
+
   it('collapses athwartships when the hull spec has no beam', () => {
     const [p] = anchorLights([{ fx: 0, py: 0.3, z: 0.2 }], L, { ...hull, beam: 0 }, profile);
     expect(p[2]).toBe(0);
