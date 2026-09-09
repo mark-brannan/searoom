@@ -25,14 +25,19 @@ import * as THREE from 'three';
 import { ModelErrorBoundary } from './ModelErrorBoundary';
 import type { PlacedLight } from './placement';
 import {
+  PROFILE_STATIONS,
   anchorLights,
   lightPosition,
   placeHullModel,
+  sampleEdges,
   stationProfile,
 } from './modelTransform';
+import type { HullStations } from './modelTransform';
 import { DEFAULT_TILT, MAX_TILT } from '../state/urlState';
 
 const MODEL_URL = `${import.meta.env.BASE_URL}models/3dbenchy-lowpoly.glb`;
+
+const NO_HULL: HullStations = { beam: 0, mastX: NaN, aftMastX: NaN, sternX: NaN };
 
 /** Camera distance as a multiple of the vessel's length. */
 const ORBIT_DISTANCE = 1.6;
@@ -42,14 +47,17 @@ function lightRadius(lengthMeters: number): number {
   return Math.max(lengthMeters * 0.012, 0.12);
 }
 
-/** The world-space vertices of every mesh under `root`, flat xyz. */
-function worldVertices(root: THREE.Object3D): Float32Array {
+/** Every mesh under `root` as one world-space triangle list: flat xyz
+ * vertices and a merged index. */
+function worldMesh(root: THREE.Object3D): { xyz: Float32Array; index: number[] } {
   const chunks: Float32Array[] = [];
+  const index: number[] = [];
   let total = 0;
   const v = new THREE.Vector3();
   root.traverse((o) => {
     if (!(o instanceof THREE.Mesh)) return;
-    const pos = o.geometry.getAttribute('position');
+    const geom = o.geometry as THREE.BufferGeometry;
+    const pos = geom.getAttribute('position');
     if (!pos) return;
     const out = new Float32Array(pos.count * 3);
     for (let i = 0; i < pos.count; i++) {
@@ -58,16 +66,22 @@ function worldVertices(root: THREE.Object3D): Float32Array {
       out[i * 3 + 1] = v.y;
       out[i * 3 + 2] = v.z;
     }
+    const base = total / 3;
+    if (geom.index) {
+      for (let i = 0; i < geom.index.count; i++) index.push(base + geom.index.getX(i));
+    } else {
+      for (let i = 0; i < pos.count; i++) index.push(base + i);
+    }
     chunks.push(out);
     total += out.length;
   });
-  const all = new Float32Array(total);
+  const xyz = new Float32Array(total);
   let at = 0;
   for (const c of chunks) {
-    all.set(c, at);
+    xyz.set(c, at);
     at += c.length;
   }
-  return all;
+  return { xyz, index };
 }
 
 /** The placed hull and her lights, seated on it. One component because
@@ -76,11 +90,11 @@ function worldVertices(root: THREE.Object3D): Float32Array {
  * lights appearing first at their analytic positions and then jumping. */
 function Hull({
   lengthMeters,
-  beam,
+  hull,
   placed,
 }: {
   lengthMeters: number;
-  beam: number;
+  hull: HullStations;
   placed: PlacedLight[];
 }): ReactElement {
   const { scene } = useGLTF(MODEL_URL);
@@ -98,15 +112,19 @@ function Hull({
     g.position.set(...position);
     g.updateMatrixWorld(true);
 
-    return { group: g, profile: stationProfile(worldVertices(g)) };
+    // Sample the edges at half a station so a flat roof spanning several
+    // stations still registers in each of them.
+    const { xyz, index } = worldMesh(g);
+    const spacing = lengthMeters / PROFILE_STATIONS / 2;
+    return { group: g, profile: stationProfile(sampleEdges(xyz, index, spacing)) };
   }, [scene, lengthMeters]);
 
   const positions = useMemo(
     () =>
       profile
-        ? anchorLights(placed, lengthMeters, beam, profile, lightRadius(lengthMeters))
+        ? anchorLights(placed, lengthMeters, hull, profile, lightRadius(lengthMeters))
         : null,
-    [placed, lengthMeters, beam, profile],
+    [placed, lengthMeters, hull, profile],
   );
 
   return (
@@ -295,7 +313,7 @@ export function BenchyModel({
   onTheta,
   tilt = DEFAULT_TILT,
   onTilt,
-  beam = 0,
+  hull = NO_HULL,
   label,
   fallback = <div className="scene-3d" />,
   onError,
@@ -310,10 +328,10 @@ export function BenchyModel({
   /** Camera elevation above the waterline, degrees. */
   tilt?: number;
   onTilt?: (t: number) => void;
-  /** The hull spec's half-beam in py units, so a light's athwartships
-   * offset can be read as a fraction of the hull's width and re-applied
-   * to the mesh's. 0 puts every light on the centreline. */
-  beam?: number;
+  /** The hull spec's stations (half-beam, masts, stern) in fx/py units,
+   * so each light can be seated on the mesh's counterpart of where the 2D
+   * profile put it. The default seats everything on the centreline. */
+  hull?: HullStations;
   /** Accessible name for the canvas. Comes from the caller's SceneLabels —
    * these views render without an IntlProvider, by design (searoom#20). */
   label?: string;
@@ -343,7 +361,7 @@ export function BenchyModel({
           lengthMeters={lengthMeters}
         />
         <Suspense fallback={null}>
-          <Hull lengthMeters={lengthMeters} beam={beam} placed={placed} />
+          <Hull lengthMeters={lengthMeters} hull={hull} placed={placed} />
         </Suspense>
         {anchored && <AnchorCable lengthMeters={lengthMeters} />}
       </Canvas>

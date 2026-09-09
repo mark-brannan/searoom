@@ -70,7 +70,7 @@ export function BenchyView({
               onTheta={onTheta}
               tilt={tilt}
               onTilt={onTilt}
-              beam={hull.spec.beam}
+              hull={hull.spec}
               label={labels.benchyAlt}
               fallback={<div className="scene-3d" aria-hidden="true" />}
               onError={() => setModelFailed(true)}
