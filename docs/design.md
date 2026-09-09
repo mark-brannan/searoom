@@ -15,12 +15,11 @@ history and don't get rewritten.
 Branding workshop output (session `navlights-branding-workshop-0885d7`):
 
 - **App: `searoom`** — this repo. "See the rules of the road."
-- **Renderer (extracted from in-app code once proven): [`nav-wright`](https://github.com/mark-brannan/nav-wright)**
-- **Evaluator (extracted from in-app code once proven): [`colregs-engine`](https://github.com/mark-brannan/colregs-engine)**
+- **Renderer (extracted from in-app code later): [`nav-wright`](https://github.com/mark-brannan/nav-wright)**
+- **Evaluator (extracted from in-app code later): [`colregs-engine`](https://github.com/mark-brannan/colregs-engine)**
 
 Both nav-wright and colregs-engine are built *inside* this repo first and
-extracted later, once the interfaces have proven themselves against a real
-consumer — not designed as standalone packages up front.
+extracted later — not designed as standalone packages up front.
 
 Still separate and **unsettled**: the SignalK *switching plugin*'s name and
 repo siting (a different artifact — the runtime plugin, not this educational
