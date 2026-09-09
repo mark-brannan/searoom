@@ -1,4 +1,4 @@
-// The scale/orientation/centering math used by BenchyModel. The last case
+// The scale/orientation/centering math used by HullModel. The last case
 // re-derives the same placement through three.js itself, so the analytic
 // version above can't quietly drift from the library's conventions.
 

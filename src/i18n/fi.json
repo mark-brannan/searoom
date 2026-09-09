@@ -15,6 +15,7 @@
   "view.profile": "Sivulta",
   "view.bearing": "Suuntima",
   "view.plan": "Sektorit",
+  "view.model": "3D-malli",
   "view.label": "Näkymä",
 
   "fact.propulsion": "Kulkutapa",
@@ -86,6 +87,7 @@
   "scene.bearing.noLights": "Tästä suuntimasta ei näy valoja",
   "scene.bearing.thetaLabel": "Suhteellinen suuntima θ",
   "scene.bearing.thetaValue": "{theta} astetta, {aspect}",
+  "scene.model.alt": "3D-mallinäkymä: alus kolmiulotteisena valoineen",
   "scene.plan.alt": "Sektorinäkymä: kunkin valon näkyvyyssektori rungon ympärillä",
   "scene.hullHint": "Himmeä runkovihje",
 
