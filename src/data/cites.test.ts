@@ -7,22 +7,22 @@ import { applicability } from './colregs';
 import { evaluateDisplay } from 'colregs-engine';
 import { factsForEntry, paragraphsForCite } from './cites';
 
-// colregs main is missing fixture coverage for these 30 entries as of the
-// commit that bumped it to 0.2.0 (verified: present at 92741bb2, the exact
-// version-bump commit, so it's upstream's gap, not this migration's) —
-// carded on the global board. REQ-VERIFY-3 promises a fixture per entry;
-// colregs isn't keeping that promise for these yet.
-const NO_FIXTURE_YET = new Set([
-  '4', '11', '19a', '18a1', '18a2', '18a3', '18a4', '18b1', '18b2', '18b3',
-  '18c1', '18c2', '18d1', '18f1', '8f3', '13a', '9b', '9c', '10i', '10j',
-  '7d1', '12a1', '12a2', '12a3', '13b-overtaking', '13b-overtaken', '13d',
-  '14b', '15a-crossing', '15a-give-way',
-]);
+// colregs 0.2.0 split the one-vessel `display` category (lights and shapes,
+// evaluateDisplay's own domain) from the two-vessel `precedence`,
+// `classification` and `scope` categories (which vessel gives way — read a
+// Situation, not a FactRecord). colregs main carries fixtures for the
+// two-vessel entries too (fixtures/situation-fixtures.json, every case
+// `binding`), but colregs-engine has no evaluator for a Situation yet — only
+// evaluateDisplay, which the two-vessel entries' predicates were never meant
+// to run through. Tracked upstream: colregs-engine needs an evaluateSituation
+// entry point before these can be reached the same way. Once it exists, this
+// loop should cover them via situation-fixtures.json instead of skipping.
+const TWO_VESSEL_CATEGORIES = new Set(['precedence', 'classification', 'scope']);
 
 describe('entry reachability', () => {
   for (const entry of applicability.entries) {
-    const t = NO_FIXTURE_YET.has(entry.id) ? it.skip : it;
-    t(`${entry.id} has a fixture fact record that fires it`, () => {
+    if (TWO_VESSEL_CATEGORIES.has(entry.category ?? 'display')) continue;
+    it(`${entry.id} has a fixture fact record that fires it`, () => {
       const facts = factsForEntry(entry.id);
       expect(facts).toBeDefined();
       const evaln = evaluateDisplay(facts!);
