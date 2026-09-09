@@ -5,7 +5,7 @@
 // test's adjacency structure as a distractor generator.
 
 import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
-import { applicability } from '../data/colregs';
+import { applicability, lights } from '../data/colregs';
 import { evaluateDisplay } from 'colregs-engine';
 import type { Display, FactRecord } from './types';
 import { placeLights, bearingInArc } from '../render/placement';
@@ -35,7 +35,7 @@ export function mulberry32(seed: number): () => number {
  */
 export function displaySignature(facts: FactRecord, display: Display): string {
   const hull = selectHull(facts);
-  const placed = placeLights(display.lights, hull.spec, facts);
+  const placed = placeLights(display.lights, hull.spec, facts, lights);
   const multiset = placed
     .map((l) => `${l.color}:${l.character}`)
     .sort()
@@ -55,7 +55,7 @@ export function visibleSignature(
   theta: number,
 ): string {
   const hull = selectHull(facts);
-  const placed = placeLights(display.lights, hull.spec, facts);
+  const placed = placeLights(display.lights, hull.spec, facts, lights);
   return placed
     .filter((l) => bearingInArc(theta, l.arc) && l.lightId !== 'light:deck_lights')
     .map((l) => `${l.color}${l.character === 'flashing' ? '!' : ''}`)

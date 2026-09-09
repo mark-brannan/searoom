@@ -9,6 +9,7 @@ import type { QuizQuestion } from '../engine/quiz';
 import { bearingLabel } from '../render/BearingView';
 import { selectHull } from '../render/hulls';
 import { placeLights, bearingInArc } from '../render/placement';
+import { lights } from '../data/colregs';
 import { Glow } from '../render/svg';
 import type { Display, FactRecord } from '../engine/types';
 import { PX, PZ } from '../render/hulls';
@@ -21,7 +22,7 @@ function MiniProfile({
   display: Display;
 }) {
   const hull = selectHull(facts);
-  const placed = placeLights(display.lights, hull.spec, facts);
+  const placed = placeLights(display.lights, hull.spec, facts, lights);
   return (
     <svg viewBox="0 0 440 240" className="scene-svg" aria-hidden="true">
       <rect width="440" height="240" fill="var(--sea-night)" />
@@ -51,7 +52,7 @@ function MiniBearing({
   theta: number;
 }) {
   const hull = selectHull(facts);
-  const placed = placeLights(display.lights, hull.spec, facts);
+  const placed = placeLights(display.lights, hull.spec, facts, lights);
   const rad = (theta * Math.PI) / 180;
   return (
     <svg viewBox="0 0 440 240" className="scene-svg scene-svg-black" aria-hidden="true">

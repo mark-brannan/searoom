@@ -7,7 +7,7 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
 import { FactControls } from '../components/FactControls';
 import { RuleParagraphs } from '../components/RuleParagraphs';
-import { applicability, colregsVersion, corpus } from '../data/colregs';
+import { applicability, colregsVersion, corpus, lights } from '../data/colregs';
 import { evaluateDisplay } from 'colregs-engine';
 import type { Display, Entry, DisplayEvaluation } from '../engine/types';
 import { selectHull } from '../render/hulls';
@@ -315,6 +315,7 @@ export function Sandbox({
       [...display.lights, ...additionLights],
       hull.spec,
       state.facts,
+      lights,
     );
   }, [display, evaln, hull, state.facts, state.additionsOn]);
 
