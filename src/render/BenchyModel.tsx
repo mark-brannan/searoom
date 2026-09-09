@@ -1,6 +1,6 @@
-// Minimal three.js stand-in for one hull's 2D profile (power-small), behind
-// the ?render3d=1 flag — see featureFlags.ts. Everything else (lights,
-// other hulls) stays on the SVG path.
+// Renders the Benchy model in place of one hull's 2D profile (power-small),
+// behind the ?render3d=1 flag — see featureFlags.ts. Everything else
+// (lights, other hulls) stays on the SVG path.
 //
 // Model: public/models/3dbenchy-lowpoly.glb — see MODELS.md for
 // provenance, license and the bow-orientation check this component relies
@@ -14,7 +14,7 @@ import * as THREE from 'three';
 
 const MODEL_URL = `${import.meta.env.BASE_URL}models/3dbenchy-lowpoly.glb`;
 
-function BenchyMesh({ lengthMeters }: { lengthMeters: number }): ReactElement {
+function Benchy({ lengthMeters }: { lengthMeters: number }): ReactElement {
   const { scene } = useGLTF(MODEL_URL);
 
   const group = useMemo(() => {
@@ -44,7 +44,7 @@ useGLTF.preload(MODEL_URL);
 
 /** Heading-aligned, beam-on view: bow to the right, matching the SVG
  * profile's convention (hulls.tsx: "bow right"). */
-export function VesselModel3D({ lengthMeters }: { lengthMeters: number }): ReactElement {
+export function BenchyModel({ lengthMeters }: { lengthMeters: number }): ReactElement {
   return (
     <Canvas className="scene-3d" dpr={[1, 2]} gl={{ antialias: true }}>
       <color attach="background" args={['#0a1622']} />
@@ -53,7 +53,7 @@ export function VesselModel3D({ lengthMeters }: { lengthMeters: number }): React
       <directionalLight position={[-4, 3, -3]} intensity={0.3} />
       <Suspense fallback={null}>
         <Bounds fit clip observe margin={1.3}>
-          <BenchyMesh lengthMeters={lengthMeters} />
+          <Benchy lengthMeters={lengthMeters} />
         </Bounds>
       </Suspense>
     </Canvas>
