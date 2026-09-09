@@ -28,6 +28,20 @@ Searoom is the consumer face of a small stack, each piece its own package:
 Engine and renderer are being built inside this repo first and extracted
 once they earn a second consumer.
 
+## Running this project
+
+`npm run dev` starts Vite's dev server; `npm run build && npm run preview`
+serves a production build. Either prints the URL it's listening on — pass
+`--port` if the default is taken, which it usually is when more than one
+worktree is running at once:
+
+```
+npx vite preview --port 4181
+```
+
+Working in a git worktree (`.claude/worktrees/<name>`)? Run the command from
+inside it — Vite serves whatever worktree it's launched from, not `main`.
+
 ## Not for navigation
 
 Searoom is a study tool. It is not navigation equipment and must not be
