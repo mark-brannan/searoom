@@ -3,10 +3,12 @@
 // theta sweeps — arcs come straight from lights.json via placement.
 
 import type { ReactElement } from 'react';
-import { FormattedMessage, useIntl } from 'react-intl';
 import type { Hull } from './hulls';
 import type { PlacedLight } from './placement';
 import { bearingInArc } from './placement';
+import type { SceneLabels } from './labels';
+import { defaultSceneLabels } from './labels';
+import type { Aspect } from './labels';
 import { Glow } from './svg';
 
 const CX = 220;
@@ -14,7 +16,7 @@ const HORIZON = 150;
 const SCALE = 150;
 const ZSCALE = 95;
 
-export function bearingLabel(theta: number): string {
+export function bearingLabel(theta: number): Aspect {
   // named aspects at the conventional sector centers
   const t = ((theta % 360) + 360) % 360;
   if (t < 11.25 || t >= 348.75) return 'ahead';
@@ -33,14 +35,15 @@ export function BearingView({
   theta,
   onTheta,
   hullHint,
+  labels = defaultSceneLabels,
 }: {
   hull: Hull;
   placed: PlacedLight[];
   theta: number;
   onTheta: (t: number) => void;
   hullHint: boolean;
+  labels?: SceneLabels;
 }): ReactElement {
-  const intl = useIntl();
   const rad = (theta * Math.PI) / 180;
   const sin = Math.sin(rad);
   const cos = Math.cos(rad);
@@ -64,10 +67,7 @@ export function BearingView({
       <svg
         viewBox="0 0 440 240"
         role="img"
-        aria-label={intl.formatMessage(
-          { id: 'scene.bearing.alt' },
-          { theta: Math.round(theta) },
-        )}
+        aria-label={labels.bearingAlt(Math.round(theta))}
         className="scene-svg scene-svg-black"
       >
         <rect width="440" height="240" fill="#000000" />
@@ -91,14 +91,12 @@ export function BearingView({
         ))}
         {projected.length === 0 && (
           <text x="220" y="120" textAnchor="middle" className="bearing-empty">
-            <FormattedMessage id="scene.bearing.noLights" />
+            {labels.bearingNoLights}
           </text>
         )}
       </svg>
       <div className="theta-control">
-        <label htmlFor="theta">
-          <FormattedMessage id="scene.bearing.thetaLabel" />
-        </label>
+        <label htmlFor="theta">{labels.bearingThetaLabel}</label>
         <input
           id="theta"
           type="range"
@@ -107,19 +105,14 @@ export function BearingView({
           step={1}
           value={Math.round(theta)}
           onChange={(e) => onTheta(Number(e.target.value))}
-          aria-valuetext={intl.formatMessage(
-            { id: 'scene.bearing.thetaValue' },
-            {
-              theta: Math.round(theta),
-              aspect: intl.formatMessage({
-                id: `aspect.${bearingLabel(theta)}`,
-              }),
-            },
+          aria-valuetext={labels.bearingThetaValue(
+            Math.round(theta),
+            labels.aspect[bearingLabel(theta)],
           )}
         />
         <span className="theta-readout">
           {Math.round(theta)}°&ensp;
-          <FormattedMessage id={`aspect.${bearingLabel(theta)}`} />
+          {labels.aspect[bearingLabel(theta)]}
         </span>
       </div>
     </div>
