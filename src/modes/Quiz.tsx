@@ -6,13 +6,17 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import { describeFacts } from '../components/factLabel';
 import { makeForward, makeReverse } from '../engine/quiz';
 import type { QuizQuestion } from '../engine/quiz';
-import { bearingLabel } from '../render/bearing';
-import { selectHull } from '../render/hulls';
-import { placeLights, bearingInArc } from '../render/placement';
+import {
+  Glow,
+  PX,
+  PZ,
+  bearingInArc,
+  bearingLabel,
+  placeLights,
+  selectHull,
+} from 'nav-wright';
 import { lights } from '../data/colregs';
-import { Glow } from '../render/svg';
 import type { Display, FactRecord } from '../engine/types';
-import { PX, PZ } from '../render/hulls';
 
 function MiniProfile({
   facts,

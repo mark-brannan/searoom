@@ -2,8 +2,8 @@
 // view so both drive the same angle with the same control.
 
 import type { ReactElement } from 'react';
-import { bearingLabel } from './bearing';
-import type { SceneLabels } from './labels';
+import { bearingLabel } from 'nav-wright';
+import type { SceneLabels } from 'nav-wright';
 
 export function ThetaControl({
   theta,

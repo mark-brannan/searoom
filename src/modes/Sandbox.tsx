@@ -10,13 +10,16 @@ import { RuleParagraphs } from '../components/RuleParagraphs';
 import { applicability, colregsVersion, corpus, lights } from '../data/colregs';
 import { evaluateDisplay } from 'colregs-engine';
 import type { Display, Entry, DisplayEvaluation } from '../engine/types';
-import { selectHull } from '../render/hulls';
-import { placeLights } from '../render/placement';
-import { BearingView } from '../render/BearingView';
+import {
+  BearingView,
+  PlanView,
+  ProfileView,
+  placeLights,
+  selectHull,
+} from 'nav-wright';
+import type { Aspect } from 'nav-wright';
 import { BenchyView } from '../render/BenchyView';
-import { PlanView } from '../render/PlanView';
-import { ProfileView } from '../render/ProfileView';
-import type { Aspect, SceneLabels } from '../render/labels';
+import type { SearoomSceneLabels } from '../render/sceneLabels';
 import type { AppState, View } from '../state/urlState';
 
 const ASPECTS: Aspect[] = [
@@ -317,7 +320,7 @@ export function Sandbox({
     if (state.displayIndex !== current) patch({ displayIndex: current });
   }, [state.displayIndex, current, patch]);
 
-  const sceneLabels: SceneLabels = useMemo(
+  const sceneLabels: SearoomSceneLabels = useMemo(
     () => ({
       bearingAlt: (theta) =>
         intl.formatMessage({ id: 'scene.bearing.alt' }, { theta }),
