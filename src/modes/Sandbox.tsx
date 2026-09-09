@@ -331,6 +331,9 @@ export function Sandbox({
       planAlt: intl.formatMessage({ id: 'scene.plan.alt' }),
       profileAlt: intl.formatMessage({ id: 'scene.profile.alt' }),
       benchyAlt: intl.formatMessage({ id: 'scene.benchy.alt' }),
+      benchyTiltLabel: intl.formatMessage({ id: 'scene.benchy.tiltLabel' }),
+      benchyTiltValue: (tilt) =>
+        intl.formatMessage({ id: 'scene.benchy.tiltValue' }, { tilt }),
     }),
     [intl],
   );
@@ -405,6 +408,8 @@ export function Sandbox({
               facts={state.facts}
               theta={state.theta}
               onTheta={(t) => patch({ theta: t })}
+              tilt={state.tilt}
+              onTilt={(t) => patch({ tilt: t })}
               labels={sceneLabels}
             />
           )}

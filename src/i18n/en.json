@@ -85,6 +85,8 @@
   "scene.bearing.thetaLabel": "Relative bearing θ",
   "scene.bearing.thetaValue": "{theta} degrees, {aspect}",
   "scene.benchy.alt": "Benchy view: the vessel as a 3D model with her lights, free to orbit",
+  "scene.benchy.tiltLabel": "Tilt",
+  "scene.benchy.tiltValue": "{tilt} degrees above the waterline",
   "scene.plan.alt": "Plan view: each light's arc of visibility around the hull",
   "scene.hullHint": "Faint hull hint",
   "sandbox.displays.title": "{count, plural, one {# lawful display} other {# lawful displays}}",

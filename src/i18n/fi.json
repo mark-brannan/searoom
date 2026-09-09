@@ -88,6 +88,8 @@
   "scene.bearing.thetaLabel": "Suhteellinen suuntima θ",
   "scene.bearing.thetaValue": "{theta} astetta, {aspect}",
   "scene.benchy.alt": "Benchy-näkymä: alus 3D-mallina valoineen, vapaasti käännettävissä",
+  "scene.benchy.tiltLabel": "Kallistus",
+  "scene.benchy.tiltValue": "{tilt} astetta vesirajan yläpuolella",
   "scene.plan.alt": "Sektorinäkymä: kunkin valon näkyvyyssektori rungon ympärillä",
   "scene.hullHint": "Himmeä runkovihje",
 

@@ -23,6 +23,8 @@ export interface SceneLabels {
   planAlt: string;
   profileAlt: string;
   benchyAlt: string;
+  benchyTiltLabel: string;
+  benchyTiltValue: (tilt: number) => string;
 }
 
 export const defaultSceneLabels: SceneLabels = {
@@ -45,4 +47,6 @@ export const defaultSceneLabels: SceneLabels = {
   profileAlt: 'Profile view: the vessel from abeam with her lights',
   benchyAlt:
     'Benchy view: the vessel as a 3D model with her lights, free to orbit',
+  benchyTiltLabel: 'Tilt',
+  benchyTiltValue: (tilt) => `${tilt} degrees above the waterline`,
 };

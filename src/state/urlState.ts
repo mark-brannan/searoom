@@ -18,6 +18,8 @@ export interface AppState {
   facts: FactRecord;
   view: View;
   theta: number;
+  /** Camera elevation above the waterline in the 3D view, degrees. */
+  tilt: number;
   displayIndex: number;
   additionsOn: string[];
   signpost: string | null;
@@ -35,11 +37,18 @@ export const DEFAULT_FACTS: FactRecord = {
   'fact:length_m': 12,
 };
 
+// The 3D view's camera elevation: 0 is at the waterline, MAX_TILT is close
+// to straight down. Nothing below the waterline — there is nothing to see
+// there and the sliders would need a sign.
+export const DEFAULT_TILT = 10;
+export const MAX_TILT = 85;
+
 export const DEFAULT_STATE: AppState = {
   mode: 'sandbox',
   facts: DEFAULT_FACTS,
   view: 'profile',
   theta: 45,
+  tilt: DEFAULT_TILT,
   displayIndex: 0,
   additionsOn: [],
   signpost: null,
@@ -110,6 +119,8 @@ export function serialize(state: AppState): string {
   if (state.view !== DEFAULT_STATE.view) params.set('view', state.view);
   if (state.theta !== DEFAULT_STATE.theta)
     params.set('th', String(Math.round(state.theta)));
+  if (state.tilt !== DEFAULT_STATE.tilt)
+    params.set('tl', String(Math.round(state.tilt)));
   if (state.displayIndex !== 0) params.set('d', String(state.displayIndex));
   if (state.additionsOn.length > 0)
     params.set('add', state.additionsOn.join(','));
@@ -165,6 +176,9 @@ export function deserialize(hash: string): AppState {
   const th = Number(params.get('th'));
   if (params.has('th') && Number.isFinite(th))
     state.theta = ((th % 360) + 360) % 360;
+  const tl = Number(params.get('tl'));
+  if (params.has('tl') && Number.isFinite(tl))
+    state.tilt = Math.min(MAX_TILT, Math.max(0, tl));
   const d = Number(params.get('d'));
   if (params.has('d') && Number.isInteger(d) && d >= 0) state.displayIndex = d;
   const add = params.get('add');
