@@ -329,10 +329,9 @@ select {
   border: 1px solid var(--line);
 }
 
-/* 3D hull under the shared SVG annotation layer: one box, one border,
-   both children filling it. The canvas stays in flow (react-three-fiber
-   sets position/width/height on its container inline, so it can't be
-   absolutely positioned from here); the annotations overlay it. */
+/* The 3D scene's frame: one box, one border, the canvas filling it. The
+   canvas stays in flow — react-three-fiber sets position/width/height on
+   its container inline, so it can't be absolutely positioned from here. */
 .scene-3d-stack {
   position: relative;
   width: 100%;
