@@ -68,6 +68,7 @@ the URL.
   browser.
 - Depends on `colregs` and `colregs-engine` for content and evaluation; it
   invents no rules data of its own.
-- `npm test` runs against fixtures with the network unavailable; screenshot
-  and end-to-end checks (`scripts/screenshots.mjs`, Playwright) run in CI
-  against the built app, not the deployed origin.
+- `npm test` runs against fixtures with the network unavailable; CI runs only
+  typecheck, test and build. The screenshot and click-through checks
+  (`scripts/screenshots.mjs`, `scripts/verify-live.mjs`) are run by hand, not
+  in CI, and they target a preview build or the deployed origin.
