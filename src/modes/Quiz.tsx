@@ -7,12 +7,9 @@ import { describeFacts } from '../components/factLabel';
 import { makeForward, makeReverse } from '../engine/quiz';
 import type { QuizQuestion } from '../engine/quiz';
 import { bearingLabel } from '../render/bearing';
-import { selectHull } from '../render/hulls';
-import { placeLights, bearingInArc } from '../render/placement';
+import { selectHull, placeLights, bearingInArc, Glow, PX, PZ } from 'nav-wright';
 import { lights } from '../data/colregs';
-import { Glow } from '../render/svg';
 import type { Display, FactRecord } from '../engine/types';
-import { PX, PZ } from '../render/hulls';
 
 function MiniProfile({
   facts,

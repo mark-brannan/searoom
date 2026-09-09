@@ -15,14 +15,6 @@
   --green-dim: #2c8a46;
   --yellow: #ffd23f;
   --white-light: #f5f5f0;
-  --sea-night: #0b1526;
-  --sea-below: #08101d;
-  --waterline: #2a3d58;
-  --hull-fill: #101c30;
-  --hull-stroke: #3d5273;
-  --rig-stroke: #33465f;
-  --grid-line: #33465f;
-  --accent-soft: #9fc7bd;
   --focus: #f5f5f0;
   --danger-bg: #3a1512;
   --radius: 10px;
@@ -308,19 +300,6 @@ select {
 }
 
 /* scene */
-.scene-svg {
-  width: 100%;
-  height: auto;
-  display: block;
-  border-radius: var(--radius);
-  border: 1px solid var(--line);
-  touch-action: none;
-}
-
-.scene-svg-black {
-  border-color: #1a2436;
-}
-
 .scene-3d {
   width: 100%;
   aspect-ratio: 440 / 240;
@@ -358,12 +337,6 @@ select {
   cursor: grabbing;
 }
 
-.plan-svg {
-  max-width: 440px;
-  margin: 0 auto;
-  cursor: crosshair;
-}
-
 .view-tabs {
   display: flex;
   gap: 6px;
@@ -386,56 +359,17 @@ select {
   font-weight: 600;
 }
 
-.theta-control {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 10px;
-}
-
+/* .theta-control's layout, its input, and .theta-readout come from
+   nav-wright/style.css; this local rule only adds the dimmed label color
+   nav-wright's default doesn't set. */
 .theta-control label {
-  font-size: 13px;
   color: var(--dim);
-  white-space: nowrap;
 }
 
-.theta-control input {
-  flex: 1;
-}
-
-.theta-readout {
-  font-variant-numeric: tabular-nums;
-  font-size: 13.5px;
-  min-width: 11em;
-}
-
+/* nav-wright's default .bearing-empty is --accent-soft; searoom dims it
+   to match the rest of the UI's muted text. */
 .bearing-empty {
   fill: var(--dim);
-  font-size: 14px;
-}
-
-@keyframes light-flash {
-  0%,
-  40% {
-    opacity: 1;
-  }
-  50%,
-  90% {
-    opacity: 0.08;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-.light-flash {
-  animation: light-flash 0.5s steps(1) infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .light-flash {
-    animation: none;
-  }
 }
 
 /* display chips */

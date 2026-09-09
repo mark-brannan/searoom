@@ -8,8 +8,7 @@ import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
 import { applicability, lights } from '../data/colregs';
 import { evaluateDisplay } from 'colregs-engine';
 import type { Display, FactRecord } from './types';
-import { placeLights, bearingInArc } from '../render/placement';
-import { selectHull } from '../render/hulls';
+import { placeLights, bearingInArc, selectHull } from 'nav-wright';
 
 const fixtures = fixturesJson as unknown as {
   cases: { name: string; facts: FactRecord; expect: string[] }[];

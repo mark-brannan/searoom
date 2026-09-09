@@ -1,7 +1,7 @@
 // Naming a relative bearing. Its own module so both the bearing view and
 // the shared ThetaControl can use it without importing a view.
 
-import type { Aspect } from './labels';
+import type { Aspect } from 'nav-wright';
 
 export function bearingLabel(theta: number): Aspect {
   // named aspects at the conventional sector centers

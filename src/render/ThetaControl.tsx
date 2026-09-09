@@ -3,7 +3,7 @@
 
 import type { ReactElement } from 'react';
 import { bearingLabel } from './bearing';
-import type { SceneLabels } from './labels';
+import type { SceneLabels } from 'nav-wright';
 
 export function ThetaControl({
   theta,

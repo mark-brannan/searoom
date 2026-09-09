@@ -23,7 +23,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { ModelErrorBoundary } from './ModelErrorBoundary';
-import type { PlacedLight } from './placement';
+import type { PlacedLight } from 'nav-wright';
 import {
   PROFILE_STATIONS,
   anchorLights,
