@@ -302,8 +302,12 @@ select {
 /* scene */
 /* nav-wright's default .scene-svg border is var(--grid-line) (#33465f);
    searoom uses its own, slightly darker --line (#26374f) for every panel
-   border, scene SVGs included — override just that one property. */
-.scene-svg {
+   border, scene SVGs included — override just that one property. Scoped
+   to exclude .scene-svg-black (Identify.tsx, Quiz.tsx's mini-bearing
+   svg): that class sets its own near-black border in nav-wright's
+   stylesheet, loaded before this file, and an unscoped .scene-svg here
+   would win the tie on equal specificity and clobber it. */
+.scene-svg:not(.scene-svg-black) {
   border-color: var(--line);
 }
 
