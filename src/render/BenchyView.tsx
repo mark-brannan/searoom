@@ -6,12 +6,11 @@
 import { lazy, Suspense, useState } from 'react';
 import type { ReactElement } from 'react';
 import type { FactRecord } from '../engine/types';
-import type { Hull } from './hulls';
+import { ProfileView } from 'nav-wright';
+import type { Hull, PlacedLight } from 'nav-wright';
 import { ModelErrorBoundary } from './ModelErrorBoundary';
-import type { PlacedLight } from './placement';
-import type { SceneLabels } from './labels';
-import { defaultSceneLabels } from './labels';
-import { ProfileView } from './ProfileView';
+import type { SearoomSceneLabels } from './sceneLabels';
+import { defaultSearoomSceneLabels } from './sceneLabels';
 import { DEFAULT_TILT } from '../state/urlState';
 import { ThetaControl } from './ThetaControl';
 import { TiltControl } from './TiltControl';
@@ -30,7 +29,7 @@ export function BenchyView({
   onTheta,
   tilt = DEFAULT_TILT,
   onTilt,
-  labels = defaultSceneLabels,
+  labels = defaultSearoomSceneLabels,
 }: {
   hull: Hull;
   placed: PlacedLight[];
@@ -40,7 +39,7 @@ export function BenchyView({
   /** Camera elevation above the waterline, degrees; see TiltControl. */
   tilt?: number;
   onTilt?: (t: number) => void;
-  labels?: SceneLabels;
+  labels?: SearoomSceneLabels;
 }): ReactElement {
   // A failed model load degrades to the 2D profile rather than to a blank
   // pane: the lights are the subject of this app, so losing them is worse

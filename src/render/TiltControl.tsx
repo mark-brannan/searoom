@@ -4,7 +4,7 @@
 // one number, and that number travels in the URL (tl=) next to θ.
 
 import type { ReactElement } from 'react';
-import type { SceneLabels } from './labels';
+import type { SearoomSceneLabels } from './sceneLabels';
 import { MAX_TILT } from '../state/urlState';
 
 export function TiltControl({
@@ -14,7 +14,7 @@ export function TiltControl({
 }: {
   tilt: number;
   onTilt: (t: number) => void;
-  labels: SceneLabels;
+  labels: SearoomSceneLabels;
 }): ReactElement {
   return (
     <div className="theta-control">
