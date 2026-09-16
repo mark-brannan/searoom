@@ -18,8 +18,9 @@ import {
   selectHull,
 } from 'nav-wright';
 import type { Aspect } from 'nav-wright';
-import { BenchyView } from '../render/BenchyView';
-import type { SearoomSceneLabels } from '../render/sceneLabels';
+import { BenchyView } from 'nav-wright/benchy';
+import benchyModelUrl from 'nav-wright/models/3dbenchy-lowpoly.glb?url';
+import type { BenchyLabels } from 'nav-wright/benchy';
 import type { AppState, View } from '../state/urlState';
 
 const ASPECTS: Aspect[] = [
@@ -320,7 +321,7 @@ export function Sandbox({
     if (state.displayIndex !== current) patch({ displayIndex: current });
   }, [state.displayIndex, current, patch]);
 
-  const sceneLabels: SearoomSceneLabels = useMemo(
+  const sceneLabels: BenchyLabels = useMemo(
     () => ({
       bearingAlt: (theta) =>
         intl.formatMessage({ id: 'scene.bearing.alt' }, { theta }),
@@ -406,6 +407,7 @@ export function Sandbox({
           )}
           {state.view === 'benchy' && (
             <BenchyView
+              modelUrl={benchyModelUrl}
               hull={hull}
               placed={placed}
               facts={state.facts}

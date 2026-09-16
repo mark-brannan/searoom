@@ -3,6 +3,7 @@
 // GitHub Pages happy. Deep-link shape for rules: #/rules/27(a)(i).
 
 import type { FactRecord, FactValue } from '../engine/types';
+import { DEFAULT_TILT, MAX_TILT } from 'nav-wright/benchy';
 
 // FactRecord (from colregs-engine/schema) has no index signature — each key
 // carries its own literal type. The URL codec below reads/writes facts by a
@@ -37,11 +38,9 @@ export const DEFAULT_FACTS: FactRecord = {
   'fact:length_m': 12,
 };
 
-// The 3D view's camera elevation: 0 is at the waterline, MAX_TILT is close
-// to straight down. Nothing below the waterline — there is nothing to see
-// there and the sliders would need a sign.
-export const DEFAULT_TILT = 10;
-export const MAX_TILT = 85;
+// The 3D view's camera elevation bounds are nav-wright's; re-exported so
+// the rest of the app keeps one import path for URL-state constants.
+export { DEFAULT_TILT, MAX_TILT };
 
 export const DEFAULT_STATE: AppState = {
   mode: 'sandbox',
