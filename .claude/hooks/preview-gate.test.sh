@@ -33,6 +33,16 @@ kill "$pid"; sleep 1
 out=$(echo '{}' | sh "$hook")
 case "$out" in *'"decision":"block"'*) r=block ;; *) r="$out" ;; esac
 check "server died -> restarts and blocks" "$r" block
+pid=$(cat .claude/preview/pid)
+
+# alive but not listening: a process that never binds the port must be killed, not orphaned
+kill "$pid"; sleep 1
+sleep 300 & echo $! > .claude/preview/pid
+out=$(echo '{}' | sh "$hook")
+sleep 1
+if kill -0 "$(cat /dev/null; echo "$!")" 2>/dev/null; then r=leaked; else r=killed; fi
+case "$out" in *'"decision":"block"'*) ;; *) r="$out" ;; esac
+check "server alive but not listening -> old pid killed, restarts" "$r" killed
 kill "$(cat .claude/preview/pid)" 2>/dev/null
 
 exit $fail

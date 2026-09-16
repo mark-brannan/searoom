@@ -36,6 +36,8 @@ listening() { [ -n "$1" ] && node -e '
   const s=require("net").connect(+process.argv[1],"127.0.0.1");
   s.on("connect",()=>{s.end();process.exit(0)}).on("error",()=>process.exit(1))' "$1" 2>/dev/null; }
 if alive "$pid" && listening "$port"; then exit 0; fi
+# alive but not listening (hung, mid-crash): kill it so step 3 does not leak it
+alive "$pid" && kill "$pid" 2>/dev/null
 
 # --- 3. start one -----------------------------------------------------------
 port=$(node -e '
