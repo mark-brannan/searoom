@@ -12,7 +12,7 @@ import { DEFAULT_TILT, MAX_TILT } from 'nav-wright/benchy';
 type FactBag = Record<string, FactValue | undefined>;
 
 export type Mode = 'sandbox' | 'identify' | 'quiz' | 'rules' | 'sound';
-export type View = 'profile' | 'bearing' | 'plan' | 'benchy';
+export type View = 'profile' | 'bearing' | 'plan' | 'benchy' | 'model';
 
 export interface AppState {
   mode: Mode;
@@ -170,7 +170,13 @@ export function deserialize(hash: string): AppState {
   if (Object.keys(facts).length > 0)
     state.facts = { ...DEFAULT_FACTS, ...facts } as FactRecord;
   const view = params.get('view');
-  if (view === 'profile' || view === 'bearing' || view === 'plan' || view === 'benchy')
+  if (
+    view === 'profile' ||
+    view === 'bearing' ||
+    view === 'plan' ||
+    view === 'benchy' ||
+    view === 'model'
+  )
     state.view = view;
   const th = Number(params.get('th'));
   if (params.has('th') && Number.isFinite(th))

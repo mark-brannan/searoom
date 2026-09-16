@@ -20,7 +20,7 @@ import {
 import type { Aspect } from 'nav-wright';
 import { BenchyView } from 'nav-wright/benchy';
 import type { BenchyLabels } from 'nav-wright/benchy';
-import { modelUrlForHull } from '../render/hullModels';
+import { FALLBACK_MODEL_URL, modelUrlForHull } from '../render/hullModels';
 import type { AppState, View } from '../state/urlState';
 
 const ASPECTS: Aspect[] = [
@@ -357,7 +357,7 @@ export function Sandbox({
     );
   }, [display, evaln, hull, state.facts, state.additionsOn]);
 
-  const views: View[] = ['profile', 'bearing', 'plan', 'benchy'];
+  const views: View[] = ['profile', 'bearing', 'plan', 'benchy', 'model'];
 
   return (
     <div className="sandbox-grid">
@@ -406,6 +406,19 @@ export function Sandbox({
             />
           )}
           {state.view === 'benchy' && (
+            <BenchyView
+              modelUrl={FALLBACK_MODEL_URL}
+              hull={hull}
+              placed={placed}
+              facts={state.facts}
+              theta={state.theta}
+              onTheta={(t) => patch({ theta: t })}
+              tilt={state.tilt}
+              onTilt={(t) => patch({ tilt: t })}
+              labels={sceneLabels}
+            />
+          )}
+          {state.view === 'model' && (
             <BenchyView
               modelUrl={modelUrlForHull(hull)}
               hull={hull}
