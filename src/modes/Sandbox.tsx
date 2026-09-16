@@ -19,8 +19,8 @@ import {
 } from 'nav-wright';
 import type { Aspect } from 'nav-wright';
 import { BenchyView } from 'nav-wright/benchy';
-import benchyModelUrl from 'nav-wright/models/3dbenchy-lowpoly.glb?url';
 import type { BenchyLabels } from 'nav-wright/benchy';
+import { modelUrlForHull } from '../render/hullModels';
 import type { AppState, View } from '../state/urlState';
 
 const ASPECTS: Aspect[] = [
@@ -407,7 +407,7 @@ export function Sandbox({
           )}
           {state.view === 'benchy' && (
             <BenchyView
-              modelUrl={benchyModelUrl}
+              modelUrl={modelUrlForHull(hull)}
               hull={hull}
               placed={placed}
               facts={state.facts}
