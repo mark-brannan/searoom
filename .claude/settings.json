@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/preview-gate.sh\"",
+            "timeout": 60,
+            "statusMessage": "Making sure a dev server is serving this worktree's visual changes"
+          }
+        ]
+      }
+    ]
+  }
+}

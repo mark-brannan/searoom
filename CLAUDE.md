@@ -8,8 +8,12 @@ finished turn.
   the URL and the worktree path it's serving from — see
   [README.md](README.md#running-this-project) for the commands. Don't just
   report the change; give them something to look at.
-- This should eventually be a hook, not a rule agents have to remember —
-  see [#25](https://github.com/mark-brannan/searoom/issues/25).
+- This is enforced by a Stop hook, `.claude/hooks/preview-gate.sh`: when
+  the branch touches rendered files and nothing is serving this worktree,
+  it starts `npm run dev` on a free port and blocks the turn once with the
+  URL, so you have to relay it. Pid, port and log sit in `.claude/preview/`
+  (gitignored, one per worktree). `sh .claude/hooks/preview-gate.test.sh`
+  runs its tests.
 
 ## Stage: pre-consumer
 
