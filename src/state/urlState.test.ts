@@ -56,6 +56,16 @@ describe('URL state round-trip', () => {
     expect(serialize({ ...DEFAULT_STATE, tilt: 40, view: 'benchy' })).toContain('tl=40');
   });
 
+  it('round-trips the model view, which is distinct from benchy', () => {
+    expect(deserialize(serialize({ ...DEFAULT_STATE, view: 'model' })).view).toBe(
+      'model',
+    );
+    expect(deserialize(serialize({ ...DEFAULT_STATE, view: 'benchy' })).view).toBe(
+      'benchy',
+    );
+    expect(deserialize('#/sandbox?view=bogus').view).toBe(DEFAULT_STATE.view);
+  });
+
   it('drops an out-of-range enum param instead of producing a fact evaluate() rejects', () => {
     // Regression for a hand-edited/stale URL like #/sandbox?p=bogus: the
     // engine's validateFacts() throws on an unrecognized enum value, and
