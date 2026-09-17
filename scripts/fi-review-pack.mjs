@@ -111,7 +111,11 @@ for (const { hash } of rows) {
 await browser.close();
 
 const esc = (s) =>
-  String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 
 const card = (r, i) => `
 <section class="s" id="${esc(r.key)}">

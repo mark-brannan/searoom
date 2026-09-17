@@ -93,12 +93,6 @@ export function catalogDuplicates(locale: Locale): string[] {
     .sort();
 }
 
-/** Provenance of a package catalog, for the locale picker and the review pack. */
-export function packageProvenance(locale: Locale) {
-  const cat = (locale === 'fi' ? pkgFi : pkgEn) as PackageCatalog;
-  return cat.provenance;
-}
-
 export const catalogs: Record<Locale, Catalog> = {
   en: catalogFor('en'),
   fi: catalogFor('fi'),
