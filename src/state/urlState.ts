@@ -4,6 +4,7 @@
 
 import type { FactRecord, FactValue } from '../engine/types';
 import { DEFAULT_TILT, MAX_TILT } from 'nav-wright/benchy';
+import { DEFAULT_CORPUS_ID, corpusById } from '../data/corpora';
 
 // FactRecord (from colregs-engine/schema) has no index signature — each key
 // carries its own literal type. The URL codec below reads/writes facts by a
@@ -24,7 +25,10 @@ export interface AppState {
   displayIndex: number;
   additionsOn: string[];
   signpost: string | null;
+  /** UI language (catalog). Independent of the rule-text corpus — REQ-LANG-1. */
   locale: string;
+  /** Rule-text corpus id from colregs data/corpora.json, e.g. intl@2016.es.boe. */
+  corpus: string;
   rulePath: string | null;
   hullHint: boolean;
   drawer: boolean;
@@ -52,6 +56,7 @@ export const DEFAULT_STATE: AppState = {
   additionsOn: [],
   signpost: null,
   locale: 'en',
+  corpus: DEFAULT_CORPUS_ID,
   rulePath: null,
   hullHint: true,
   drawer: false,
@@ -125,6 +130,7 @@ export function serialize(state: AppState): string {
     params.set('add', state.additionsOn.join(','));
   if (state.signpost) params.set('sp', state.signpost);
   if (state.locale !== 'en') params.set('loc', state.locale);
+  if (state.corpus !== DEFAULT_CORPUS_ID) params.set('cp', state.corpus);
   if (!state.hullHint) params.set('hh', '0');
   if (state.drawer) params.set('dd', '1');
   const path =
@@ -191,6 +197,9 @@ export function deserialize(hash: string): AppState {
   state.signpost = params.get('sp');
   const loc = params.get('loc');
   if (loc) state.locale = loc;
+  // a corpus id the package does not ship is a stale or hand-edited URL
+  const cp = params.get('cp');
+  if (cp && corpusById(cp)) state.corpus = cp;
   if (params.get('hh') === '0') state.hullHint = false;
   if (params.get('dd') === '1') state.drawer = true;
   return state;

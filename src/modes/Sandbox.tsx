@@ -7,7 +7,9 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
 import { FactControls } from '../components/FactControls';
 import { RuleParagraphs } from '../components/RuleParagraphs';
-import { applicability, colregsVersion, corpus, lights } from '../data/colregs';
+import { applicability, colregsVersion, lights } from '../data/colregs';
+import { corpusHandle, jurisdictionOf } from '../data/corpora';
+import { useCorpus } from '../state/corpusContext';
 import { evaluateDisplay } from 'colregs-engine';
 import type { Display, Entry, DisplayEvaluation } from '../engine/types';
 import {
@@ -220,6 +222,7 @@ function DisplayChips({
 
 function EntryRow({ entry, evaln }: { entry: Entry; evaln: DisplayEvaluation }) {
   const intl = useIntl();
+  const corpus = useCorpus();
   const modality = evaln.modalities[entry.id] ?? entry.modality;
   return (
     <div className="entry">
@@ -230,7 +233,7 @@ function EntryRow({ entry, evaln }: { entry: Entry; evaln: DisplayEvaluation }) 
           {intl.formatMessage({ id: `modality.${modality}` })}
         </span>
         <span className="badge tier">
-          {corpus.source} · {intl.formatMessage({ id: `corpus.tier.${corpus.tier}` })} · {corpus.language}
+          {corpusHandle(corpus)} · {intl.formatMessage({ id: `corpus.tier.${corpus.tier}` })} · {corpus.language}
         </span>
       </div>
       <details>
@@ -262,6 +265,7 @@ function DataDrawer({
   patch: (p: Patch) => void;
 }) {
   const applied = evaln.applied.map((id) => entryById.get(id));
+  const corpus = useCorpus();
   return (
     <div className="panel drawer">
       <details
@@ -281,8 +285,8 @@ function DataDrawer({
             id="drawer.packageLine"
             values={{
               version: colregsVersion,
-              jurisdiction: corpus.jurisdiction,
-              corpus: corpus.source,
+              jurisdiction: jurisdictionOf(corpus),
+              corpus: `${corpusHandle(corpus)} ${corpus.edition}`,
               tier: corpus.tier,
               language: corpus.language,
             }}

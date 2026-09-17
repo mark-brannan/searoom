@@ -8,6 +8,9 @@ import { useEffect, useRef } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import type { Signpost } from '../data/signposts';
 import { corpora, findSignpost, jurisdictions, parts } from '../data/signposts';
+import { corpusById, DEFAULT_JURISDICTION, corporaFor } from '../data/corpora';
+import { CorpusRow } from './CorpusSwitcher';
+import { CorpusLine } from './RuleParagraphs';
 
 function StatusChip({
   status,
@@ -33,6 +36,7 @@ function StatusChip({
 
 function SignpostBody({ sp }: { sp: Signpost }) {
   const intl = useIntl();
+  const live = sp.corpusId ? corpusById(sp.corpusId) : undefined;
   return (
     <div className="signpost-body">
       <StatusChip status={sp.status} kind={sp.kind} />
@@ -41,6 +45,24 @@ function SignpostBody({ sp }: { sp: Signpost }) {
           {intl.formatMessage({ id: `corpus.tier.${sp.tier}` })}
           {sp.language ? ` · ${sp.language}` : ''}
         </span>
+      )}
+      {live && (
+        <>
+          <p className="corpus-line">
+            <CorpusLine corpus={live} link /> · {live.source.publisher}
+          </p>
+          <p className="corpus-line">{live.source.title}</p>
+          <p className="corpus-line">
+            <FormattedMessage
+              id="corpus.rights"
+              values={{
+                text: live.rights.source_text,
+                basis: live.rights.redistribution_basis,
+              }}
+            />
+          </p>
+          {live.note && <p className="corpus-line">{live.note}</p>}
+        </>
       )}
       {sp.bodyKeys.map((k) => (
         <p key={k}>
@@ -117,13 +139,19 @@ function JurisdictionPickerBody({
 function LocalePickerBody({
   locale,
   onLocale,
+  corpus,
+  onCorpus,
   onOpen,
 }: {
   locale: string;
   onLocale: (l: string) => void;
+  corpus: string;
+  onCorpus: (id: string) => void;
   onOpen: (id: string) => void;
 }) {
   const intl = useIntl();
+  const live = corporaFor(DEFAULT_JURISDICTION);
+  const liveIds = new Set(corpora.filter((c) => c.corpusId).map((c) => c.id));
   return (
     <div>
       <h3>
@@ -156,8 +184,28 @@ function LocalePickerBody({
         <FormattedMessage id="locale.corpora.title" />
       </h3>
       <div className="picker-list">
+        {live.map((c) => (
+          <CorpusRow
+            key={c.id}
+            corpus={c}
+            current={c.id === corpus}
+            onPick={onCorpus}
+          />
+        ))}
+      </div>
+      <p className="picker-note">
+        <FormattedMessage id="corpus.switcher.note" />
+      </p>
+      <h3 style={{ marginTop: 16 }}>
+        <FormattedMessage id="locale.corpora.signposted" />
+      </h3>
+      <div className="picker-list">
         {corpora.map((c) => (
-          <button key={c.id} className="picker-row" onClick={() => onOpen(c.id)}>
+          <button
+            key={c.id}
+            className={`picker-row${liveIds.has(c.id) && c.corpusId === corpus ? ' current' : ''}`}
+            onClick={() => onOpen(c.id)}
+          >
             <span className="grow label">
               <FormattedMessage id={c.labelKey} />
             </span>
@@ -185,12 +233,16 @@ export function SignpostPanel({
   onClose,
   locale,
   onLocale,
+  corpus,
+  onCorpus,
   onOpen,
 }: {
   id: string;
   onClose: () => void;
   locale?: string;
   onLocale?: (l: string) => void;
+  corpus?: string;
+  onCorpus?: (id: string) => void;
   onOpen?: (id: string) => void;
 }) {
   const intl = useIntl();
@@ -217,6 +269,8 @@ export function SignpostPanel({
       <LocalePickerBody
         locale={locale ?? 'en'}
         onLocale={onLocale ?? (() => undefined)}
+        corpus={corpus ?? ''}
+        onCorpus={onCorpus ?? (() => undefined)}
         onOpen={open}
       />
     );

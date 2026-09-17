@@ -33,6 +33,8 @@ export interface Signpost {
   /** corpus rows only (ADR 0003 tiers) */
   tier?: 'authentic' | 'official' | 'national' | 'community';
   language?: string;
+  /** a live corpus: its id in colregs data/corpora.json */
+  corpusId?: string;
 }
 
 const COLREGS = 'https://github.com/mark-brannan/colregs';
@@ -40,6 +42,7 @@ const REQS = `${COLREGS}/blob/main/docs/requirements.md`;
 const ADR1 = `${COLREGS}/blob/main/docs/adr/0001-name-and-jurisdiction-model.md`;
 const ADR3 = `${COLREGS}/blob/main/docs/adr/0003-language-as-a-dimension.md`;
 const VERIF = `${COLREGS}/blob/main/docs/verification/2026-08-30-q6-q8.md`;
+const TEXT = `${COLREGS}/blob/main/data/text/intl/2016`;
 const DESIGN = 'https://github.com/mark-brannan/searoom/blob/main/docs/design.md';
 
 export const jurisdictions: Signpost[] = [
@@ -160,57 +163,57 @@ export const corpora: Signpost[] = [
     status: 'live',
     tier: 'national',
     language: 'en-US',
+    corpusId: 'intl@2016.en-US.uscg',
     labelKey: 'sp.en-us.label',
     bodyKeys: ['sp.en-us.p1', 'sp.en-us.p2'],
-    blockers: [{ id: '#6', textKey: 'blocker.issue6' }],
-    link: `${COLREGS}/issues/6`,
-  },
-  {
-    id: 'fi-finlex',
-    kind: 'corpus',
-    status: 'ranked',
-    tier: 'national',
-    language: 'fi',
-    labelKey: 'sp.fi.label',
-    bodyKeys: ['sp.fi.p1', 'sp.fi.p2'],
-    blockers: [{ id: 'Q-7', textKey: 'blocker.q7' }],
-    link: ADR3,
-  },
-  {
-    id: 'fr-unts',
-    kind: 'corpus',
-    status: 'ranked',
-    tier: 'authentic',
-    language: 'fr',
-    labelKey: 'sp.fr.label',
-    bodyKeys: ['sp.fr.p1'],
-    blockers: [
-      { id: 'Q-7', textKey: 'blocker.q7' },
-      { id: 'GATE-2', textKey: 'blocker.gate2' },
-    ],
-    link: VERIF,
-  },
-  {
-    id: 'en-unts',
-    kind: 'corpus',
-    status: 'ranked',
-    tier: 'authentic',
-    language: 'en',
-    labelKey: 'sp.en-unts.label',
-    bodyKeys: ['sp.en-unts.p1'],
-    blockers: [{ id: 'Q-7', textKey: 'blocker.q7' }],
-    link: VERIF,
+    blockers: [],
+    link: `${TEXT}/en-US.uscg.json`,
   },
   {
     id: 'es',
     kind: 'corpus',
-    status: 'ranked',
-    tier: 'official',
+    status: 'live',
+    tier: 'national',
     language: 'es',
+    corpusId: 'intl@2016.es.boe',
     labelKey: 'sp.es.label',
-    bodyKeys: ['sp.es-ru.p1'],
-    blockers: [{ id: 'Q-7', textKey: 'blocker.q7' }],
-    link: VERIF,
+    bodyKeys: ['sp.es.p1', 'sp.es.p2'],
+    blockers: [],
+    link: `${TEXT}/es.boe.json`,
+  },
+  {
+    id: 'fi-finlex',
+    kind: 'corpus',
+    status: 'live',
+    tier: 'national',
+    language: 'fi',
+    corpusId: 'intl@2016.fi.finlex',
+    labelKey: 'sp.fi.label',
+    bodyKeys: ['sp.fi.p1', 'sp.fi.p2'],
+    blockers: [{ id: '#98', textKey: 'blocker.issue98' }],
+    link: `${COLREGS}/issues/98`,
+  },
+  {
+    id: 'fr-unts',
+    kind: 'corpus',
+    status: 'measured',
+    tier: 'authentic',
+    language: 'fr',
+    labelKey: 'sp.fr.label',
+    bodyKeys: ['sp.fr.p1'],
+    blockers: [{ id: 'Q-7', textKey: 'blocker.q7.unts' }],
+    link: `${COLREGS}/issues/81`,
+  },
+  {
+    id: 'en-unts',
+    kind: 'corpus',
+    status: 'measured',
+    tier: 'authentic',
+    language: 'en',
+    labelKey: 'sp.en-unts.label',
+    bodyKeys: ['sp.en-unts.p1'],
+    blockers: [{ id: 'Q-7', textKey: 'blocker.q7.unts' }],
+    link: `${COLREGS}/issues/81`,
   },
   {
     id: 'ru',
@@ -219,7 +222,7 @@ export const corpora: Signpost[] = [
     tier: 'official',
     language: 'ru',
     labelKey: 'sp.ru.label',
-    bodyKeys: ['sp.es-ru.p1'],
+    bodyKeys: ['sp.ru.p1'],
     blockers: [{ id: 'Q-7', textKey: 'blocker.q7' }],
     link: VERIF,
   },

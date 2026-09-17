@@ -542,6 +542,26 @@ select {
   margin-top: 2px;
 }
 
+.corpus-id {
+  white-space: nowrap;
+}
+
+/* a paragraph shown from the fallback corpus, not the one the reader chose */
+.rule-text.fallback {
+  border-left-style: dashed;
+  border-left-color: var(--yellow);
+}
+
+.corpus-line.fallback,
+.corpus-line.mixed {
+  color: var(--yellow);
+}
+
+.picker-row .label .corpus-line {
+  display: block;
+  font-size: 12px;
+}
+
 .rule-image {
   max-width: 320px;
   width: 100%;

@@ -13,11 +13,25 @@ import lightsJson from 'colregs/data/lights.json' with { type: 'json' };
 import rulesJson from 'colregs/data/rules.json' with { type: 'json' };
 import colregsPkg from 'colregs/package.json' with { type: 'json' };
 
-import type { ApplicabilityData, LightsData, RulesData } from '../engine/types';
+import type { ApplicabilityData, LightsData } from '../engine/types';
+
+// colregs 0.3: rules.json is the language-neutral skeleton — paths, rule
+// numbers, jurisdiction, figures. The words live in data/text/ corpora
+// (src/data/corpora.ts), one per edition × language × source (ADR 0013).
+export interface SkeletonParagraph {
+  path: string;
+  rule: string;
+  jurisdiction: string;
+  images?: string[];
+}
+export interface RulesSkeleton {
+  note?: string;
+  paragraphs: Record<string, SkeletonParagraph>;
+}
 
 export const applicability = applicabilityJson as unknown as ApplicabilityData;
 export const lights = lightsJson as unknown as LightsData;
-export const rules = rulesJson as unknown as RulesData;
+export const rules = rulesJson as unknown as RulesSkeleton;
 export const facts = factsJson as Record<string, unknown>;
 export const geometry = geometryJson as Record<string, unknown>;
 export const images = imagesJson as unknown as {
@@ -36,12 +50,3 @@ export const images = imagesJson as unknown as {
 
 export const colregsVersion: string = (colregsPkg as { version: string })
   .version;
-
-/** The corpus identity of the shipped rule text (see ADR 0003). */
-export const corpus = {
-  jurisdiction: 'intl',
-  language: 'en-US',
-  source: 'USCG amalgamated rendition',
-  sourceUrl: (rulesJson as { source_url: string }).source_url,
-  tier: 'national' as const,
-};

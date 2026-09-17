@@ -27,10 +27,16 @@ describe('URL state round-trip', () => {
       additionsOn: ['26b-mast'],
       signpost: 'eu-cevni',
       locale: 'fi',
+      corpus: 'intl@2016.es.boe',
       hullHint: false,
       drawer: true,
     };
     expect(deserialize(serialize(state))).toEqual(state);
+  });
+
+  it('drops a corpus id the package does not ship', () => {
+    const s = deserialize('#/rules?cp=intl@2016.xx.nowhere');
+    expect(s.corpus).toBe(DEFAULT_STATE.corpus);
   });
 
   it('deep-links a rules paragraph', () => {

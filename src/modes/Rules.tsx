@@ -1,12 +1,23 @@
 // The rules reference: paragraph-keyed, deep-linkable (#/rules/27(a)(i)),
-// with the USCG diagrams inline, the five recorded known_omissions shown
-// as first-class gaps, and the amendment-state teaching point.
+// quoted from the corpus the reader picked, with the USCG diagrams inline,
+// the recorded known_omissions shown as first-class gaps, and the
+// amendment state read from the declared edition (editions.json).
 
 import { useEffect, useMemo, useRef } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
 import { entriesForRule, factsForEntry, ruleOf } from '../data/cites';
-import { applicability, corpus, images as imagesData, rules } from '../data/colregs';
+import { applicability, images as imagesData, rules } from '../data/colregs';
+import {
+  corpusHandle,
+  editionOf,
+  instrumentOf,
+  resolveParagraphs,
+  ruleTitle,
+} from '../data/corpora';
+import { CorpusSwitcher } from '../components/CorpusSwitcher';
+import { CorpusLine, MixedNote, Paragraph } from '../components/RuleParagraphs';
+import { useCorpus } from '../state/corpusContext';
 import { serialize, DEFAULT_STATE } from '../state/urlState';
 import type { AppState } from '../state/urlState';
 
@@ -29,11 +40,14 @@ export function Rules({
 }) {
   const intl = useIntl();
   const containerRef = useRef<HTMLDivElement>(null);
+  const corpus = useCorpus();
+  const edition = editionOf(corpus);
+  const instrument = instrumentOf(corpus);
 
   const byRule = useMemo(() => {
     const groups = new Map<string, string[]>();
-    for (const path of Object.keys(rules.paragraphs)) {
-      const rule = ruleOf(path);
+    for (const [path, para] of Object.entries(rules.paragraphs)) {
+      const rule = para.rule ?? ruleOf(path);
       if (!groups.has(rule)) groups.set(rule, []);
       groups.get(rule)!.push(path);
     }
@@ -49,6 +63,12 @@ export function Rules({
       const rule = ruleOf(e.cite);
       if (!m.has(rule)) m.set(rule, new Set());
       for (const img of e.images ?? []) m.get(rule)!.add(img);
+    }
+    // the skeleton names figures per paragraph too
+    for (const [path, para] of Object.entries(rules.paragraphs)) {
+      const rule = para.rule ?? ruleOf(path);
+      if (!m.has(rule)) m.set(rule, new Set());
+      for (const img of para.images ?? []) m.get(rule)!.add(img);
     }
     return m;
   }, []);
@@ -78,14 +98,57 @@ export function Rules({
 
       <div className="panel">
         <h3>
+          <FormattedMessage id="corpus.switcher.title" />
+        </h3>
+        <CorpusSwitcher
+          corpusId={corpus.id}
+          onPick={(id) => patch({ corpus: id })}
+        />
+        <p className="picker-note">
+          <FormattedMessage id="corpus.switcher.note" />
+        </p>
+        <p className="corpus-line">
+          <CorpusLine corpus={corpus} link /> ·{' '}
+          <FormattedMessage
+            id="corpus.retrieved"
+            values={{ retrieved: corpus.source.retrieved ?? '—' }}
+          />
+        </p>
+        <p className="corpus-line">
+          <FormattedMessage
+            id="corpus.rights"
+            values={{
+              text: corpus.rights.source_text,
+              basis: corpus.rights.redistribution_basis,
+            }}
+          />
+        </p>
+        {corpus.rights.attribution && (
+          <p className="corpus-line">{corpus.rights.attribution}</p>
+        )}
+        {corpus.note && <p className="corpus-line">{corpus.note}</p>}
+      </div>
+
+      <div className="panel">
+        <h3>
           <FormattedMessage id="rules.amendment.title" />
         </h3>
         <p className="elim">
           <FormattedMessage
             id="rules.amendment.p1"
-            values={{ retrieved: rules.retrieved }}
+            values={{
+              instrument: instrument ?? corpus.edition,
+              edition: corpus.edition,
+              amended: edition?.amended_through ?? '—',
+              inForce: edition?.in_force ?? '—',
+              corpus: corpusHandle(corpus),
+              status: intl.formatMessage({
+                id: `corpus.editionStatus.${corpus.edition_status}`,
+              }),
+            }}
           />
         </p>
+        {edition?.note && <p className="corpus-line">{edition.note}</p>}
         <p className="elim">
           <FormattedMessage id="rules.amendment.p2" />
         </p>
@@ -121,13 +184,20 @@ export function Rules({
 
       {byRule.map(([rule, paths]) => {
         const entries = entriesForRule(rule);
-        const ruleTitle = rules.paragraphs[paths[0]].rule_title;
+        const title = ruleTitle(paths, corpus.id);
         const ruleImages = [...(imagesByRule.get(rule) ?? [])];
+        const resolved = resolveParagraphs(paths, corpus.id);
         return (
           <div className="panel" key={rule} id={`rule-${rule}`}>
             <h3>
-              Rule {rule} — {ruleTitle}
+              Rule {rule}
+              {title ? ` — ${title}` : ''}
             </h3>
+            <MixedNote
+              fallbackCount={resolved.fallbackCount}
+              total={resolved.items.length}
+              fallbackCorpus={resolved.fallbackCorpus}
+            />
             {entries.length > 0 && (
               <div className="chips">
                 {entries.map((e) => {
@@ -151,53 +221,44 @@ export function Rules({
                 })}
               </div>
             )}
-            {paths.map((p) => {
-              const para = rules.paragraphs[p];
+            {resolved.items.map((r) => {
+              const p = r.path;
               const selected = state.rulePath === p;
               return (
                 <div
                   key={p}
                   data-path={p}
-                  className="rule-text"
                   style={
                     selected
-                      ? { borderLeftColor: 'var(--green)' }
+                      ? { borderLeft: '2px solid var(--green)', paddingLeft: 6 }
                       : undefined
                   }
                 >
-                  <a
-                    href={serialize({
-                      ...DEFAULT_STATE,
-                      mode: 'rules',
-                      rulePath: p,
-                    })}
-                    onClick={(ev) => {
-                      ev.preventDefault();
-                      patch({ rulePath: p });
-                    }}
-                    style={{ textDecoration: 'none' }}
-                  >
-                    <strong>{p}</strong>
-                  </a>{' '}
-                  {para.text}
+                  <Paragraph
+                    r={r}
+                    label={
+                      <a
+                        href={serialize({
+                          ...DEFAULT_STATE,
+                          mode: 'rules',
+                          rulePath: p,
+                          corpus: corpus.id,
+                        })}
+                        onClick={(ev) => {
+                          ev.preventDefault();
+                          patch({ rulePath: p });
+                        }}
+                        style={{ textDecoration: 'none' }}
+                      >
+                        <strong>{p}</strong>
+                      </a>
+                    }
+                  />
                 </div>
               );
             })}
-            {(rules.gaps ?? [])
-              .filter((g) => ruleOf(g.path) === rule)
-              .map((g) => (
-                <p key={g.path} className="corpus-line">
-                  <FormattedMessage
-                    id="rules.gap"
-                    values={{ path: g.path, reason: g.reason }}
-                  />
-                </p>
-              ))}
             <p className="corpus-line">
-              {corpus.source} ({corpus.tier}, {corpus.language}) —{' '}
-              <a href={corpus.sourceUrl} target="_blank" rel="noreferrer">
-                {new URL(corpus.sourceUrl).hostname}
-              </a>
+              <CorpusLine corpus={corpus} link /> — {corpus.source.publisher}
             </p>
             {ruleImages.length > 0 && (
               <details>

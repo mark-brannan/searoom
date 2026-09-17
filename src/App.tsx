@@ -11,7 +11,9 @@ import { Identify } from './modes/Identify';
 import { Quiz } from './modes/Quiz';
 import { Rules } from './modes/Rules';
 import { Sound } from './modes/Sound';
-import { colregsVersion, corpus } from './data/colregs';
+import { colregsVersion } from './data/colregs';
+import { DEFAULT_JURISDICTION } from './data/corpora';
+import { CorpusContext } from './state/corpusContext';
 
 const catalogs: Record<string, Record<string, string>> = {
   en: en as Record<string, string>,
@@ -81,6 +83,7 @@ export function App() {
 
   return (
     <IntlProvider locale={locale} messages={messages} defaultLocale="en">
+      <CorpusContext.Provider value={state.corpus}>
       <div className="app">
         <Header state={state} patch={patch} setMode={setMode} />
         {locale === 'fi' && (
@@ -98,7 +101,7 @@ export function App() {
               id="app.poweredBy"
               values={{
                 version: colregsVersion,
-                jurisdiction: corpus.jurisdiction,
+                jurisdiction: DEFAULT_JURISDICTION,
               }}
             />
           </span>
@@ -111,10 +114,13 @@ export function App() {
             onClose={() => patch({ signpost: null })}
             locale={state.locale}
             onLocale={(l) => patch({ locale: l })}
+            corpus={state.corpus}
+            onCorpus={(c) => patch({ corpus: c })}
             onOpen={(id) => patch({ signpost: id })}
           />
         )}
       </div>
+      </CorpusContext.Provider>
     </IntlProvider>
   );
 }
