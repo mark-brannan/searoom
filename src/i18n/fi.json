@@ -167,5 +167,7 @@
   "fallback.missing": "Ei korpuksessa {wanted} ({language}): {reason}.",
   "fallback.showing": "Näytetään sen sijaan {shown} ({tier}, {language}).",
   "fallback.mixed": "Sekanäkymä: {count}/{total} kappaletta tässä joukossa näytetään korpuksesta {shown}. Sekakorpusnäkymä ei ole koskaan yksi virallinen laitos.",
-  "locale.corpora.signposted": "Korpukset — käytössä ja viitoitetut"
+  "locale.corpora.signposted": "Korpukset — käytössä ja viitoitetut",
+  "fallback.all": "Mikään tässä joukossa ei ole valitsemastasi korpuksesta: kaikki {total} kappaletta näytetään korpuksesta {shown}. Tämä on varakorpuksen esitys, ei sekanäkymä.",
+  "corpus.rights": "Oikeudet: {text}. Uudelleenjakelu: {basis}."
 }

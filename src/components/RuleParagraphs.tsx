@@ -105,10 +105,13 @@ export function MixedNote({
   fallbackCorpus?: Corpus;
 }) {
   if (fallbackCount === 0 || !fallbackCorpus) return null;
+  // resolveParagraphs' `mixed` means some but not all fell back; every
+  // paragraph falling back is a wholesale substitution, labelled as such
+  const mixed = fallbackCount < total;
   return (
     <p className="corpus-line mixed">
       <FormattedMessage
-        id="fallback.mixed"
+        id={mixed ? 'fallback.mixed' : 'fallback.all'}
         values={{
           count: fallbackCount,
           total,
