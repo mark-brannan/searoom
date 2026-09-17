@@ -19,7 +19,7 @@
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
     "colregs": "github:mark-brannan/colregs#ec1a35fb06bb1f45374bfcff2a0eda575fabf21d",
-    "colregs-engine": "^0.1.7",
+    "colregs-engine": "github:mark-brannan/colregs-engine#bb1f23651cbf69e5a04a4f7968135126ecbf5562",
     "nav-wright": "github:mark-brannan/nav-wright#v0.1.2",
     "react": "~19.2.8",
     "react-dom": "~19.2.8",
