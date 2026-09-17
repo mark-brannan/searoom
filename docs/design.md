@@ -375,6 +375,15 @@ the package's live documentation.
 
 ## Roadmap
 
+**As of 2026-09-16 the roadmap lives on GitHub**, as seven searoom
+milestones — Breadth, Encounters, Visual quality, UI, Refactor, Study
+modes, Rigour — each with an `[Epic]` issue carrying its sequence and
+the cross-repo work in colregs and nav-wright:
+<https://github.com/mark-brannan/searoom/milestones>. The phases below
+are the original sequencing and stand as history; two of their premises
+have since moved upstream (Part B is modelled via the situation record,
+ADR 0005; Q-11 is resolved by ADR 0018).
+
 - **Phase 0 — this design.** Done (this doc).
 - **Phase 0.5 — naming/branding workshop.** Interactive, Mark in the loop.
   Output: name, repo created and seeded, one-line positioning, palette
