@@ -8,8 +8,9 @@ import type { Patch } from '../App';
 import { FactControls } from '../components/FactControls';
 import { RuleParagraphs } from '../components/RuleParagraphs';
 import { applicability, colregsVersion, lights } from '../data/colregs';
-import { corpusHandle } from '../data/corpusText';
-import { useCorpus } from '../state/corpusContext';
+import { paragraphsForCite } from '../data/cites';
+import { corpusHandle, resolveParagraphs } from '../data/corpusText';
+import { useCorpus, useCorpusId } from '../state/corpusContext';
 import { evaluateDisplayIn } from '../engine/evaluate';
 import type { Display, Entry, DisplayEvaluation } from '../engine/types';
 import { BearingView, PlanView, ProfileView, selectHull } from 'nav-wright';
@@ -234,7 +235,18 @@ function EntryRow({
     /^modality:/,
     '',
   );
-  const corpus = useCorpus();
+  // the badge names the corpus that actually supplies this entry's text —
+  // inherited or fallen back — not merely the one the reader picked, which
+  // may carry none of it yet (REQ-LANG-3, REQ-LANG-7)
+  const corpusId = useCorpusId();
+  const { items } = resolveParagraphs(
+    state.jurisdiction,
+    paragraphsForCite(entry.cite, state.jurisdiction),
+    corpusId,
+  );
+  const sources = new Map(
+    items.flatMap((r) => (r.shown ? [[r.shown.corpus.id, r.shown.corpus]] : [])),
+  );
   return (
     <div className="entry">
       <div className="entry-head">
@@ -243,11 +255,13 @@ function EntryRow({
         <span className={`badge ${modality}`}>
           {intl.formatMessage({ id: `modality.${modality}` })}
         </span>
-        <span className="badge tier">
-          {corpusHandle(corpus)} ·{' '}
-          {intl.formatMessage({ id: `corpus.tier.${corpus.tier}` })} ·{' '}
-          {corpus.language}
-        </span>
+        {[...sources.values()].map((corpus) => (
+          <span className="badge tier" key={corpus.id}>
+            {corpusHandle(corpus)} ·{' '}
+            {intl.formatMessage({ id: `corpus.tier.${corpus.tier}` })} ·{' '}
+            {corpus.language}
+          </span>
+        ))}
       </div>
       <details>
         <summary>
