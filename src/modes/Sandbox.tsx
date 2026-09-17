@@ -33,7 +33,7 @@ const ASPECTS: Aspect[] = [
 ];
 
 // a label lookup, not a rule set: an id -> cite map over every jurisdiction's
-// entries, so an excluded-by or in-lieu-of reference still renders its cite
+// entries, so an overridden-by or in-lieu-of reference still renders its cite
 const entryById = new Map(applicability.entries.map((e) => [e.id, e]));
 
 function imageUrl(name: string): string {
@@ -194,16 +194,16 @@ function DisplayChips({
           ))}
         </>
       )}
-      {evaln.excluded.length > 0 && (
+      {evaln.overridden.length > 0 && (
         <>
           <h3>
-            <FormattedMessage id="sandbox.excluded.title" />
+            <FormattedMessage id="sandbox.overridden.title" />
           </h3>
-          {evaln.excluded.map((x) => (
+          {evaln.overridden.map((x) => (
             <p className="elim" key={x.id}>
               <span className="x">✕ </span>
               <FormattedMessage
-                id="sandbox.excluded.item"
+                id="sandbox.overridden.item"
                 values={{
                   id: x.id,
                   cite: entryById.get(x.id)?.cite ?? '',

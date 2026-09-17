@@ -85,10 +85,10 @@ describe('corpus index', () => {
 });
 
 describe('reference corpus coverage', () => {
-  // colregs #185: 30(d)(i) is in the skeleton but the USCG corpus has
-  // neither its text nor a recorded gap. Pinned so the drift is visible and
-  // this test flips the day the package fixes it.
-  const knownDrift = ['30(d)(i)'];
+  // colregs #185: 30(d)(i) and 30(d)(ii) are in the skeleton but the USCG
+  // corpus has neither their text nor a recorded gap. Pinned so the drift is
+  // visible and this test flips the day the package fixes it.
+  const knownDrift = ['30(d)(i)', '30(d)(ii)'];
 
   it('supplies text or a recorded gap for every skeleton path (colregs #185 excepted)', () => {
     const uncovered = skeletonPaths.filter((p) => {
