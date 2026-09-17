@@ -243,11 +243,18 @@ the actual CFR paths behind them (83.23(e), 83.24(j), 83.30(g)–(l)).
 model and differ only in the vocabulary they emit (REQ-PART-2), so this is
 modelled-for and unwritten, not unresolved.
 
-**Sound signals (Part D, Rules 32–37)** as a visible mode stub, signposted
-with its actual open question: Q-1 — whether Part D fits the entry model at
-all, or needs an event dimension, because signals are event-triggered rather
-than state-derived. REQ-PART-3 requires an ADR before any Part D data is
-written. Not "coming soon": *undecided, and here is the decision*.
+**Sound signals (Part D, Rules 32–37)** as a working mode over a
+*provisional* signal table: the Rule 34, 35 and 36 signals, sounded in the
+browser at Rule 32 durations with Annex III's whistle bands, plus a quiz in
+both directions. What is still signposted is the part colregs owns — the rule
+text, and the shape of the data. Q-1 asks whether Part D fits the entry model
+at all, or needs an event dimension, because signals are event-triggered
+rather than state-derived, and REQ-PART-3 requires an ADR before any Part D
+data is written. So searoom's table is shaped like the ADR's signal-table
+candidate and carries no rule text at all: each signal shows its paragraph
+and an empty text slot pointing at colregs #168. Not "coming soon":
+*undecided upstream, and here is the decision, under a mode you can use
+today*.
 
 **Steering and sailing rules (Part B)** are deliberately **out of scope and
 may never be modelled** (REQ-PART-4) — they govern conduct between two
@@ -369,8 +376,9 @@ the package's live documentation.
   + the handful of situations you'll actually meet. Lamination bait.
 - **Aspect trainer** — timed drill on the bearing view alone: aspect,
   crossing/overtaking geometry as seen by lights. The watchkeeper tier.
-- **Day shapes / Part D sound signals** — same entry model (REQ-PART-2/3);
-  sound quiz gets audio. Light up when colregs lands the data.
+- **Day shapes** — same entry model (REQ-PART-2); lights up when colregs
+  lands the data. Part D's mode and audio are built; its rule text and the
+  final data shape wait on colregs Q-1.
 - **Annex II fishing signals** — already in the SignalK decode table
   (`shooting`, `hauling`, `purse_seine_hampered`); signpost until modeled.
 - **SignalK live mode** — read `navigation.state` from a demo/live server
@@ -553,9 +561,10 @@ Scope -- all of it, this sprint:
       paths (83.23(e), 83.24(j), 83.30(g)-(l)).
     * Day/night toggle: night live, day signposted (REQ-PART-2 -- modelled
       for, unwritten).
-    * Part D sound signals: a mode stub signposted with colregs Q-1, the
-      actual open question (event-triggered vs state-derived; REQ-PART-3
-      needs an ADR first).
+    * Part D sound signals: a live mode over a provisional signal table --
+      synthesized audio, Rule 32 durations, a quiz both ways -- with the
+      rule text slot signposted on colregs Q-1, the actual open question
+      (event-triggered vs state-derived; REQ-PART-3 needs an ADR first).
     * Part B steering and sailing: signposted as permanently out of scope
       (REQ-PART-4, single-vessel fact record). A deliberate dead end.
   Every panel names its blocker by id. Where colregs has not scoped
