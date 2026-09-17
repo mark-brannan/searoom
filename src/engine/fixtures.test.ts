@@ -9,12 +9,20 @@ import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
 import { evaluateDisplayIn } from './evaluate';
 import type { FactRecord } from './types';
 
+// colregs' fixture schema widened `expect` from a bare entry id to
+// `RuleId | { entry, modality }` for the Rule 20(c) modality shift (colregs
+// ADR 0021). A bare id still asserts only that the entry applied; the object
+// form additionally pins the modality the engine resolved for it.
+type ExpectItem = string | { entry: string; modality: string };
+
 interface FixtureCase {
   name: string;
   facts: FactRecord;
-  expect: string[];
+  expect: ExpectItem[];
   jurisdiction?: string;
 }
+
+const entryOf = (e: ExpectItem) => (typeof e === 'string' ? e : e.entry);
 
 const fixtures = fixturesJson as unknown as {
   jurisdiction: string;
@@ -36,7 +44,11 @@ describe('colregs applicability fixtures (verbatim replay)', () => {
   for (const c of fixtures.cases) {
     it(`${c.name} [${jurisdictionOf(c)}]`, () => {
       const result = evaluateDisplayIn(jurisdictionOf(c), c.facts);
-      expect([...result.applied].sort()).toEqual([...c.expect].sort());
+      expect([...result.applied].sort()).toEqual(c.expect.map(entryOf).sort());
+      for (const e of c.expect) {
+        if (typeof e === 'string') continue;
+        expect(result.modalities[e.entry]).toBe(e.modality);
+      }
     });
   }
 });
