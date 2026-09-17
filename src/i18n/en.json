@@ -266,5 +266,7 @@
   "rules.restated": "reads differently under {jurisdiction}",
   "rules.only": "{jurisdiction} only",
   "rules.voided": "no counterpart here",
-  "modality.shall-not-impede": "shall not impede"
+  "modality.shall-not-impede": "shall not impede",
+  "jurisdiction.short.intl": "International",
+  "jurisdiction.short.us/inland": "US Inland"
 }

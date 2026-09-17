@@ -56,6 +56,19 @@ export function Rules({
   const meta = jurisdictionMeta(jurisdiction);
   const corpus = corpusFor(jurisdiction, locale);
 
+  // identifiers never render raw in learner-facing copy (REQ-LANG-2): the
+  // jurisdiction reaches prose as its catalog label, not as `us/inland`
+  const jurisdictionName = intl.formatMessage({
+    id: `jurisdiction.${jurisdiction}`,
+    defaultMessage: meta?.instrument ?? jurisdiction,
+  });
+
+  // the short form is what fits a badge beside a paragraph path
+  const jurisdictionShort = intl.formatMessage({
+    id: `jurisdiction.short.${jurisdiction}`,
+    defaultMessage: jurisdictionName,
+  });
+
   const sourcesOf = (paths: string[]) => {
     const byId = new Map<string, ReturnType<typeof corpusFor>>();
     for (const p of paths) {
@@ -150,7 +163,7 @@ export function Rules({
           <h3>
             <FormattedMessage
               id="rules.differs.title"
-              values={{ jurisdiction }}
+              values={{ jurisdiction: jurisdictionName }}
             />
           </h3>
           <p className="elim">
@@ -318,7 +331,7 @@ export function Rules({
                             ? 'rules.only'
                             : 'rules.restated'
                         }
-                        values={{ jurisdiction }}
+                        values={{ jurisdiction: jurisdictionShort }}
                       />
                     </span>
                   )}{' '}
