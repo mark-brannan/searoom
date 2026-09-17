@@ -1,12 +1,13 @@
 // A jurisdiction is a merge patch over `intl` — colregs ADR 0018 for the
-// entries, ADR 0020 for the paragraph skeleton. colregs-engine has no
-// jurisdiction parameter; it takes resolved data through
-// `EvaluateOptions.data`, so searoom resolves the patch here and hands the
-// engine a single jurisdiction's rule set.
+// entries, ADR 0020 for the paragraph skeleton. colregs-engine resolves the
+// entry patch itself (`EvaluateOptions.jurisdiction`, colregs-engine #123);
+// searoom resolves it here too, for the views that read entries without
+// evaluating — the Rules reference and the quiz's entry lists — and for the
+// paragraph skeleton, which the engine does not read.
 
 import { applicability, editions, rules } from './colregs';
 import { mergePatch } from './mergePatch';
-import type { ApplicabilityData, Entry, Paragraph } from '../engine/types';
+import type { Entry, Paragraph } from '../engine/types';
 
 /** The base every delta patches. */
 export const BASE_JURISDICTION = 'intl';
@@ -106,20 +107,6 @@ function entryPatch(id: string): Record<string, Entry | null> {
   return patch;
 }
 
-const entryCache = new Map<string, ApplicabilityData>();
-
-/**
- * `applicability.json` with `entries` resolved for one jurisdiction — own
- * rows present, tombstoned rows gone, everything else inherited from the
- * base. This is what goes to the engine as `EvaluateOptions.data`.
- */
-export function resolveApplicability(id: string): ApplicabilityData {
-  const hit = entryCache.get(id);
-  if (hit) return hit;
-  const resolved = { ...applicability, entries: resolveEntries(id) };
-  entryCache.set(id, resolved);
-  return resolved;
-}
 
 /** The resolved entry list, in the base's document order. */
 export function resolveEntries(id: string): Entry[] {

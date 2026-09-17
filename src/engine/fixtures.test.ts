@@ -26,7 +26,7 @@ const jurisdictionOf = (c: FixtureCase) =>
 
 describe('colregs applicability fixtures (verbatim replay)', () => {
   it('has the full fixture set', () => {
-    expect(fixtures.cases.length).toBe(70);
+    expect(fixtures.cases.length).toBe(111);
   });
 
   it('covers more than one jurisdiction', () => {
