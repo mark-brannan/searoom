@@ -94,7 +94,7 @@ export function App() {
       case 'rules':
         return <Rules state={state} patch={patch} />;
       case 'sound':
-        return <Sound patch={patch} />;
+        return <Sound state={state} patch={patch} />;
     }
   }, [state, patch]);
 
