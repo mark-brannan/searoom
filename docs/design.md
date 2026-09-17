@@ -269,10 +269,11 @@ status.
 Mirrors colregs ADR 0003 exactly. Two string planes, never mixed:
 
 - **Display catalogs** — UI chrome, light names, fact-value labels, modality
-  labels. App-side message catalogs for now: `data/i18n/` **does not exist
-  yet** (REQ-LANG-6 is unimplemented; catalog extraction is step 2 of ADR
-  0003's sequencing). Static strings only — no interpolation, plurals or
-  gender grammar in the package; message composition is ours (REQ-LANG-6).
+  labels. Split since colregs 0.3 shipped `data/i18n/` (REQ-LANG-6): the
+  closed vocabularies come from the package, the chrome stays app-side, and
+  `src/i18n/index.ts` merges them with the package on top. Static strings
+  only — no interpolation, plurals or gender grammar in the package; message
+  composition is ours (REQ-LANG-6).
 - **Rule-text corpora** — legal text, rendered *only* from package data,
   never translated app-side. Each render shows its corpus's tier and source
   beside the modality badge.
@@ -596,9 +597,9 @@ Scope -- all of it, this sprint:
   corpus, say so explicitly and show the fallback -- REQ-LANG-7 makes
   fallback the consumer's job; never substitute silently, and never present
   a mixed-corpus view as a single authoritative edition.
-  Note that colregs data/i18n/ does NOT exist yet (REQ-LANG-6 unimplemented)
-  -- app-side catalogs are all there is; structure yours so package catalogs
-  can supersede them without a rewrite.
+  Vocabulary labels come from colregs data/i18n/ (REQ-LANG-6); app-side
+  catalogs hold chrome only, and a package string supersedes an app string of
+  the same key.
 - Amendment-state teaching point in the rules reference: colregs verified
   (2026-08-30) that two of seven IMO amendments renumbered Part C -- 23(c)
   meant the small-vessel alternative until 2003, when WIG took that path and
