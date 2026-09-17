@@ -8,7 +8,8 @@ import type { Patch } from '../App';
 import { FactControls } from '../components/FactControls';
 import { RuleParagraphs } from '../components/RuleParagraphs';
 import { applicability, colregsVersion, lights } from '../data/colregs';
-import { corpusFor } from '../data/corpusText';
+import { corpusHandle } from '../data/corpusText';
+import { useCorpus } from '../state/corpusContext';
 import { evaluateDisplayIn } from '../engine/evaluate';
 import type { Display, Entry, DisplayEvaluation } from '../engine/types';
 import { BearingView, PlanView, ProfileView, selectHull } from 'nav-wright';
@@ -233,7 +234,7 @@ function EntryRow({
     /^modality:/,
     '',
   );
-  const corpus = corpusFor(entry.jurisdiction, state.locale);
+  const corpus = useCorpus();
   return (
     <div className="entry">
       <div className="entry-head">
@@ -243,7 +244,7 @@ function EntryRow({
           {intl.formatMessage({ id: `modality.${modality}` })}
         </span>
         <span className="badge tier">
-          {corpus.source.publisher} ·{' '}
+          {corpusHandle(corpus)} ·{' '}
           {intl.formatMessage({ id: `corpus.tier.${corpus.tier}` })} ·{' '}
           {corpus.language}
         </span>
@@ -252,11 +253,7 @@ function EntryRow({
         <summary>
           <FormattedMessage id="sandbox.rules.showText" />
         </summary>
-        <RuleParagraphs
-          cite={entry.cite}
-          jurisdiction={state.jurisdiction}
-          locale={state.locale}
-        />
+        <RuleParagraphs cite={entry.cite} jurisdiction={state.jurisdiction} />
         {(entry.images ?? []).map((img) => (
           <img
             key={img}
@@ -281,6 +278,7 @@ function DataDrawer({
   patch: (p: Patch) => void;
 }) {
   const applied = evaln.applied.map((id) => entryById.get(id));
+  const corpus = useCorpus();
   return (
     <div className="panel drawer">
       <details
@@ -301,10 +299,9 @@ function DataDrawer({
             values={{
               version: colregsVersion,
               jurisdiction: state.jurisdiction,
-              corpus: corpusFor(state.jurisdiction, state.locale).source
-                .publisher,
-              tier: corpusFor(state.jurisdiction, state.locale).tier,
-              language: corpusFor(state.jurisdiction, state.locale).language,
+              corpus: `${corpusHandle(corpus)} ${corpus.edition}`,
+              tier: corpus.tier,
+              language: corpus.language,
             }}
           />
         </p>

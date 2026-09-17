@@ -5,6 +5,13 @@
 import type { FactRecord, FactValue } from '../engine/types';
 import { BASE_JURISDICTION, isJurisdiction } from '../data/jurisdictions';
 import { DEFAULT_TILT, MAX_TILT } from 'nav-wright/benchy';
+import {
+  DEFAULT_CORPUS_ID,
+  corpusById,
+  corpusIn,
+  jurisdictionOf,
+  referenceCorpusFor,
+} from '../data/corpusText';
 
 // FactRecord (from colregs-engine/schema) has no index signature — each key
 // carries its own literal type. The URL codec below reads/writes facts by a
@@ -27,7 +34,13 @@ export interface AppState {
   displayIndex: number;
   additionsOn: string[];
   signpost: string | null;
+  /** UI language (catalog). Independent of the rule-text corpus — REQ-LANG-1. */
   locale: string;
+  /**
+   * Rule-text corpus id from colregs data/corpora.json, e.g. intl@2016.es.boe.
+   * Belongs to `jurisdiction`; a jurisdiction switch re-picks its reference.
+   */
+  corpus: string;
   rulePath: string | null;
   hullHint: boolean;
   drawer: boolean;
@@ -45,6 +58,11 @@ export const DEFAULT_FACTS: FactRecord = {
 // the rest of the app keeps one import path for URL-state constants.
 export { DEFAULT_TILT, MAX_TILT };
 
+/** The corpus a jurisdiction reads unless the URL says otherwise. */
+export function defaultCorpusFor(jurisdiction: string): string {
+  return referenceCorpusFor(jurisdiction)?.id ?? DEFAULT_CORPUS_ID;
+}
+
 export const DEFAULT_STATE: AppState = {
   mode: 'sandbox',
   jurisdiction: BASE_JURISDICTION,
@@ -56,6 +74,7 @@ export const DEFAULT_STATE: AppState = {
   additionsOn: [],
   signpost: null,
   locale: 'en',
+  corpus: DEFAULT_CORPUS_ID,
   rulePath: null,
   hullHint: true,
   drawer: false,
@@ -131,6 +150,8 @@ export function serialize(state: AppState): string {
     params.set('j', state.jurisdiction);
   if (state.signpost) params.set('sp', state.signpost);
   if (state.locale !== 'en') params.set('loc', state.locale);
+  const cp = corpusIn(state.jurisdiction, state.corpus).id;
+  if (cp !== defaultCorpusFor(state.jurisdiction)) params.set('cp', cp);
   if (!state.hullHint) params.set('hh', '0');
   if (state.drawer) params.set('dd', '1');
   const path =
@@ -201,6 +222,12 @@ export function deserialize(hash: string): AppState {
   state.signpost = params.get('sp');
   const loc = params.get('loc');
   if (loc) state.locale = loc;
+  // a corpus id the package does not ship, or one from another jurisdiction,
+  // is a stale or hand-edited URL: read the jurisdiction's reference instead
+  state.corpus = defaultCorpusFor(state.jurisdiction);
+  const cp = params.get('cp');
+  const chosen = cp ? corpusById(cp) : undefined;
+  if (chosen && jurisdictionOf(chosen) === state.jurisdiction) state.corpus = chosen.id;
   if (params.get('hh') === '0') state.hullHint = false;
   if (params.get('dd') === '1') state.drawer = true;
   return state;
