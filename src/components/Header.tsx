@@ -2,6 +2,7 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
 import { JURISDICTIONS } from '../data/jurisdictions';
 import type { AppState, Mode } from '../state/urlState';
+import { corpusById } from '../data/corpora';
 
 const MODES: Mode[] = ['sandbox', 'identify', 'quiz', 'rules', 'sound'];
 
@@ -57,6 +58,10 @@ export function Header({
             <FormattedMessage id="locale.title" />
             {': '}
             {state.locale === 'fi' ? 'FI' : 'EN'}
+            {' · '}
+            <span className="corpus-lang" title={corpusById(state.corpus).source.publisher}>
+              {corpusById(state.corpus).language}
+            </span>
           </button>
         </div>
       </div>

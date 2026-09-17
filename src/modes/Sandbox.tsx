@@ -6,7 +6,7 @@ import { useEffect, useMemo } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
 import { FactControls } from '../components/FactControls';
-import { RuleParagraphs } from '../components/RuleParagraphs';
+import { CorpusBadge, RuleParagraphs } from '../components/RuleParagraphs';
 import { applicability, colregsVersion, lights } from '../data/colregs';
 import { corpusFor } from '../data/corpusText';
 import { evaluateDisplayIn } from '../engine/evaluate';
@@ -233,7 +233,7 @@ function EntryRow({
     /^modality:/,
     '',
   );
-  const corpus = corpusFor(entry.jurisdiction, state.locale);
+  const corpus = corpusFor(entry.jurisdiction, state.corpus);
   return (
     <div className="entry">
       <div className="entry-head">
@@ -242,11 +242,7 @@ function EntryRow({
         <span className={`badge ${modality}`}>
           {intl.formatMessage({ id: `modality.${modality}` })}
         </span>
-        <span className="badge tier">
-          {corpus.source.publisher} ·{' '}
-          {intl.formatMessage({ id: `corpus.tier.${corpus.tier}` })} ·{' '}
-          {corpus.language}
-        </span>
+        <CorpusBadge corpus={corpus} />
       </div>
       <details>
         <summary>
@@ -255,7 +251,7 @@ function EntryRow({
         <RuleParagraphs
           cite={entry.cite}
           jurisdiction={state.jurisdiction}
-          locale={state.locale}
+          corpusId={state.corpus}
         />
         {(entry.images ?? []).map((img) => (
           <img
@@ -301,10 +297,10 @@ function DataDrawer({
             values={{
               version: colregsVersion,
               jurisdiction: state.jurisdiction,
-              corpus: corpusFor(state.jurisdiction, state.locale).source
+              corpus: corpusFor(state.jurisdiction, state.corpus).source
                 .publisher,
-              tier: corpusFor(state.jurisdiction, state.locale).tier,
-              language: corpusFor(state.jurisdiction, state.locale).language,
+              tier: corpusFor(state.jurisdiction, state.corpus).tier,
+              language: corpusFor(state.jurisdiction, state.corpus).language,
             }}
           />
         </p>

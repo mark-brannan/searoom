@@ -8,6 +8,7 @@
 export type SignpostStatus =
   | 'live'
   | 'measured' // delta measured against the primary source, blocked
+  | 'blocked' // the blocker is verified, not presumed: the source's terms refuse
   | 'ranked' // ranked on the queue, not measured
   | 'modelled-for' // the data model accommodates it; nothing written
   | 'undecided' // an open question must resolve first
@@ -33,6 +34,8 @@ export interface Signpost {
   /** corpus rows only (ADR 0003 tiers) */
   tier?: 'authentic' | 'official' | 'national' | 'community';
   language?: string;
+  /** live corpus rows: the colregs corpora.json id the row selects */
+  corpusId?: string;
 }
 
 const COLREGS = 'https://github.com/mark-brannan/colregs';
@@ -154,6 +157,7 @@ export const corpora: Signpost[] = [
     status: 'live',
     tier: 'national',
     language: 'en-US',
+    corpusId: 'intl@2016.en-US.uscg',
     labelKey: 'sp.en-us.label',
     bodyKeys: ['sp.en-us.p1', 'sp.en-us.p2'],
     blockers: [{ id: '#6', textKey: 'blocker.issue6' }],
@@ -162,48 +166,47 @@ export const corpora: Signpost[] = [
   {
     id: 'fi-finlex',
     kind: 'corpus',
-    status: 'ranked',
+    status: 'live',
     tier: 'national',
     language: 'fi',
+    corpusId: 'intl@2016.fi.finlex',
     labelKey: 'sp.fi.label',
     bodyKeys: ['sp.fi.p1', 'sp.fi.p2'],
-    blockers: [{ id: 'Q-7', textKey: 'blocker.q7' }],
+    blockers: [{ id: '#98', textKey: 'blocker.issue98' }],
+    link: `${COLREGS}/issues/98`,
+  },
+  {
+    id: 'es',
+    kind: 'corpus',
+    status: 'live',
+    tier: 'official',
+    language: 'es',
+    corpusId: 'intl@2016.es.boe',
+    labelKey: 'sp.es.label',
+    bodyKeys: ['sp.es.p1', 'sp.es.p2'],
+    blockers: [],
     link: ADR3,
   },
   {
     id: 'fr-unts',
     kind: 'corpus',
-    status: 'ranked',
+    status: 'blocked',
     tier: 'authentic',
     language: 'fr',
     labelKey: 'sp.fr.label',
     bodyKeys: ['sp.fr.p1'],
-    blockers: [
-      { id: 'Q-7', textKey: 'blocker.q7' },
-      { id: 'GATE-2', textKey: 'blocker.gate2' },
-    ],
+    blockers: [{ id: 'Q-7', textKey: 'blocker.q7.unts' }],
     link: VERIF,
   },
   {
     id: 'en-unts',
     kind: 'corpus',
-    status: 'ranked',
+    status: 'blocked',
     tier: 'authentic',
     language: 'en',
     labelKey: 'sp.en-unts.label',
     bodyKeys: ['sp.en-unts.p1'],
-    blockers: [{ id: 'Q-7', textKey: 'blocker.q7' }],
-    link: VERIF,
-  },
-  {
-    id: 'es',
-    kind: 'corpus',
-    status: 'ranked',
-    tier: 'official',
-    language: 'es',
-    labelKey: 'sp.es.label',
-    bodyKeys: ['sp.es-ru.p1'],
-    blockers: [{ id: 'Q-7', textKey: 'blocker.q7' }],
+    blockers: [{ id: 'Q-7', textKey: 'blocker.q7.unts' }],
     link: VERIF,
   },
   {
@@ -213,7 +216,7 @@ export const corpora: Signpost[] = [
     tier: 'official',
     language: 'ru',
     labelKey: 'sp.ru.label',
-    bodyKeys: ['sp.es-ru.p1'],
+    bodyKeys: ['sp.ru.p1'],
     blockers: [{ id: 'Q-7', textKey: 'blocker.q7' }],
     link: VERIF,
   },

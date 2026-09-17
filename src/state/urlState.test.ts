@@ -27,6 +27,7 @@ describe('URL state round-trip', () => {
       additionsOn: ['26b-mast'],
       signpost: 'eu-cevni',
       locale: 'fi',
+      corpus: 'intl@2016.es.boe',
       hullHint: false,
       drawer: true,
     };
@@ -42,6 +43,16 @@ describe('URL state round-trip', () => {
     const url = serialize(state);
     expect(url).toContain('/rules/');
     expect(deserialize(url).rulePath).toBe('27(a)(i)');
+  });
+
+  it('keeps the corpus to ids colregs registers', () => {
+    expect(deserialize('#/rules?txt=intl%402016.fi.finlex').corpus).toBe(
+      'intl@2016.fi.finlex',
+    );
+    expect(deserialize('#/rules?txt=intl%402016.xx.nowhere').corpus).toBe(
+      DEFAULT_STATE.corpus,
+    );
+    expect(serialize(DEFAULT_STATE)).not.toContain('txt=');
   });
 
   it('tolerates junk', () => {

@@ -111,6 +111,8 @@ export function App() {
             onClose={() => patch({ signpost: null })}
             locale={state.locale}
             onLocale={(l) => patch({ locale: l })}
+            corpus={state.corpus}
+            onCorpus={(corpus) => patch({ corpus })}
             onOpen={(id) => patch({ signpost: id })}
           />
         )}

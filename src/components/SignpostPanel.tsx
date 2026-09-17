@@ -8,6 +8,16 @@ import { useEffect, useRef } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import type { Signpost } from '../data/signposts';
 import { corpora, findSignpost, jurisdictions, parts } from '../data/signposts';
+import { rules } from '../data/colregs';
+import {
+  REFERENCE_CORPUS_ID,
+  corpusById,
+  coverage,
+  isCorpusId,
+} from '../data/corpora';
+import { CorpusBadge } from './RuleParagraphs';
+
+const skeletonPaths = Object.keys(rules.paragraphs);
 
 function StatusChip({
   status,
@@ -36,7 +46,22 @@ function SignpostBody({ sp }: { sp: Signpost }) {
   return (
     <div className="signpost-body">
       <StatusChip status={sp.status} kind={sp.kind} />
-      {sp.tier && (
+      {sp.corpusId && isCorpusId(sp.corpusId) && (
+        <p className="corpus-line">
+          <CorpusBadge corpus={corpusById(sp.corpusId)} />{' '}
+          <FormattedMessage
+            id="corpus.coverage"
+            values={{
+              edition: corpusById(sp.corpusId).edition,
+              status: intl.formatMessage({
+                id: `corpus.editionStatus.${corpusById(sp.corpusId).edition_status}`,
+              }),
+              ...coverage(sp.corpusId, skeletonPaths),
+            }}
+          />
+        </p>
+      )}
+      {sp.tier && !sp.corpusId && (
         <span className="badge tier" style={{ marginLeft: 8 }}>
           {intl.formatMessage({ id: `corpus.tier.${sp.tier}` })}
           {sp.language ? ` · ${sp.language}` : ''}
@@ -117,10 +142,14 @@ function JurisdictionPickerBody({
 function LocalePickerBody({
   locale,
   onLocale,
+  corpus,
+  onCorpus,
   onOpen,
 }: {
   locale: string;
   onLocale: (l: string) => void;
+  corpus: string;
+  onCorpus: (id: string) => void;
   onOpen: (id: string) => void;
 }) {
   const intl = useIntl();
@@ -150,25 +179,57 @@ function LocalePickerBody({
         </button>
       </div>
       <p className="picker-note">
-        <FormattedMessage id="locale.corpusNote" />
+        <FormattedMessage
+          id="locale.corpusNote"
+          values={{
+            count: corpora.filter((c) => c.corpusId && isCorpusId(c.corpusId))
+              .length,
+          }}
+        />
       </p>
       <h3 style={{ marginTop: 16 }}>
         <FormattedMessage id="locale.corpora.title" />
       </h3>
       <div className="picker-list">
-        {corpora.map((c) => (
-          <button key={c.id} className="picker-row" onClick={() => onOpen(c.id)}>
-            <span className="grow label">
-              <FormattedMessage id={c.labelKey} />
-            </span>
-            {c.tier && (
-              <span className="badge tier">
-                {intl.formatMessage({ id: `corpus.tier.${c.tier}` })}
-              </span>
-            )}
-            <StatusChip status={c.status} kind="corpus" />
-          </button>
-        ))}
+        {corpora.map((c) => {
+          const live = c.corpusId !== undefined && isCorpusId(c.corpusId);
+          const cov = live ? coverage(c.corpusId!, skeletonPaths) : undefined;
+          const tier = live ? corpusById(c.corpusId!).tier : c.tier;
+          return (
+            <div key={c.id} className="picker-row-wrap">
+              <button
+                className={`picker-row${live && c.corpusId === corpus ? ' current' : ''}`}
+                onClick={() => (live ? onCorpus(c.corpusId!) : onOpen(c.id))}
+                aria-pressed={live ? c.corpusId === corpus : undefined}
+              >
+                <span className="grow label">
+                  <FormattedMessage id={c.labelKey} />
+                  {cov && (
+                    <span className="corpus-line">
+                      {' '}
+                      {cov.have}/{cov.total}
+                    </span>
+                  )}
+                </span>
+                {tier && (
+                  <span className="badge tier">
+                    {intl.formatMessage({ id: `corpus.tier.${tier}` })}
+                  </span>
+                )}
+                <StatusChip status={c.status} kind="corpus" />
+              </button>
+              {live && (
+                <button
+                  className="mode-tab about"
+                  onClick={() => onOpen(c.id)}
+                  aria-label={intl.formatMessage({ id: 'signpost.about' })}
+                >
+                  <FormattedMessage id="signpost.about" />
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
       <p className="picker-note">
         <FormattedMessage id="sp.locale.fact1" />
@@ -185,12 +246,16 @@ export function SignpostPanel({
   onClose,
   locale,
   onLocale,
+  corpus,
+  onCorpus,
   onOpen,
 }: {
   id: string;
   onClose: () => void;
   locale?: string;
   onLocale?: (l: string) => void;
+  corpus?: string;
+  onCorpus?: (id: string) => void;
   onOpen?: (id: string) => void;
 }) {
   const intl = useIntl();
@@ -217,6 +282,8 @@ export function SignpostPanel({
       <LocalePickerBody
         locale={locale ?? 'en'}
         onLocale={onLocale ?? (() => undefined)}
+        corpus={corpus ?? REFERENCE_CORPUS_ID}
+        onCorpus={onCorpus ?? (() => undefined)}
         onOpen={open}
       />
     );

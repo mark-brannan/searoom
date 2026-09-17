@@ -269,32 +269,41 @@ status.
 Mirrors colregs ADR 0003 exactly. Two string planes, never mixed:
 
 - **Display catalogs** — UI chrome, light names, fact-value labels, modality
-  labels. App-side message catalogs for now: `data/i18n/` **does not exist
-  yet** (REQ-LANG-6 is unimplemented; catalog extraction is step 2 of ADR
-  0003's sequencing). Static strings only — no interpolation, plurals or
-  gender grammar in the package; message composition is ours (REQ-LANG-6).
+  labels. App-side message catalogs for now; colregs 0.3 ships `data/i18n/`
+  (en, fi) and the app has not switched to it yet. Static strings only — no
+  interpolation, plurals or gender grammar in the package; message
+  composition is ours (REQ-LANG-6).
 - **Rule-text corpora** — legal text, rendered *only* from package data,
-  never translated app-side. Each render shows its corpus's tier and source
-  beside the modality badge.
+  never translated app-side. colregs 0.3 splits the words from the skeleton:
+  `rules.json` is language-neutral paths, `corpora.json` indexes one text
+  file per edition × language × source under `data/text/`, and
+  `editions.json` names the edition each corpus reflects (ADR 0013). The app
+  reads all three: `src/data/corpora.ts` is the registry, `corpusText.ts` the
+  one resolver over it. A corpus belongs to a jurisdiction's edition, so the
+  reader picks among the corpora of the jurisdiction in view. Each render
+  shows its corpus's tier, source and language beside every paragraph, and
+  the URL carries the chosen corpus (`txt=`) so a reading is shareable.
 
-**What exists today: exactly one corpus**, and the app should say so. The
-shipped English is the **USCG amalgamated rendition — `national` tier,
-`en-US`**, not the authentic treaty English ("maneuver" where the authentic
-text reads "manoeuvre"). It also carries four known transcription defects
-against its own declared source (21(a), 21(b), 23(b), 29(b) — colregs issue
+**Three corpora of `intl` ship today**, and the app says so. The reference is
+the **USCG amalgamated rendition — `national` tier, `en-US`**, not the
+authentic treaty English ("maneuver" where the authentic text reads
+"manoeuvre"); every other corpus falls back to it paragraph by paragraph. It
+carries four known transcription defects against its own declared source
+(21(a), 21(b), 23(b), 29(b) — colregs issue
 [#6](https://github.com/mark-brannan/colregs/issues/6), open). Surfacing
 both facts is itself the teaching point.
 
-The locale picker joins the signposted-breadth pattern, and each entry
+The locale picker joins the signposted-breadth pattern: a live corpus row
+selects that corpus and shows its coverage of the skeleton; every other row
 carries its **tier** (REQ-LANG-3) and its **named blocker**:
 
 | Corpus | Tier | Status |
 |---|---|---|
-| `en-US` / USCG | `national` | **Live.** The only corpus. Four transcription defects open (#6). |
-| `en` / UNTS original | `authentic` | Article IX verified 2026-08-30: English and French are equally authentic. Addable beside the USCG text; not yet scheduled. |
-| `fr` / UNTS | `authentic` | Front of the queue with Finnish (ADR 0003 step 3). Blocked on Q-7 — the UNTS deposit's reproduction terms are unchecked. |
-| `fi` / Finlex | `national` | ADR 0003's other front-runner, chosen for SignalK's heavily Finnish contributor base. Blocked on Q-7 (Finlex terms). |
-| `es` / BOE-or-deposit | `official` | Deposited official translation, verified against Article IX. Source is the problem, not the text: IMO's consolidated editions are **sold publications and probably not reproducible**; a national gazette is the likely lawful route. Q-7. |
+| `en-US` / USCG | `national` | **Live; the reference.** Four transcription defects open (#6). |
+| `es` / BOE | as declared in `corpora.json` | **Live.** Spain's instrument of accession in the BOE; licence verified 2026-09-09 (aviso legal: reuse with attribution). |
+| `fi` / Finlex | `national` | **Live.** SopS 30/1977; licence verified 2026-09-12 (treaties and official translations carry no copyright). Transcription in progress upstream (colregs #98); untranscribed paragraphs fall back and say so. |
+| `en` / UNTS original | `authentic` | Blocked: the UNTS deposit's reproduction terms are verified and do not permit redistribution (Q-7). |
+| `fr` / UNTS | `authentic` | Blocked on the same verified reason (Q-7). |
 | `ru` | `official` | Same as `es`. An IMO Russian edition is catalogued (ISBN 9789280141078) — and catalogued means *for sale*. Q-7. |
 | `zh` | `official` | Mechanism verified (IMO's six official languages); Chinese edition catalogued (ISBN 9789280160512). Q-7. |
 | `ar` | `official` | Mechanism verified; the Arabic edition is **the one sub-claim colregs flags as not confirmed to the same standard** — its product page returned 403 to the verification pass. Q-7, and a verification gap besides. |
@@ -309,11 +318,10 @@ decisions and they are more interesting than a progress bar:
   that a lawful, reproducible source exists for each text. And Q-7 is
   answerable **per language** — clearing one source unblocks that corpus
   alone, which is the cheap path if a demo needs a specific language early.
-- **The first non-English corpus is a gate, not just a file** (GATE-2).
-  Landing translation #1 forces colregs to re-take the
-  instrument → edition → corpus layering decision, because a French text of
-  `intl` is the second corpus of `intl`. So the locale picker's first new
-  entry is a design event upstream, and the app can say that.
+- **The first non-English corpus was a gate, not just a file** (GATE-2).
+  Landing it forced colregs to re-take the instrument → edition → corpus
+  layering decision, settled by ADR 0013: every corpus now names the edition
+  its text reflects, and the app can say that.
 
 REQ-LANG-7 puts fallback on the consumer, so the app owns an explicit
 fallback UX: "this paragraph isn't in the Finnish corpus yet — showing en-US
@@ -321,8 +329,10 @@ fallback UX: "this paragraph isn't in the Finnish corpus yet — showing en-US
 A mixed-corpus rendering is never a single authoritative edition, and the app
 must say so wherever it assembles one.
 
-**Amendment state is a signpost too.** REQ-LANG-10 is unimplemented — the
-shipped ruleset declares no amendment state — but the history is now verified
+**Amendment state is data now.** `editions.json` declares each edition's
+`amended_through` and `in_force`, and each corpus declares the edition it
+reflects with a `verified` or `claimed` status; the rules browser reads those
+rather than app prose (REQ-LANG-10). The history is verified
 (colregs, 2026-08-30): seven amendment resolutions since 1972, two of which
 renumbered Part C. `23(c)` meant the small-vessel alternative until 2003,
 when the WIG-craft paragraph took that path and displaced it to `23(d)`;

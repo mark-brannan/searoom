@@ -639,6 +639,7 @@ details summary:hover {
   border: 1px solid var(--line);
 }
 
+.status-blocked,
 .status-out-of-scope,
 .status-not-scoped {
   background: var(--danger-bg);
@@ -839,4 +840,57 @@ table.corpora th {
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+/* corpus fallback and mixed-rendering labels (REQ-LANG-7) */
+.rule-text.fallback {
+  border-left-style: dashed;
+  color: var(--dim);
+}
+
+.corpus-line.fallback {
+  color: var(--yellow);
+}
+
+.corpus-line.mixed {
+  border: 1px solid var(--yellow);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--yellow);
+  margin: 8px 0;
+}
+
+.corpus-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin: 8px 0;
+}
+
+.corpus-switcher select {
+  font: inherit;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.picker-row-wrap {
+  display: flex;
+  gap: 4px;
+  align-items: stretch;
+}
+
+.picker-row-wrap .picker-row {
+  flex: 1;
+}
+
+.picker-row-wrap .about {
+  font-size: 12px;
+}
+
+.corpus-lang {
+  color: var(--accent-soft);
 }
