@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormattedMessage, IntlProvider } from 'react-intl';
-import en from './i18n/en.json';
 import fi from './i18n/fi.json';
+import { catalogs } from './i18n';
 import type { AppState, Mode } from './state/urlState';
 import {
   DEFAULT_STATE,
@@ -19,13 +19,6 @@ import { Sound } from './modes/Sound';
 import { colregsVersion } from './data/colregs';
 import { corpusIn } from './data/corpusText';
 import { CorpusContext } from './state/corpusContext';
-
-const catalogs: Record<string, Record<string, string>> = {
-  en: en as Record<string, string>,
-  // draft catalog: untranslated keys fall back to English (UI chrome only —
-  // legal text never goes through a catalog)
-  fi: { ...(en as Record<string, string>), ...(fi as Record<string, string>) },
-};
 
 export type Patch = Partial<AppState>;
 
