@@ -74,4 +74,17 @@ describe('URL state round-trip', () => {
     expect(state.facts['fact:propulsion']).toBe(DEFAULT_FACTS['fact:propulsion']);
     expect(() => evaluateDisplay(state.facts)).not.toThrow();
   });
+  it('round-trips the jurisdiction, and omits it at the default', () => {
+    expect(serialize(DEFAULT_STATE)).not.toContain('j=');
+    const url = serialize({ ...DEFAULT_STATE, jurisdiction: 'us/inland' });
+    expect(deserialize(url).jurisdiction).toBe('us/inland');
+  });
+
+  it('falls back to the base for a jurisdiction the data does not carry', () => {
+    // A hand-edited or stale URL must not hand the engine a rule set that
+    // resolves to nothing.
+    expect(deserialize('#/sandbox?j=xx%2Fnowhere').jurisdiction).toBe(
+      DEFAULT_STATE.jurisdiction,
+    );
+  });
 });

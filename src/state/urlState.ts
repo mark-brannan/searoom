@@ -3,6 +3,7 @@
 // GitHub Pages happy. Deep-link shape for rules: #/rules/27(a)(i).
 
 import type { FactRecord, FactValue } from '../engine/types';
+import { BASE_JURISDICTION, isJurisdiction } from '../data/jurisdictions';
 import { DEFAULT_TILT, MAX_TILT } from 'nav-wright/benchy';
 
 // FactRecord (from colregs-engine/schema) has no index signature — each key
@@ -16,6 +17,8 @@ export type View = 'profile' | 'bearing' | 'plan' | 'benchy' | 'model';
 
 export interface AppState {
   mode: Mode;
+  /** which jurisdiction's resolved rule set the app evaluates against */
+  jurisdiction: string;
   facts: FactRecord;
   view: View;
   theta: number;
@@ -44,6 +47,7 @@ export { DEFAULT_TILT, MAX_TILT };
 
 export const DEFAULT_STATE: AppState = {
   mode: 'sandbox',
+  jurisdiction: BASE_JURISDICTION,
   facts: DEFAULT_FACTS,
   view: 'profile',
   theta: 45,
@@ -123,6 +127,8 @@ export function serialize(state: AppState): string {
   if (state.displayIndex !== 0) params.set('d', String(state.displayIndex));
   if (state.additionsOn.length > 0)
     params.set('add', state.additionsOn.join(','));
+  if (state.jurisdiction !== DEFAULT_STATE.jurisdiction)
+    params.set('j', state.jurisdiction);
   if (state.signpost) params.set('sp', state.signpost);
   if (state.locale !== 'en') params.set('loc', state.locale);
   if (!state.hullHint) params.set('hh', '0');
@@ -188,6 +194,10 @@ export function deserialize(hash: string): AppState {
   if (params.has('d') && Number.isInteger(d) && d >= 0) state.displayIndex = d;
   const add = params.get('add');
   if (add) state.additionsOn = add.split(',').filter(Boolean);
+  // an unknown jurisdiction in a hand-edited or stale URL falls back to the
+  // base rather than handing the engine a rule set that doesn't exist
+  const j = params.get('j');
+  if (j && isJurisdiction(j)) state.jurisdiction = j;
   state.signpost = params.get('sp');
   const loc = params.get('loc');
   if (loc) state.locale = loc;

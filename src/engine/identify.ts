@@ -4,12 +4,14 @@
 // indistinguishable from this bearing" — which is true of the real Rules.
 
 import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
-import { evaluateDisplay } from 'colregs-engine';
+import { BASE_JURISDICTION } from '../data/jurisdictions';
+import { evaluateDisplayIn } from './evaluate';
 import { visibleSignature } from './quiz';
 import type { Display, FactRecord } from './types';
 
 const fixtures = fixturesJson as unknown as {
-  cases: { name: string; facts: FactRecord }[];
+  jurisdiction: string;
+  cases: { name: string; facts: FactRecord; jurisdiction?: string }[];
 };
 
 export interface SeenLight {
@@ -26,7 +28,7 @@ export interface Candidate {
 
 // The candidate pool: every fixture fact record (deduplicated), plus a
 // small grid filling situations the boundary probes leave out.
-function buildPool(): FactRecord[] {
+function buildPool(jurisdiction: string): FactRecord[] {
   const pool: FactRecord[] = [];
   const seen = new Set<string>();
   const add = (f: FactRecord) => {
@@ -38,7 +40,13 @@ function buildPool(): FactRecord[] {
       pool.push(f);
     }
   };
-  for (const c of fixtures.cases) add(c.facts);
+  // the base's fact records describe vessels under any jurisdiction; a case
+  // pinned to a third one may carry facts outside this rule set
+  for (const c of fixtures.cases) {
+    const own = c.jurisdiction ?? fixtures.jurisdiction;
+    if (own !== jurisdiction && own !== BASE_JURISDICTION) continue;
+    add(c.facts);
+  }
   for (const length of [6, 15, 60]) {
     add({
       'fact:propulsion': 'propulsion:power',
@@ -56,7 +64,17 @@ function buildPool(): FactRecord[] {
   return pool;
 }
 
-const pool = buildPool();
+const poolCache = new Map<string, FactRecord[]>();
+
+function poolFor(jurisdiction: string): FactRecord[] {
+  let hit = poolCache.get(jurisdiction);
+  if (!hit) {
+    hit = buildPool(jurisdiction);
+    poolCache.set(jurisdiction, hit);
+  }
+  return hit;
+}
+
 const THETA_STEP = 5;
 
 export function signatureOf(seen: SeenLight[]): string {
@@ -67,12 +85,15 @@ export function signatureOf(seen: SeenLight[]): string {
 }
 
 /** All candidate explanations for the given lights. */
-export function identifyCandidates(seen: SeenLight[]): Candidate[] {
+export function identifyCandidates(
+  seen: SeenLight[],
+  jurisdiction: string = BASE_JURISDICTION,
+): Candidate[] {
   if (seen.length === 0) return [];
   const wanted = signatureOf(seen);
   const out: Candidate[] = [];
-  for (const facts of pool) {
-    const evaln = evaluateDisplay(facts);
+  for (const facts of poolFor(jurisdiction)) {
+    const evaln = evaluateDisplayIn(jurisdiction, facts);
     for (const display of evaln.displays) {
       if (display.lights.length === 0) continue;
       const thetas: number[] = [];

@@ -55,17 +55,11 @@ export const jurisdictions: Signpost[] = [
   {
     id: 'us-inland',
     kind: 'jurisdiction',
-    status: 'measured',
+    status: 'live',
     labelKey: 'sp.us-inland.label',
-    bodyKeys: [
-      'sp.us-inland.p1',
-      'sp.us-inland.p2',
-      'sp.us-inland.p3',
-      'sp.us-inland.p4',
-      'sp.us-inland.geo',
-    ],
-    blockers: [{ id: 'Q-11', textKey: 'blocker.q11' }],
-    link: `${REQS}#11-open-questions`,
+    bodyKeys: [],
+    blockers: [],
+    link: COLREGS,
   },
   {
     id: 'ca-inland',
@@ -267,6 +261,22 @@ export const corpora: Signpost[] = [
     link: `${REQS}#5-languages-and-localization`,
   },
 ];
+
+/**
+ * The "how this jurisdiction differs" explainer, by jurisdiction id. These
+ * were the US Inland signpost's measured-delta paragraphs while Inland was
+ * blocked; now that it is live they belong beside its rule text, in the Rules
+ * reference, rather than in a panel about work not yet done.
+ */
+export const jurisdictionExplainers: Record<string, string[]> = {
+  'us/inland': [
+    'sp.us-inland.p1',
+    'sp.us-inland.p2',
+    'sp.us-inland.p3',
+    'sp.us-inland.p4',
+    'sp.us-inland.geo',
+  ],
+};
 
 export const allSignposts: Signpost[] = [
   ...jurisdictions,

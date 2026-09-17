@@ -5,11 +5,20 @@
 
 import { FormattedMessage } from 'react-intl';
 import { paragraphsForCite } from '../data/cites';
-import { corpus, rules } from '../data/colregs';
+import { gapsFor, textFor } from '../data/corpusText';
+import { BASE_JURISDICTION } from '../data/jurisdictions';
 
-export function RuleParagraphs({ cite }: { cite: string }) {
-  const paths = paragraphsForCite(cite);
-  const gaps = (rules.gaps ?? []).filter(
+export function RuleParagraphs({
+  cite,
+  jurisdiction = BASE_JURISDICTION,
+  locale = 'en',
+}: {
+  cite: string;
+  jurisdiction?: string;
+  locale?: string;
+}) {
+  const paths = paragraphsForCite(cite, jurisdiction);
+  const gaps = gapsFor(jurisdiction, locale).filter(
     (g) => g.path === cite || paths.includes(g.path),
   );
   if (paths.length === 0 && gaps.length === 0) {
@@ -25,14 +34,25 @@ export function RuleParagraphs({ cite }: { cite: string }) {
   return (
     <div>
       {paths.map((p) => {
-        const para = rules.paragraphs[p];
+        const resolved = textFor(jurisdiction, p, locale);
+        if (!resolved) {
+          return (
+            <p className="corpus-line" key={p}>
+              <FormattedMessage
+                id="rules.gap"
+                values={{ path: p, reason: 'not present in the corpus' }}
+              />
+            </p>
+          );
+        }
+        const { corpus } = resolved;
         return (
           <div key={p}>
             <div className="rule-text">
-              <strong>{p}</strong> — {para.text}
+              <strong>{p}</strong> — {resolved.text}
             </div>
             <p className="corpus-line">
-              {para.rule_title} · {corpus.source} ({corpus.tier},{' '}
+              {resolved.ruleTitle} · {corpus.source.publisher} ({corpus.tier},{' '}
               {corpus.language})
             </p>
           </div>

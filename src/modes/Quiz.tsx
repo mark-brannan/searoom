@@ -6,16 +6,10 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import { describeFacts } from '../components/factLabel';
 import { makeForward, makeReverse } from '../engine/quiz';
 import type { QuizQuestion } from '../engine/quiz';
-import {
-  Glow,
-  PX,
-  PZ,
-  bearingInArc,
-  bearingLabel,
-  placeLights,
-  selectHull,
-} from 'nav-wright';
+import { Glow, PX, PZ, bearingInArc, bearingLabel, selectHull } from 'nav-wright';
+import { placeLights } from '../render/navWright';
 import { lights } from '../data/colregs';
+import type { AppState } from '../state/urlState';
 import type { Display, FactRecord } from '../engine/types';
 
 function MiniProfile({
@@ -80,7 +74,7 @@ function MiniBearing({
   );
 }
 
-export function Quiz() {
+export function Quiz({ state }: { state: AppState }) {
   const intl = useIntl();
   const [direction, setDirection] = useState<'forward' | 'reverse'>('forward');
   const [seed, setSeed] = useState(1);
@@ -88,8 +82,11 @@ export function Quiz() {
   const [score, setScore] = useState({ right: 0, total: 0 });
 
   const question: QuizQuestion = useMemo(
-    () => (direction === 'forward' ? makeForward(seed) : makeReverse(seed)),
-    [direction, seed],
+    () =>
+      direction === 'forward'
+        ? makeForward(seed, state.jurisdiction)
+        : makeReverse(seed, state.jurisdiction),
+    [direction, seed, state.jurisdiction],
   );
 
   const answer = (i: number) => {

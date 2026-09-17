@@ -1,10 +1,12 @@
-// Replays fixtures/applicability-fixtures.json verbatim — all cases but the
-// jurisdiction-dependent ones below. This is colregs' cross-implementation
-// contract (REQ-VERIFY-1), exercised here by its second real implementation.
+// Replays fixtures/applicability-fixtures.json verbatim — every case, under
+// the jurisdiction the case names. This is colregs' cross-implementation
+// contract (REQ-VERIFY-1), exercised here by its second real implementation,
+// and it is the statement that searoom's app-side merge-patch resolution
+// agrees with the package's own (colregs ADR 0018, ADR 0020).
 
 import { describe, expect, it } from 'vitest';
 import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
-import { evaluateDisplay } from 'colregs-engine';
+import { evaluateDisplayIn } from './evaluate';
 import type { FactRecord } from './types';
 
 interface FixtureCase {
@@ -19,27 +21,21 @@ const fixtures = fixturesJson as unknown as {
   cases: FixtureCase[];
 };
 
+const jurisdictionOf = (c: FixtureCase) =>
+  c.jurisdiction ?? fixtures.jurisdiction;
+
 describe('colregs applicability fixtures (verbatim replay)', () => {
   it('has the full fixture set', () => {
-    expect(fixtures.cases.length).toBe(66);
+    expect(fixtures.cases.length).toBe(70);
+  });
+
+  it('covers more than one jurisdiction', () => {
+    expect(new Set(fixtures.cases.map(jurisdictionOf)).size).toBeGreaterThan(1);
   });
 
   for (const c of fixtures.cases) {
-    // colregs@0.2.2 (ADR 0008) gave every entry a `jurisdiction` and added
-    // the first national delta, 30a-buoy/30b-buoy (`us/inland`), reached
-    // only via `fact:on_mooring_buoy: true`. colregs-engine has no
-    // jurisdiction parameter yet (its own open gap, not fallout of this
-    // bump), so a case that actually turns on jurisdiction can't be
-    // replayed verbatim: skipped, rather than silently mis-scored, until
-    // that lands. `fact:on_mooring_buoy: false` doesn't turn on anything —
-    // evaluateDisplay already gets it right today.
-    if (c.facts['fact:on_mooring_buoy'] === true) {
-      const jurisdiction = c.jurisdiction ?? fixtures.jurisdiction;
-      it.skip(`${c.name} (jurisdiction: ${jurisdiction}, not yet supported)`, () => {});
-      continue;
-    }
-    it(c.name, () => {
-      const result = evaluateDisplay(c.facts);
+    it(`${c.name} [${jurisdictionOf(c)}]`, () => {
+      const result = evaluateDisplayIn(jurisdictionOf(c), c.facts);
       expect([...result.applied].sort()).toEqual([...c.expect].sort());
     });
   }

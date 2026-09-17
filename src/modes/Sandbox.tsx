@@ -7,16 +7,12 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
 import { FactControls } from '../components/FactControls';
 import { RuleParagraphs } from '../components/RuleParagraphs';
-import { applicability, colregsVersion, corpus, lights } from '../data/colregs';
-import { evaluateDisplay } from 'colregs-engine';
+import { applicability, colregsVersion, lights } from '../data/colregs';
+import { corpusFor } from '../data/corpusText';
+import { evaluateDisplayIn } from '../engine/evaluate';
 import type { Display, Entry, DisplayEvaluation } from '../engine/types';
-import {
-  BearingView,
-  PlanView,
-  ProfileView,
-  placeLights,
-  selectHull,
-} from 'nav-wright';
+import { BearingView, PlanView, ProfileView, selectHull } from 'nav-wright';
+import { placeLights } from '../render/navWright';
 import type { Aspect } from 'nav-wright';
 import { BenchyView } from 'nav-wright/benchy';
 import type { BenchyLabels } from 'nav-wright/benchy';
@@ -34,6 +30,8 @@ const ASPECTS: Aspect[] = [
   'port-bow',
 ];
 
+// a label lookup, not a rule set: an id -> cite map over every jurisdiction's
+// entries, so an excluded-by or in-lieu-of reference still renders its cite
 const entryById = new Map(applicability.entries.map((e) => [e.id, e]));
 
 function imageUrl(name: string): string {
@@ -218,9 +216,24 @@ function DisplayChips({
   );
 }
 
-function EntryRow({ entry, evaln }: { entry: Entry; evaln: DisplayEvaluation }) {
+function EntryRow({
+  entry,
+  evaln,
+  state,
+}: {
+  entry: Entry;
+  evaln: DisplayEvaluation;
+  state: AppState;
+}) {
   const intl = useIntl();
-  const modality = evaln.modalities[entry.id] ?? entry.modality;
+  // closed vocabularies are prefixed identifiers (colregs ADR 0017); the
+  // catalog and the badge class both key off the suffix, as every other
+  // vocabulary in the app does
+  const modality = (evaln.modalities[entry.id] ?? entry.modality).replace(
+    /^modality:/,
+    '',
+  );
+  const corpus = corpusFor(entry.jurisdiction, state.locale);
   return (
     <div className="entry">
       <div className="entry-head">
@@ -230,14 +243,20 @@ function EntryRow({ entry, evaln }: { entry: Entry; evaln: DisplayEvaluation }) 
           {intl.formatMessage({ id: `modality.${modality}` })}
         </span>
         <span className="badge tier">
-          {corpus.source} · {intl.formatMessage({ id: `corpus.tier.${corpus.tier}` })} · {corpus.language}
+          {corpus.source.publisher} ·{' '}
+          {intl.formatMessage({ id: `corpus.tier.${corpus.tier}` })} ·{' '}
+          {corpus.language}
         </span>
       </div>
       <details>
         <summary>
           <FormattedMessage id="sandbox.rules.showText" />
         </summary>
-        <RuleParagraphs cite={entry.cite} />
+        <RuleParagraphs
+          cite={entry.cite}
+          jurisdiction={state.jurisdiction}
+          locale={state.locale}
+        />
         {(entry.images ?? []).map((img) => (
           <img
             key={img}
@@ -281,10 +300,11 @@ function DataDrawer({
             id="drawer.packageLine"
             values={{
               version: colregsVersion,
-              jurisdiction: corpus.jurisdiction,
-              corpus: corpus.source,
-              tier: corpus.tier,
-              language: corpus.language,
+              jurisdiction: state.jurisdiction,
+              corpus: corpusFor(state.jurisdiction, state.locale).source
+                .publisher,
+              tier: corpusFor(state.jurisdiction, state.locale).tier,
+              language: corpusFor(state.jurisdiction, state.locale).language,
             }}
           />
         </p>
@@ -310,8 +330,8 @@ export function Sandbox({
 }) {
   const intl = useIntl();
   const evaln = useMemo(
-    () => evaluateDisplay(state.facts),
-    [state.facts],
+    () => evaluateDisplayIn(state.jurisdiction, state.facts),
+    [state.jurisdiction, state.facts],
   );
   const current = Math.max(
     0,
@@ -454,7 +474,7 @@ export function Sandbox({
           {evaln.applied
             .map((id) => entryById.get(id)!)
             .map((e) => (
-              <EntryRow key={e.id} entry={e} evaln={evaln} />
+              <EntryRow key={e.id} entry={e} evaln={evaln} state={state} />
             ))}
         </div>
 

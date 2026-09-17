@@ -11,7 +11,7 @@ import { Identify } from './modes/Identify';
 import { Quiz } from './modes/Quiz';
 import { Rules } from './modes/Rules';
 import { Sound } from './modes/Sound';
-import { colregsVersion, corpus } from './data/colregs';
+import { colregsVersion } from './data/colregs';
 
 const catalogs: Record<string, Record<string, string>> = {
   en: en as Record<string, string>,
@@ -71,7 +71,7 @@ export function App() {
       case 'identify':
         return <Identify state={state} patch={patch} />;
       case 'quiz':
-        return <Quiz />;
+        return <Quiz state={state} />;
       case 'rules':
         return <Rules state={state} patch={patch} />;
       case 'sound':
@@ -98,7 +98,7 @@ export function App() {
               id="app.poweredBy"
               values={{
                 version: colregsVersion,
-                jurisdiction: corpus.jurisdiction,
+                jurisdiction: state.jurisdiction,
               }}
             />
           </span>

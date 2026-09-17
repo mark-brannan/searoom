@@ -165,6 +165,29 @@ button {
   border-color: var(--dim);
 }
 
+/* Jurisdiction picker: same pill as a mode tab, since it selects which rule
+   set every mode below is answering from. */
+.jurisdiction-picker select {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--dim);
+  font: inherit;
+  max-width: 100%;
+}
+
+.jurisdiction-picker select:hover,
+.jurisdiction-picker select:focus-visible {
+  color: var(--text);
+  border-color: var(--dim);
+}
+
+.jurisdiction-picker select option {
+  background: var(--bg);
+  color: var(--text);
+}
+
 .mode-tab.active:hover {
   color: var(--bg);
 }
