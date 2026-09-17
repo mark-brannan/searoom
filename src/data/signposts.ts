@@ -179,7 +179,7 @@ export const corpora: Signpost[] = [
     id: 'es',
     kind: 'corpus',
     status: 'live',
-    tier: 'official',
+    tier: 'national',
     language: 'es',
     corpusId: 'intl@2016.es.boe',
     labelKey: 'sp.es.label',
