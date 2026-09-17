@@ -35,9 +35,34 @@ alive() { [ -n "$1" ] && kill -0 "$1" 2>/dev/null; }
 listening() { [ -n "$1" ] && node -e '
   const s=require("net").connect(+process.argv[1],"127.0.0.1");
   s.on("connect",()=>{s.end();process.exit(0)}).on("error",()=>process.exit(1))' "$1" 2>/dev/null; }
+# pid actually holding a port, not whatever pid we happened to record (npm's
+# pid, not its vite child's) — best-effort, needs ss or lsof.
+port_pid() {
+  [ -n "${1:-}" ] || return 0
+  if command -v ss >/dev/null 2>&1; then
+    ss -ltnp "sport = :$1" 2>/dev/null | sed -n 's/.*pid=\([0-9][0-9]*\).*/\1/p' | head -n1
+  elif command -v lsof >/dev/null 2>&1; then
+    lsof -ti tcp:"$1" -sTCP:LISTEN 2>/dev/null | head -n1
+  fi
+}
 if alive "$pid" && listening "$port"; then exit 0; fi
 # alive but not listening (hung, mid-crash): kill it so step 3 does not leak it
 alive "$pid" && kill "$pid" 2>/dev/null
+# the recorded pid may not be the process actually bound to the port (npm vs.
+# its vite child) — find and kill that one too, then confirm the port is
+# actually free before starting a new server on a fresh one. A silent skip
+# here is exactly the leak from issue #148: a stale server keeps serving a
+# stale bundle at the old URL while a second one starts on a new port.
+held_pid=$(port_pid "$port")
+[ -n "$held_pid" ] && kill "$held_pid" 2>/dev/null
+if [ -n "$port" ]; then
+  i=0; freewait=${PREVIEW_GATE_WAIT:-20}
+  while [ "$i" -lt "$freewait" ] && listening "$port"; do sleep 1; i=$((i+1)); done
+  if listening "$port"; then
+    printf '%s\n' "{\"decision\":\"block\",\"reason\":\"preview-gate.sh: port $port is still held (recorded pid $pid, actual holder $(port_pid "$port")) after killing both. Kill it by hand (fuser -k $port/tcp) before restarting, and tell the user.\"}"
+    exit 0
+  fi
+fi
 
 # --- 3. start one -----------------------------------------------------------
 port=$(node -e '
@@ -56,6 +81,13 @@ while [ "$i" -lt "$wait" ] && ! listening "$port"; do sleep 1; i=$((i+1)); done
 
 esc() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n' ' '; }
 if listening "$port"; then
+  # $pid is npm's (or a shell wrapper's), not necessarily the process bound
+  # to the port — record the real listener so a later kill actually frees it.
+  real_pid=$(port_pid "$port")
+  if [ -n "$real_pid" ]; then
+    printf '%s\n' "$real_pid" > "$dir/pid"
+    pid=$real_pid
+  fi
   printf '{"decision":"block","reason":"%s"}\n' "$(esc "Rendered files changed on this branch, so preview-gate.sh started a dev server: http://localhost:$port serving $root (pid $pid, log $dir/log). Tell the user that URL and worktree path in your reply, then end the turn again.")"
 else
   kill "$pid" 2>/dev/null

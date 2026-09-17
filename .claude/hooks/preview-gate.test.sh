@@ -45,4 +45,25 @@ case "$out" in *'"decision":"block"'*) ;; *) r="$out" ;; esac
 check "server alive but not listening -> old pid killed, restarts" "$r" killed
 kill "$(cat .claude/preview/pid)" 2>/dev/null
 
+# recorded pid dead but something else (the real vite child, in prod) still
+# holds the port: the hook must kill the actual holder and free the port,
+# not just start a second server on a new port and leave the old one leaked.
+if command -v ss >/dev/null 2>&1 || command -v lsof >/dev/null 2>&1; then
+  node -e 'require("net").createServer().listen(0,"127.0.0.1",function(){console.log(this.address().port)})' >"$tmp/orphan.port" &
+  orphan_pid=$!
+  sleep 1
+  orphan_port=$(cat "$tmp/orphan.port")
+  echo 999999 > .claude/preview/pid   # a pid that is (almost certainly) not running
+  echo "$orphan_port" > .claude/preview/port
+  out=$(echo '{}' | sh "$hook")
+  case "$out" in *'"decision":"block"'*'http://localhost:'*"$tmp"*) r=block ;; *) r="$out" ;; esac
+  check "recorded pid dead, port held by another process -> killed and restarts" "$r" block
+  sleep 1
+  if kill -0 "$orphan_pid" 2>/dev/null; then r=leaked; else r=killed; fi
+  check "recorded pid dead, port held by another process -> orphan actually killed" "$r" killed
+  kill "$(cat .claude/preview/pid)" 2>/dev/null
+else
+  echo "skip recorded-pid-dead-port-held test: no ss or lsof"
+fi
+
 exit $fail
