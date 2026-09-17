@@ -1,19 +1,32 @@
 // The rules reference: paragraph-keyed, deep-linkable (#/rules/27(a)(i)),
-// with the USCG diagrams inline, the recorded known_omissions shown as
-// first-class gaps, and the amendment-state teaching point.
+// quoted from the corpus the reader picked, with the USCG diagrams inline,
+// the recorded known_omissions shown as first-class gaps, and the
+// amendment state read from the declared edition (editions.json).
 //
 // Everything below is keyed off the jurisdiction in view: the skeleton is
 // that jurisdiction's resolved one, so an Inland-only path appears and a path
 // Inland does not spell does not. A restated path is marked as reading
 // differently here, and a path the source voids carries colregs' own reason
 // for the absence rather than going silently missing (colregs ADR 0020).
+// The corpus is one of that jurisdiction's; an inherited path reads from the
+// base corpus and says so, a missing one falls back visibly (REQ-LANG-7).
 
 import { useEffect, useMemo, useRef } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
+import { CorpusSwitcher } from '../components/CorpusSwitcher';
+import { CorpusLine, MixedNote, Paragraph } from '../components/RuleParagraphs';
 import { entriesForRule, factsForEntry, jurisdictionForEntry, ruleOf } from '../data/cites';
 import { applicability, images as imagesData } from '../data/colregs';
-import { corpusFor, gapsFor, ruleTitleFor, textFor } from '../data/corpusText';
+import {
+  corpusHandle,
+  editionOf,
+  gapsFor,
+  instrumentOf,
+  resolveParagraphs,
+  ruleTitleFor,
+} from '../data/corpusText';
+import type { Corpus } from '../data/corpusText';
 import {
   BASE_JURISDICTION,
   entrySuppressionsFor,
@@ -25,7 +38,8 @@ import {
   restatedPathsFor,
 } from '../data/jurisdictions';
 import { jurisdictionExplainers } from '../data/signposts';
-import { serialize, DEFAULT_STATE } from '../state/urlState';
+import { useCorpus } from '../state/corpusContext';
+import { serialize, DEFAULT_STATE, defaultCorpusFor } from '../state/urlState';
 import type { AppState } from '../state/urlState';
 
 function imageUrl(name: string): string {
@@ -35,10 +49,12 @@ function imageUrl(name: string): string {
 function sandboxLink(entryId: string, jurisdiction: string): string | undefined {
   const facts = factsForEntry(entryId);
   if (!facts) return undefined;
+  const j = jurisdictionForEntry(entryId) ?? jurisdiction;
   return serialize({
     ...DEFAULT_STATE,
     mode: 'sandbox',
-    jurisdiction: jurisdictionForEntry(entryId) ?? jurisdiction,
+    jurisdiction: j,
+    corpus: defaultCorpusFor(j),
     facts,
   });
 }
@@ -52,9 +68,11 @@ export function Rules({
 }) {
   const intl = useIntl();
   const containerRef = useRef<HTMLDivElement>(null);
-  const { jurisdiction, locale } = state;
+  const { jurisdiction } = state;
   const meta = jurisdictionMeta(jurisdiction);
-  const corpus = corpusFor(jurisdiction, locale);
+  const corpus = useCorpus();
+  const edition = editionOf(corpus);
+  const instrument = instrumentOf(corpus);
 
   // identifiers never render raw in learner-facing copy (REQ-LANG-2): the
   // jurisdiction reaches prose as its catalog label, not as `us/inland`
@@ -68,15 +86,6 @@ export function Rules({
     id: `jurisdiction.short.${jurisdiction}`,
     defaultMessage: jurisdictionName,
   });
-
-  const sourcesOf = (paths: string[]) => {
-    const byId = new Map<string, ReturnType<typeof corpusFor>>();
-    for (const p of paths) {
-      const t = textFor(jurisdiction, p, locale);
-      if (t) byId.set(t.corpus.id, t.corpus);
-    }
-    return [...byId.values()];
-  };
 
   const skeleton = useMemo(() => resolveSkeleton(jurisdiction), [jurisdiction]);
   const restated = useMemo(
@@ -123,6 +132,13 @@ export function Rules({
     return m;
   }, [jurisdiction]);
 
+  // a corpus's recorded gaps for paths the skeleton does not carry; a gap
+  // on a skeleton path is already reported inline, beside the paragraph
+  const looseGaps = useMemo(
+    () => gapsFor(corpus).filter((g) => !skeleton[g.path]),
+    [corpus, skeleton],
+  );
+
   useEffect(() => {
     if (state.rulePath && containerRef.current) {
       const el = containerRef.current.querySelector(
@@ -141,11 +157,9 @@ export function Rules({
         <p className="elim">
           <FormattedMessage id="rules.subtitle" />
         </p>
-        {jurisdiction === BASE_JURISDICTION && (
-          <p className="corpus-line">
-            <FormattedMessage id="rules.corpusNote" />
-          </p>
-        )}
+        <p className="corpus-line">
+          <FormattedMessage id="rules.corpusNote" />
+        </p>
         <p className="corpus-line">
           <FormattedMessage
             id="rules.instrument"
@@ -156,6 +170,40 @@ export function Rules({
             }}
           />
         </p>
+      </div>
+
+      <div className="panel">
+        <h3>
+          <FormattedMessage id="corpus.switcher.title" />
+        </h3>
+        <CorpusSwitcher
+          corpusId={corpus.id}
+          jurisdiction={jurisdiction}
+          onPick={(id) => patch({ corpus: id })}
+        />
+        <p className="picker-note">
+          <FormattedMessage id="corpus.switcher.note" />
+        </p>
+        <p className="corpus-line">
+          <CorpusLine corpus={corpus} link /> ·{' '}
+          <FormattedMessage
+            id="corpus.retrieved"
+            values={{ retrieved: corpus.source.retrieved ?? '—' }}
+          />
+        </p>
+        <p className="corpus-line">
+          <FormattedMessage
+            id="corpus.rights"
+            values={{
+              text: corpus.rights.source_text,
+              basis: corpus.rights.redistribution_basis,
+            }}
+          />
+        </p>
+        {corpus.rights.attribution && (
+          <p className="corpus-line">{corpus.rights.attribution}</p>
+        )}
+        {corpus.note && <p className="corpus-line">{corpus.note}</p>}
       </div>
 
       {jurisdiction !== BASE_JURISDICTION && (
@@ -211,7 +259,6 @@ export function Rules({
         </div>
       )}
 
-      {jurisdiction === BASE_JURISDICTION && (
       <div className="panel">
         <h3>
           <FormattedMessage id="rules.amendment.title" />
@@ -219,23 +266,36 @@ export function Rules({
         <p className="elim">
           <FormattedMessage
             id="rules.amendment.p1"
-            values={{ retrieved: corpus.source.retrieved ?? '—' }}
+            values={{
+              instrument: instrument ?? corpus.edition,
+              edition: corpus.edition,
+              amended: edition?.amended_through ?? '—',
+              inForce: edition?.in_force ?? '—',
+              corpus: corpusHandle(corpus),
+              status: intl.formatMessage({
+                id: `corpus.editionStatus.${corpus.edition_status}`,
+              }),
+            }}
           />
         </p>
-        <p className="elim">
-          <FormattedMessage id="rules.amendment.p2" />
-        </p>
-        <p className="elim">
-          <a
-            href="https://github.com/mark-brannan/colregs/blob/main/docs/verification/2026-08-30-q6-q8.md"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <FormattedMessage id="rules.amendment.link" />
-          </a>
-        </p>
+        {edition?.note && <p className="corpus-line">{edition.note}</p>}
+        {jurisdiction === BASE_JURISDICTION && (
+          <>
+            <p className="elim">
+              <FormattedMessage id="rules.amendment.p2" />
+            </p>
+            <p className="elim">
+              <a
+                href="https://github.com/mark-brannan/colregs/blob/main/docs/verification/2026-08-30-q6-q8.md"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <FormattedMessage id="rules.amendment.link" />
+              </a>
+            </p>
+          </>
+        )}
       </div>
-      )}
 
       <div className="panel">
         <h3>
@@ -258,14 +318,27 @@ export function Rules({
 
       {byRule.map(([rule, paths]) => {
         const entries = entriesForRule(rule, jurisdiction);
-        const ruleTitle = ruleTitleFor(jurisdiction, paths, locale);
+        const spelled = paths.filter((p) => skeleton[p]);
+        const resolved = resolveParagraphs(jurisdiction, spelled, corpus.id);
+        const byPath = new Map(resolved.items.map((r) => [r.path, r]));
+        const ruleTitle = ruleTitleFor(jurisdiction, spelled, corpus.id);
         const ruleImages = [...(imagesByRule.get(rule) ?? [])];
+        // every corpus a paragraph of this rule was read from, in order
+        const sources = new Map<string, Corpus>();
+        for (const r of resolved.items) {
+          if (r.shown) sources.set(r.shown.corpus.id, r.shown.corpus);
+        }
         return (
           <div className="panel" key={rule} id={`rule-${rule}`}>
             <h3>
               Rule {rule}
               {ruleTitle ? ` — ${ruleTitle}` : ''}
             </h3>
+            <MixedNote
+              fallbackCount={resolved.fallbackCount}
+              total={resolved.items.length}
+              fallbackCorpus={resolved.fallbackCorpus}
+            />
             {entries.length > 0 && (
               <div className="chips">
                 {entries.map((e) => {
@@ -291,7 +364,8 @@ export function Rules({
             )}
             {paths.map((p) => {
               const why = voided.get(p);
-              if (why && !skeleton[p]) {
+              const r = byPath.get(p);
+              if (!r) {
                 return (
                   <div key={p} data-path={p} className="rule-text">
                     <strong>{p}</strong>{' '}
@@ -302,55 +376,54 @@ export function Rules({
                   </div>
                 );
               }
-              const resolved = textFor(jurisdiction, p, locale);
               const selected = state.rulePath === p;
               return (
                 <div
                   key={p}
                   data-path={p}
-                  className="rule-text"
                   style={
-                    selected ? { borderLeftColor: 'var(--green)' } : undefined
+                    selected
+                      ? { borderLeft: '2px solid var(--green)', paddingLeft: 6 }
+                      : undefined
                   }
                 >
-                  <a
-                    href={serialize({ ...state, mode: 'rules', rulePath: p })}
-                    onClick={(ev) => {
-                      ev.preventDefault();
-                      patch({ rulePath: p });
-                    }}
-                    style={{ textDecoration: 'none' }}
-                  >
-                    <strong>{p}</strong>
-                  </a>{' '}
-                  {restated.has(p) && (
-                    <span className="badge">
-                      <FormattedMessage
-                        id={
-                          isJurisdictionOnly(jurisdiction, p)
-                            ? 'rules.only'
-                            : 'rules.restated'
-                        }
-                        values={{ jurisdiction: jurisdictionShort }}
-                      />
-                    </span>
-                  )}{' '}
-                  {resolved ? (
-                    resolved.text
-                  ) : (
-                    <FormattedMessage
-                      id="rules.gap"
-                      values={{
-                        path: p,
-                        reason: 'not present in the corpus',
-                      }}
-                    />
-                  )}
+                  <Paragraph
+                    r={r}
+                    label={
+                      <>
+                        <a
+                          href={serialize({ ...state, mode: 'rules', rulePath: p })}
+                          onClick={(ev) => {
+                            ev.preventDefault();
+                            patch({ rulePath: p });
+                          }}
+                          style={{ textDecoration: 'none' }}
+                        >
+                          <strong>{p}</strong>
+                        </a>
+                        {restated.has(p) && (
+                          <>
+                            {' '}
+                            <span className="badge">
+                              <FormattedMessage
+                                id={
+                                  isJurisdictionOnly(jurisdiction, p)
+                                    ? 'rules.only'
+                                    : 'rules.restated'
+                                }
+                                values={{ jurisdiction: jurisdictionShort }}
+                              />
+                            </span>
+                          </>
+                        )}
+                      </>
+                    }
+                  />
                   {why && <p className="corpus-line">{why}</p>}
                 </div>
               );
             })}
-            {gapsFor(jurisdiction, locale)
+            {looseGaps
               .filter((g) => ruleOf(g.path) === rule)
               .map((g) => (
                 <p key={g.path} className="corpus-line">
@@ -360,12 +433,9 @@ export function Rules({
                   />
                 </p>
               ))}
-            {sourcesOf(paths).map((c) => (
+            {[...sources.values()].map((c) => (
               <p className="corpus-line" key={c.id}>
-                {c.source.publisher} ({c.tier}, {c.language}) —{' '}
-                <a href={c.source.url} target="_blank" rel="noreferrer">
-                  {new URL(c.source.url).hostname}
-                </a>
+                <CorpusLine corpus={c} link /> — {c.source.publisher}
               </p>
             ))}
             {ruleImages.length > 0 && (

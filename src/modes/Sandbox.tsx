@@ -8,7 +8,9 @@ import type { Patch } from '../App';
 import { FactControls } from '../components/FactControls';
 import { RuleParagraphs } from '../components/RuleParagraphs';
 import { applicability, colregsVersion, lights } from '../data/colregs';
-import { corpusFor } from '../data/corpusText';
+import { paragraphsForCite } from '../data/cites';
+import { corpusHandle, resolveParagraphs } from '../data/corpusText';
+import { useCorpus, useCorpusId } from '../state/corpusContext';
 import { evaluateDisplayIn } from '../engine/evaluate';
 import type { Display, Entry, DisplayEvaluation } from '../engine/types';
 import { BearingView, PlanView, ProfileView, selectHull } from 'nav-wright';
@@ -233,7 +235,18 @@ function EntryRow({
     /^modality:/,
     '',
   );
-  const corpus = corpusFor(entry.jurisdiction, state.locale);
+  // the badge names the corpus that actually supplies this entry's text —
+  // inherited or fallen back — not merely the one the reader picked, which
+  // may carry none of it yet (REQ-LANG-3, REQ-LANG-7)
+  const corpusId = useCorpusId();
+  const { items } = resolveParagraphs(
+    state.jurisdiction,
+    paragraphsForCite(entry.cite, state.jurisdiction),
+    corpusId,
+  );
+  const sources = new Map(
+    items.flatMap((r) => (r.shown ? [[r.shown.corpus.id, r.shown.corpus]] : [])),
+  );
   return (
     <div className="entry">
       <div className="entry-head">
@@ -242,21 +255,19 @@ function EntryRow({
         <span className={`badge ${modality}`}>
           {intl.formatMessage({ id: `modality.${modality}` })}
         </span>
-        <span className="badge tier">
-          {corpus.source.publisher} ·{' '}
-          {intl.formatMessage({ id: `corpus.tier.${corpus.tier}` })} ·{' '}
-          {corpus.language}
-        </span>
+        {[...sources.values()].map((corpus) => (
+          <span className="badge tier" key={corpus.id}>
+            {corpusHandle(corpus)} ·{' '}
+            {intl.formatMessage({ id: `corpus.tier.${corpus.tier}` })} ·{' '}
+            {corpus.language}
+          </span>
+        ))}
       </div>
       <details>
         <summary>
           <FormattedMessage id="sandbox.rules.showText" />
         </summary>
-        <RuleParagraphs
-          cite={entry.cite}
-          jurisdiction={state.jurisdiction}
-          locale={state.locale}
-        />
+        <RuleParagraphs cite={entry.cite} jurisdiction={state.jurisdiction} />
         {(entry.images ?? []).map((img) => (
           <img
             key={img}
@@ -281,6 +292,7 @@ function DataDrawer({
   patch: (p: Patch) => void;
 }) {
   const applied = evaln.applied.map((id) => entryById.get(id));
+  const corpus = useCorpus();
   return (
     <div className="panel drawer">
       <details
@@ -301,10 +313,9 @@ function DataDrawer({
             values={{
               version: colregsVersion,
               jurisdiction: state.jurisdiction,
-              corpus: corpusFor(state.jurisdiction, state.locale).source
-                .publisher,
-              tier: corpusFor(state.jurisdiction, state.locale).tier,
-              language: corpusFor(state.jurisdiction, state.locale).language,
+              corpus: `${corpusHandle(corpus)} ${corpus.edition}`,
+              tier: corpus.tier,
+              language: corpus.language,
             }}
           />
         </p>

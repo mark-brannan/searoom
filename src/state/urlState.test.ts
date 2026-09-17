@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { evaluateDisplay } from 'colregs-engine';
-import { DEFAULT_FACTS, DEFAULT_STATE, deserialize, serialize } from './urlState';
+import {
+  DEFAULT_FACTS,
+  DEFAULT_STATE,
+  defaultCorpusFor,
+  deserialize,
+  serialize,
+} from './urlState';
 import type { AppState } from './urlState';
 
 describe('URL state round-trip', () => {
@@ -27,10 +33,26 @@ describe('URL state round-trip', () => {
       additionsOn: ['26b-mast'],
       signpost: 'eu-cevni',
       locale: 'fi',
+      corpus: 'intl@2016.es.boe',
       hullHint: false,
       drawer: true,
     };
     expect(deserialize(serialize(state))).toEqual(state);
+  });
+
+  it('drops a corpus id the package does not ship', () => {
+    const s = deserialize('#/rules?cp=intl@2016.xx.nowhere');
+    expect(s.corpus).toBe(DEFAULT_STATE.corpus);
+  });
+
+  it('scopes the corpus to the jurisdiction: a foreign id is dropped, the default omitted', () => {
+    const s = deserialize('#/rules?j=us%2Finland&cp=intl@2016.es.boe');
+    expect(s.jurisdiction).toBe('us/inland');
+    expect(s.corpus).toBe(defaultCorpusFor('us/inland'));
+    expect(s.corpus).not.toBe(DEFAULT_STATE.corpus);
+    const url = serialize({ ...DEFAULT_STATE, jurisdiction: 'us/inland' });
+    expect(url).not.toContain('cp=');
+    expect(deserialize(url).corpus).toBe(defaultCorpusFor('us/inland'));
   });
 
   it('deep-links a rules paragraph', () => {

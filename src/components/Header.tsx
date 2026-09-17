@@ -2,6 +2,7 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
 import { JURISDICTIONS } from '../data/jurisdictions';
 import type { AppState, Mode } from '../state/urlState';
+import { useCorpus } from '../state/corpusContext';
 
 const MODES: Mode[] = ['sandbox', 'identify', 'quiz', 'rules', 'sound'];
 
@@ -15,6 +16,7 @@ export function Header({
   setMode: (m: Mode) => void;
 }) {
   const intl = useIntl();
+  const corpus = useCorpus();
   return (
     <header className="header-wrap">
       <div className="header">
@@ -57,6 +59,8 @@ export function Header({
             <FormattedMessage id="locale.title" />
             {': '}
             {state.locale === 'fi' ? 'FI' : 'EN'}
+            {' · '}
+            <FormattedMessage id="header.text" values={{ language: corpus.language }} />
           </button>
         </div>
       </div>

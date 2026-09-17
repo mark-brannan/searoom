@@ -3,7 +3,12 @@ import { FormattedMessage, IntlProvider } from 'react-intl';
 import en from './i18n/en.json';
 import fi from './i18n/fi.json';
 import type { AppState, Mode } from './state/urlState';
-import { DEFAULT_STATE, deserialize, serialize } from './state/urlState';
+import {
+  DEFAULT_STATE,
+  defaultCorpusFor,
+  deserialize,
+  serialize,
+} from './state/urlState';
 import { Header } from './components/Header';
 import { SignpostPanel } from './components/SignpostPanel';
 import { Sandbox } from './modes/Sandbox';
@@ -12,6 +17,8 @@ import { Quiz } from './modes/Quiz';
 import { Rules } from './modes/Rules';
 import { Sound } from './modes/Sound';
 import { colregsVersion } from './data/colregs';
+import { corpusIn } from './data/corpusText';
+import { CorpusContext } from './state/corpusContext';
 
 const catalogs: Record<string, Record<string, string>> = {
   en: en as Record<string, string>,
@@ -48,7 +55,19 @@ export function App() {
   }, [state]);
 
   const patch = useCallback((p: Patch) => {
-    setState((s) => ({ ...s, ...p }));
+    setState((s) => {
+      const next = { ...s, ...p };
+      // the corpus belongs to the jurisdiction in view: switching jurisdiction
+      // re-picks that jurisdiction's reference corpus unless the patch names one
+      if (
+        p.jurisdiction !== undefined &&
+        p.jurisdiction !== s.jurisdiction &&
+        p.corpus === undefined
+      ) {
+        next.corpus = defaultCorpusFor(p.jurisdiction);
+      }
+      return next;
+    });
   }, []);
 
   const setMode = useCallback(
@@ -81,6 +100,9 @@ export function App() {
 
   return (
     <IntlProvider locale={locale} messages={messages} defaultLocale="en">
+      <CorpusContext.Provider
+        value={corpusIn(state.jurisdiction, state.corpus).id}
+      >
       <div className="app">
         <Header state={state} patch={patch} setMode={setMode} />
         {locale === 'fi' && (
@@ -111,10 +133,14 @@ export function App() {
             onClose={() => patch({ signpost: null })}
             locale={state.locale}
             onLocale={(l) => patch({ locale: l })}
+            jurisdiction={state.jurisdiction}
+            corpus={state.corpus}
+            onCorpus={(c) => patch({ corpus: c })}
             onOpen={(id) => patch({ signpost: id })}
           />
         )}
       </div>
+      </CorpusContext.Provider>
     </IntlProvider>
   );
 }

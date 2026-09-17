@@ -277,24 +277,35 @@ Mirrors colregs ADR 0003 exactly. Two string planes, never mixed:
   never translated app-side. Each render shows its corpus's tier and source
   beside the modality badge.
 
-**What exists today: exactly one corpus**, and the app should say so. The
-shipped English is the **USCG amalgamated rendition — `national` tier,
+**What exists today: three corpora for `intl` and one for `us/inland`**,
+read from colregs `data/corpora.json` and the files under `data/text/` (ADR
+0013: one file per edition × language × source, the edition declared in
+`data/editions.json`). A corpus belongs to one jurisdiction's edition, so the
+switcher offers the corpora of the jurisdiction in view and a jurisdiction
+switch re-picks that jurisdiction's reference corpus (`cp=` in the URL is
+scoped to `j=`). A delta jurisdiction restates only the paths whose text
+differs (ADR 0020), so an inherited path reads from the base corpus in the
+same language and is labelled inherited — that is not a fallback.
+The reference corpus is the **USCG amalgamated rendition — `national` tier,
 `en-US`**, not the authentic treaty English ("maneuver" where the authentic
-text reads "manoeuvre"). It also carries four known transcription defects
-against its own declared source (21(a), 21(b), 23(b), 29(b) — colregs issue
-[#6](https://github.com/mark-brannan/colregs/issues/6), open). Surfacing
-both facts is itself the teaching point.
+text reads "manoeuvre"); it carried four transcription defects against its
+own declared source (21(a), 21(b), 23(b), 29(b) — colregs issue
+[#6](https://github.com/mark-brannan/colregs/issues/6), closed). Surfacing
+that is itself the teaching point. The Spanish (BOE) and Finnish (Finlex)
+corpora are live with their licences verified; a paragraph that either corpus
+lacks falls back to the reference corpus, labelled (REQ-LANG-7).
 
 The locale picker joins the signposted-breadth pattern, and each entry
 carries its **tier** (REQ-LANG-3) and its **named blocker**:
 
 | Corpus | Tier | Status |
 |---|---|---|
-| `en-US` / USCG | `national` | **Live.** The only corpus. Four transcription defects open (#6). |
-| `en` / UNTS original | `authentic` | Article IX verified 2026-08-30: English and French are equally authentic. Addable beside the USCG text; not yet scheduled. |
-| `fr` / UNTS | `authentic` | Front of the queue with Finnish (ADR 0003 step 3). Blocked on Q-7 — the UNTS deposit's reproduction terms are unchecked. |
-| `fi` / Finlex | `national` | ADR 0003's other front-runner, chosen for SignalK's heavily Finnish contributor base. Blocked on Q-7 (Finlex terms). |
-| `es` / BOE-or-deposit | `official` | Deposited official translation, verified against Article IX. Source is the problem, not the text: IMO's consolidated editions are **sold publications and probably not reproducible**; a national gazette is the likely lawful route. Q-7. |
+| `en-US` / USCG | `national` | **Live.** The reference corpus every other `intl` corpus falls back to, and the base every inherited path reads from. |
+| `en-US` / eCFR (`us/inland`) | `national` | **Live, empty.** The Inland corpus ships with no paragraphs yet; its restated paths say so, its inherited paths read USCG. |
+| `es` / BOE | `national` (per `corpora.json`) | **Live.** Licence verified 2026-09-09 under the BOE aviso legal, with attribution. |
+| `fi` / Finlex | `national` | **Live.** Licence verified 2026-09-12 (Tekijänoikeuslaki 404/1961 §9; Finlex open data CC BY 4.0). Transcription tracked in colregs #98; untranscribed paragraphs fall back, labelled. |
+| `en` / UNTS original | `authentic` | Article IX verified 2026-08-30: English and French are equally authentic. **Blocked:** the UNTS deposit's reproduction terms were checked (colregs #81) and do not permit redistribution. |
+| `fr` / UNTS | `authentic` | **Blocked** on the same UNTS terms (colregs #81). |
 | `ru` | `official` | Same as `es`. An IMO Russian edition is catalogued (ISBN 9789280141078) — and catalogued means *for sale*. Q-7. |
 | `zh` | `official` | Mechanism verified (IMO's six official languages); Chinese edition catalogued (ISBN 9789280160512). Q-7. |
 | `ar` | `official` | Mechanism verified; the Arabic edition is **the one sub-claim colregs flags as not confirmed to the same standard** — its product page returned 403 to the verification pass. Q-7, and a verification gap besides. |
