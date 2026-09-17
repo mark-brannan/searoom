@@ -19,7 +19,8 @@ import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import { evaluateDisplay } from 'colregs-engine';
 import type { FactRecord } from '../engine/types';
-import { allHulls, PX, PZ, placeLights } from 'nav-wright';
+import { allHulls, PX, PZ } from 'nav-wright';
+import { placeLights } from './navWright';
 import type { Hull } from 'nav-wright';
 import { lights } from '../data/colregs';
 // Not on nav-wright's export map, per hullRegistration.test.ts.

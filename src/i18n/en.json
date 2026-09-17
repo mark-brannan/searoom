@@ -255,5 +255,16 @@
   "night.identity": "Night — the subject, not a theme",
   "signpost.status.ranked.corpus": "Signposted — licence unchecked",
   "signpost.status.not-scoped.corpus": "Not yet scoped",
-  "signpost.status.live.corpus": "Live"
+  "signpost.status.live.corpus": "Live",
+  "jurisdiction.label": "Jurisdiction",
+  "jurisdiction.intl": "International (COLREGS 72)",
+  "jurisdiction.us/inland": "US Inland (33 CFR 83)",
+  "rules.instrument": "{instrument} — edition {edition}, amended through {amendedThrough}.",
+  "rules.differs.title": "How {jurisdiction} differs",
+  "rules.differs.p1": "{instrument} restates {restated} paragraph paths of the International Regulations and voids {voided}. Every path not listed below is inherited word for word: the delta is the difference, not a separate rule book.",
+  "rules.differs.link": "colregs ADR 0020 — the skeleton is a delta",
+  "rules.restated": "reads differently under {jurisdiction}",
+  "rules.only": "{jurisdiction} only",
+  "rules.voided": "no counterpart here",
+  "modality.shall-not-impede": "shall not impede"
 }

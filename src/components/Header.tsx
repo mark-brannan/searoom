@@ -1,5 +1,6 @@
 import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
+import { JURISDICTIONS } from '../data/jurisdictions';
 import type { AppState, Mode } from '../state/urlState';
 
 const MODES: Mode[] = ['sandbox', 'identify', 'quiz', 'rules', 'sound'];
@@ -29,6 +30,25 @@ export function Header({
           <FormattedMessage id="app.tagline" />
         </span>
         <div className="header-actions">
+          <label className="jurisdiction-picker">
+            <span className="sr-only">
+              <FormattedMessage id="jurisdiction.label" />
+            </span>
+            <select
+              value={state.jurisdiction}
+              onChange={(e) => patch({ jurisdiction: e.target.value })}
+              aria-label={intl.formatMessage({ id: 'jurisdiction.label' })}
+            >
+              {JURISDICTIONS.map((j) => (
+                <option key={j.id} value={j.id}>
+                  {intl.formatMessage({
+                    id: j.labelKey,
+                    defaultMessage: j.id,
+                  })}
+                </option>
+              ))}
+            </select>
+          </label>
           <button
             className="mode-tab"
             onClick={() => patch({ signpost: 'locale-picker' })}

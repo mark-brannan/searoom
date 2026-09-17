@@ -415,7 +415,10 @@ export function FactControls({
           aria-haspopup="dialog"
         >
           <span className="grow label">
-            <FormattedMessage id="sp.intl.label" />
+            <FormattedMessage
+              id={`jurisdiction.${state.jurisdiction}`}
+              defaultMessage={state.jurisdiction}
+            />
           </span>
           <span className="status-chip status-live" style={{ margin: 0 }}>
             <FormattedMessage id="signpost.status.live" />

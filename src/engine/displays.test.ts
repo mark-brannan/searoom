@@ -3,8 +3,16 @@
 // names as its acceptance bar.
 
 import { describe, expect, it } from 'vitest';
-import { evaluateDisplay } from 'colregs-engine';
-import type { FactRecord } from './types';
+import { BASE_JURISDICTION } from '../data/jurisdictions';
+import { evaluateDisplayIn } from './evaluate';
+import type { DisplayEvaluation, FactRecord } from './types';
+
+// Composition is asserted at the base. The engine has no jurisdiction
+// parameter, so calling it directly would mix every jurisdiction's entries
+// into one answer — an 11 m power boat picks up Inland's rule:23d beside
+// intl's rule:23d_i. Going through the seam is what keeps the two apart.
+const evaluateDisplay = (facts: FactRecord): DisplayEvaluation =>
+  evaluateDisplayIn(BASE_JURISDICTION, facts);
 
 const sloop12: FactRecord = {
   'fact:propulsion': 'propulsion:sail',
@@ -22,15 +30,15 @@ function displayEntrySets(facts: FactRecord): string[][] {
 describe('lawful display composition', () => {
   it('12 m sloop under sail: exactly three lawful displays', () => {
     expect(displayEntrySets(sloop12)).toEqual([
-      ['25a'],
-      ['25a', '25c'],
-      ['25b'],
+      ['rule:25a'],
+      ['rule:25a', 'rule:25c'],
+      ['rule:25b'],
     ]);
   });
 
   it('tricolor and red-over-green never co-occur (rel:excludes)', () => {
     for (const d of evaluateDisplay(sloop12).displays) {
-      expect(d.entries.includes('25b') && d.entries.includes('25c')).toBe(
+      expect(d.entries.includes('rule:25b') && d.entries.includes('rule:25c')).toBe(
         false,
       );
     }
@@ -43,8 +51,8 @@ describe('lawful display composition', () => {
       'fact:position': 'position:underway',
       'fact:length_m': 49,
     });
-    expect(below.optionalAdditions.map((a) => a.id)).toContain('23a2');
-    expect(below.modalities['23a2']).toBe('may');
+    expect(below.optionalAdditions.map((a) => a.id)).toContain('rule:23a_ii');
+    expect(below.modalities['rule:23a_ii']).toBe('modality:may');
 
     const above = evaluateDisplay({
       'fact:propulsion': 'propulsion:power',
@@ -52,9 +60,9 @@ describe('lawful display composition', () => {
       'fact:position': 'position:underway',
       'fact:length_m': 55,
     });
-    expect(above.modalities['23a2']).toBe('shall');
+    expect(above.modalities['rule:23a_ii']).toBe('modality:shall');
     for (const d of above.displays) {
-      expect(d.entries).toContain('23a2');
+      expect(d.entries).toContain('rule:23a_ii');
     }
   });
 
@@ -91,8 +99,8 @@ describe('lawful display composition', () => {
       'fact:length_m': 11,
     });
     const sets = e.displays.map((d) => d.entries.join(','));
-    expect(sets).toContain('23a1,23a34');
-    expect(sets).toContain('23d1');
+    expect(sets).toContain('rule:23a_i,rule:23a_iii_iv');
+    expect(sets).toContain('rule:23d_i');
     expect(e.displays).toHaveLength(2);
   });
 
@@ -106,7 +114,7 @@ describe('lawful display composition', () => {
     expect(e.displays).toHaveLength(3);
     const torchOnly = e.displays.find((d) => d.chosen.length === 0)!;
     expect(torchOnly.lights.map((l) => l.spec.light)).toEqual(['light:torch']);
-    const viaA = e.displays.find((d) => d.chosen.includes('25a'))!;
+    const viaA = e.displays.find((d) => d.chosen.includes('rule:25a'))!;
     expect(viaA.lights.map((l) => l.spec.light)).not.toContain('light:torch');
   });
 
@@ -119,9 +127,9 @@ describe('lawful display composition', () => {
     });
     expect(e.displays).toHaveLength(2);
     for (const d of e.displays) {
-      expect(d.entries).toContain('30d-red');
+      expect(d.entries).toContain('rule:30d_i');
       expect(
-        d.entries.includes('30a') !== d.entries.includes('30b'),
+        d.entries.includes('rule:30a') !== d.entries.includes('rule:30b'),
       ).toBe(true);
     }
   });
@@ -134,7 +142,7 @@ describe('lawful display composition', () => {
       'fact:length_m': 60,
     });
     expect(e.displays).toHaveLength(1);
-    expect(e.displays[0].entries).toContain('30a');
+    expect(e.displays[0].entries).toContain('rule:30a');
   });
 
   it('trawler at anchor: Rule 30 anchor lights overridden by 26(a)', () => {
@@ -144,10 +152,10 @@ describe('lawful display composition', () => {
       'fact:position': 'position:anchored',
       'fact:length_m': 30,
     });
-    expect(e.overridden.map((x) => x.id).sort()).toEqual(['30a', '30b']);
+    expect(e.overridden.map((x) => x.id).sort()).toEqual(['rule:30a', 'rule:30b']);
     for (const d of e.displays) {
-      expect(d.entries).not.toContain('30a');
-      expect(d.entries).not.toContain('30b');
+      expect(d.entries).not.toContain('rule:30a');
+      expect(d.entries).not.toContain('rule:30b');
     }
   });
 
@@ -159,7 +167,7 @@ describe('lawful display composition', () => {
       'fact:length_m': 6,
       'fact:near_channel': false,
     });
-    expect(e.exempted.map((x) => x.id).sort()).toEqual(['30a', '30b']);
+    expect(e.exempted.map((x) => x.id).sort()).toEqual(['rule:30a', 'rule:30b']);
     expect(e.displays).toHaveLength(1);
     expect(e.displays[0].lights).toHaveLength(0);
   });
@@ -172,10 +180,10 @@ describe('lawful display composition', () => {
       'fact:length_m': 60,
     });
     for (const d of e.displays) {
-      expect(d.entries).not.toContain('23a1');
-      expect(d.entries).not.toContain('23a34');
-      expect(d.entries).toContain('27f');
-      expect(d.entries).toContain('30a');
+      expect(d.entries).not.toContain('rule:23a_i');
+      expect(d.entries).not.toContain('rule:23a_iii_iv');
+      expect(d.entries).toContain('rule:27f');
+      expect(d.entries).toContain('rule:30a');
     }
   });
 
@@ -188,9 +196,9 @@ describe('lawful display composition', () => {
     });
     expect(e.displays).toHaveLength(1);
     const ids = e.displays[0].entries;
-    expect(ids).toContain('29a');
-    expect(ids).toContain('23a34');
-    expect(ids).not.toContain('23a1');
+    expect(ids).toContain('rule:29a');
+    expect(ids).toContain('rule:23a_iii_iv');
+    expect(ids).not.toContain('rule:23a_i');
   });
 
   it('constrained by draught: Rule 23 lights required, three reds optional', () => {
@@ -200,10 +208,10 @@ describe('lawful display composition', () => {
       'fact:position': 'position:underway',
       'fact:length_m': 200,
     });
-    expect(e.displays.some((d) => d.entries.includes('23a1'))).toBe(true);
-    expect(e.optionalAdditions.map((a) => a.id)).toContain('28');
+    expect(e.displays.some((d) => d.entries.includes('rule:23a_i'))).toBe(true);
+    expect(e.optionalAdditions.map((a) => a.id)).toContain('rule:28');
     // at 200 m the second masthead import resolves to shall
-    for (const d of e.displays) expect(d.entries).toContain('23a2');
+    for (const d of e.displays) expect(d.entries).toContain('rule:23a_ii');
   });
 
   it('towing, tow 300 m: three mastheads in lieu, towing light over stern', () => {

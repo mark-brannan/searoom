@@ -5,13 +5,21 @@
 // test's adjacency structure as a distractor generator.
 
 import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
-import { applicability, lights } from '../data/colregs';
-import { evaluateDisplay } from 'colregs-engine';
+import { lights } from '../data/colregs';
+import { BASE_JURISDICTION, resolveEntries } from '../data/jurisdictions';
+import { evaluateDisplayIn } from './evaluate';
 import type { Display, FactRecord } from './types';
-import { bearingInArc, placeLights, selectHull } from 'nav-wright';
+import { bearingInArc, selectHull } from 'nav-wright';
+import { placeLights } from '../render/navWright';
 
 const fixtures = fixturesJson as unknown as {
-  cases: { name: string; facts: FactRecord; expect: string[] }[];
+  jurisdiction: string;
+  cases: {
+    name: string;
+    facts: FactRecord;
+    expect: string[];
+    jurisdiction?: string;
+  }[];
 };
 
 /** deterministic PRNG so a quiz run is reproducible */
@@ -159,26 +167,41 @@ export interface ReverseQuestion {
 
 export type QuizQuestion = ForwardQuestion | ReverseQuestion;
 
-function citeOf(facts: FactRecord, d: Display): string {
-  const byId = new Map(applicability.entries.map((e) => [e.id, e]));
-  void facts;
+function citeOf(jurisdiction: string, d: Display): string {
+  const byId = new Map(resolveEntries(jurisdiction).map((e) => [e.id, e]));
   return d.entries
     .map((id) => byId.get(id)?.cite)
     .filter(Boolean)
     .join(', ');
 }
 
-/** fixture cases that make good scenarios (skip pure boundary probes) */
-const scenarioPool = fixtures.cases.filter(
-  (c) => !c.name.includes('boundary'),
-);
+/**
+ * Fixture cases that make good scenarios under one jurisdiction: the base's,
+ * whose fact records are equally valid questions under a delta, plus the
+ * ones pinned to this jurisdiction. A case pinned to a *third* jurisdiction
+ * is left out — its facts may sit outside this rule set's vocabulary. Pure
+ * boundary probes make dull questions.
+ */
+export function scenarioPoolFor(jurisdiction: string) {
+  return fixtures.cases.filter((c) => {
+    const own = c.jurisdiction ?? fixtures.jurisdiction;
+    return (
+      !c.name.includes('boundary') &&
+      (own === jurisdiction || own === BASE_JURISDICTION)
+    );
+  });
+}
 
-export function makeForward(seed: number): ForwardQuestion {
+export function makeForward(
+  seed: number,
+  jurisdiction: string = BASE_JURISDICTION,
+): ForwardQuestion {
   const rng = mulberry32(seed);
+  const scenarioPool = scenarioPoolFor(jurisdiction);
   for (let attempt = 0; attempt < 40; attempt++) {
     const fixture =
       scenarioPool[Math.floor(rng() * scenarioPool.length)];
-    const evaln = evaluateDisplay(fixture.facts);
+    const evaln = evaluateDisplayIn(jurisdiction, fixture.facts);
     if (evaln.displays.length === 0 || evaln.displays[0].lights.length === 0)
       continue;
     const correct =
@@ -189,7 +212,7 @@ export function makeForward(seed: number): ForwardQuestion {
     const distractors: { display: Display; facts: FactRecord }[] = [];
     const seen = new Set<string>();
     for (const miss of nearMisses(fixture.facts)) {
-      const missEval = evaluateDisplay(miss);
+      const missEval = evaluateDisplayIn(jurisdiction, miss);
       for (const d of missEval.displays) {
         if (d.lights.length === 0) continue;
         const sig = displaySignature(miss, d);
@@ -217,7 +240,7 @@ export function makeForward(seed: number): ForwardQuestion {
       distractors,
       options,
       answerIndex,
-      cite: citeOf(fixture.facts, correct),
+      cite: citeOf(jurisdiction, correct),
     };
   }
   throw new Error('could not generate a forward question');
@@ -225,12 +248,16 @@ export function makeForward(seed: number): ForwardQuestion {
 
 const THETAS = [0, 20, 45, 90, 135, 180, 225, 270, 315, 340];
 
-export function makeReverse(seed: number): ReverseQuestion {
+export function makeReverse(
+  seed: number,
+  jurisdiction: string = BASE_JURISDICTION,
+): ReverseQuestion {
   const rng = mulberry32(seed ^ 0x5eed);
+  const scenarioPool = scenarioPoolFor(jurisdiction);
   for (let attempt = 0; attempt < 60; attempt++) {
     const fixture =
       scenarioPool[Math.floor(rng() * scenarioPool.length)];
-    const evaln = evaluateDisplay(fixture.facts);
+    const evaln = evaluateDisplayIn(jurisdiction, fixture.facts);
     if (evaln.displays.length === 0) continue;
     const display =
       evaln.displays[Math.floor(rng() * evaln.displays.length)];
@@ -244,7 +271,7 @@ export function makeReverse(seed: number): ReverseQuestion {
     ];
     for (const miss of nearMisses(fixture.facts)) {
       if (options.length >= 4) break;
-      const missEval = evaluateDisplay(miss);
+      const missEval = evaluateDisplayIn(jurisdiction, miss);
       if (missEval.displays.length === 0) continue;
       const d = missEval.displays[0];
       const missTheta = THETAS[Math.floor(rng() * THETAS.length)];
@@ -267,7 +294,7 @@ export function makeReverse(seed: number): ReverseQuestion {
       theta,
       options,
       answerIndex,
-      cite: citeOf(fixture.facts, display),
+      cite: citeOf(jurisdiction, display),
     };
   }
   throw new Error('could not generate a reverse question');

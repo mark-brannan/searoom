@@ -24,9 +24,11 @@ export function Identify({
   const intl = useIntl();
   const [seen, setSeen] = useState<SeenLight[]>([]);
   const [flashing, setFlashing] = useState(false);
-  void state;
 
-  const candidates = useMemo(() => identifyCandidates(seen), [seen]);
+  const candidates = useMemo(
+    () => identifyCandidates(seen, state.jurisdiction),
+    [seen, state.jurisdiction],
+  );
 
   const aspectsOf = (thetas: number[]): string => {
     const labels = [...new Set(thetas.map(bearingLabel))];
