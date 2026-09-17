@@ -62,6 +62,19 @@ if command -v ss >/dev/null 2>&1 || command -v lsof >/dev/null 2>&1; then
   if kill -0 "$orphan_pid" 2>/dev/null; then r=leaked; else r=killed; fi
   check "recorded pid dead, port held by another process -> orphan actually killed" "$r" killed
   kill "$(cat .claude/preview/pid)" 2>/dev/null
+
+  # port holder ignores SIGTERM: must block loudly, never silently start a
+  # second server on a new port while the old one keeps serving stale content.
+  node -e 'process.on("SIGTERM",()=>{}); require("net").createServer().listen(0,"127.0.0.1",function(){console.log(this.address().port)})' >"$tmp/stubborn.port" &
+  stubborn_pid=$!
+  sleep 1
+  stubborn_port=$(cat "$tmp/stubborn.port")
+  echo 999998 > .claude/preview/pid
+  echo "$stubborn_port" > .claude/preview/port
+  out=$(echo '{}' | sh "$hook")
+  case "$out" in *'"decision":"block"'*"port $stubborn_port"*) r=block ;; *) r="$out" ;; esac
+  check "port holder ignores SIGTERM -> blocks loudly instead of leaking a second server" "$r" block
+  kill -9 "$stubborn_pid" 2>/dev/null
 else
   echo "skip recorded-pid-dead-port-held test: no ss or lsof"
 fi
