@@ -70,6 +70,14 @@ describe('the signal table', () => {
     expect(signalsFor('us/inland')).toEqual([]);
   });
 
+  // The reverse quiz asks "you hear this" and has to name the conditions the
+  // signal is sounded under — in sight for Rule 34, in fog for Rule 35.
+  it('has a reverse-quiz prompt in the catalog for every category', () => {
+    for (const category of new Set(signals.map((s) => s.category))) {
+      expect(catalog[`sound.quiz.reverse.prompt.${category}`]).toBeTruthy();
+    }
+  });
+
   it('groups by rule without splitting a rule in two', () => {
     const rules = signalsByRule('intl').map((g) => g.rule);
     expect(new Set(rules).size).toBe(rules.length);

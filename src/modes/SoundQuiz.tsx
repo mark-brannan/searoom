@@ -113,7 +113,12 @@ export function SoundQuiz({ lengthM }: { lengthM: number }) {
       ) : (
         <>
           <p className="quiz-prompt-line">
-            <FormattedMessage id="sound.quiz.reverse.prompt" />
+            {/* Rule 34's signals are sounded in sight of another vessel and
+                Rule 35's in fog — one prompt for both would contradict the
+                rule it is asking about. */}
+            <FormattedMessage
+              id={`sound.quiz.reverse.prompt.${question.signal.category}`}
+            />
           </p>
           <p>
             <button
