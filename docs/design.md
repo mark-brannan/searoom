@@ -292,7 +292,7 @@ text reads "manoeuvre"); it carried four transcription defects against its
 own declared source (21(a), 21(b), 23(b), 29(b) — colregs issue
 [#6](https://github.com/mark-brannan/colregs/issues/6), closed). Surfacing
 that is itself the teaching point. The Spanish (BOE) and Finnish (Finlex)
-corpora are live with their licences verified; a paragraph either corpus
+corpora are live with their licences verified; a paragraph that either corpus
 lacks falls back to the reference corpus, labelled (REQ-LANG-7).
 
 The locale picker joins the signposted-breadth pattern, and each entry
