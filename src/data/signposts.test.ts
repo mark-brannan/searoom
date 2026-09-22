@@ -14,7 +14,14 @@ import {
 } from './colregsRequirements';
 import { corpora as shippedCorpora } from './corpusText';
 import { JURISDICTION_IDS } from './jurisdictions';
-import { allSignposts, corpora, jurisdictions, parts } from './signposts';
+import {
+  allSignposts,
+  corpora,
+  jurisdictions,
+  parts,
+  supersededBy,
+  type Signpost,
+} from './signposts';
 
 const catalogs = { en, fi } as Record<string, Record<string, string>>;
 
@@ -46,15 +53,53 @@ describe('generated rows track colregs', () => {
   });
 
   it('never signposts a corpus as blocked once colregs ships it', () => {
-    // A candidate corpus with no corpusId is fine to keep listing as
-    // blocked/ranked; one whose corpusId now matches a shipped corpus must
-    // not also appear as a separate non-live row.
-    const shippedIds = new Set(shippedCorpora.map((c) => c.id));
+    // A candidate names a language (and sometimes a source), never a
+    // corpus id, so the filter matches on those: any candidate still listed
+    // must be unmatched by every shipped corpus.
     for (const sp of corpora) {
-      if (sp.corpusId && shippedIds.has(sp.corpusId)) {
-        expect(sp.status).toBe('live');
+      if (sp.status === 'live') continue;
+      for (const shipped of shippedCorpora) {
+        expect(
+          supersededBy(sp, shipped),
+          `${sp.id} is still listed as ${sp.status} but colregs ships ${shipped.id}`,
+        ).toBe(false);
       }
     }
+  });
+
+  it('retires a candidate once colregs ships its language (or its named source)', () => {
+    const candidate = (over: Partial<Signpost>): Signpost => ({
+      id: 'x',
+      kind: 'corpus',
+      status: 'ranked',
+      bodyKeys: [],
+      blockers: [],
+      link: '',
+      ...over,
+    });
+    const shipped = (language: string, source_id: string) =>
+      ({
+        ...shippedCorpora[0],
+        language,
+        source_id,
+      }) as (typeof shippedCorpora)[0];
+    // language-wide candidate: any source in that language retires it
+    expect(
+      supersededBy(candidate({ language: 'ru' }), shipped('ru', 'gost')),
+    ).toBe(true);
+    expect(
+      supersededBy(candidate({ language: 'ru' }), shipped('ru-RU', 'gost')),
+    ).toBe(true);
+    expect(
+      supersededBy(candidate({ language: 'ru' }), shipped('rue', 'x')),
+    ).toBe(false);
+    // source-pinned candidate: only that source retires it — en-US/uscg is
+    // shipped today and must not retire the en/unts row
+    const enUnts = candidate({ language: 'en', sourceId: 'unts' });
+    expect(supersededBy(enUnts, shipped('en-US', 'uscg'))).toBe(false);
+    expect(supersededBy(enUnts, shipped('en', 'unts'))).toBe(true);
+    // no language at all (`community`) is never retired by data
+    expect(supersededBy(candidate({}), shipped('en', 'unts'))).toBe(false);
   });
 
   it('marks day shapes live exactly when the applicability data carries a shapes entry', () => {
@@ -72,7 +117,24 @@ describe('generated rows track colregs', () => {
   });
 });
 
-describe('blockers, checked against colregs\' own list', () => {
+describe('colregs registry reader', () => {
+  // The struck-through detector is what makes a superseded REQ-* fail a
+  // test; nothing cites one today, so pin it against colregs' own doc.
+  it('reads a struck-through REQ-* as settled and a live one as open', () => {
+    expect(knownColregsId('REQ-PART-4')).toBe(true);
+    expect(isSettledInColregs('REQ-PART-4')).toBe(true);
+    expect(isSettledInColregs('REQ-PART-2')).toBe(false);
+  });
+
+  it('reads gates.json status and rejects an id colregs never declared', () => {
+    expect(knownColregsId('GATE-2')).toBe(true);
+    expect(isSettledInColregs('GATE-2')).toBe(true);
+    expect(knownColregsId('Q-999')).toBe(false);
+    expect(knownColregsId('REQ-NOPE-1')).toBe(false);
+  });
+});
+
+describe("blockers, checked against colregs' own list", () => {
   const allBlockers = allSignposts.flatMap((sp) =>
     sp.blockers.map((b) => ({ sp: sp.id, ...b })),
   );
@@ -107,9 +169,14 @@ describe('blockers, checked against colregs\' own list', () => {
   };
 
   it('pins the colregs bullet behind every Q-* blocker in use', () => {
-    const cited = new Set(allBlockers.map((b) => b.id).filter((id) => id.startsWith('Q-')));
+    const cited = new Set(
+      allBlockers.map((b) => b.id).filter((id) => id.startsWith('Q-')),
+    );
     for (const id of cited) {
-      expect(pinnedQuestions, `${id} has no pinned snippet in this test`).toHaveProperty(id);
+      expect(
+        pinnedQuestions,
+        `${id} has no pinned snippet in this test`,
+      ).toHaveProperty(id);
       const text = bulletTextFor(id);
       expect(text, `colregs no longer declares ${id}`).toBeDefined();
       expect(
@@ -137,7 +204,10 @@ describe('shape', () => {
       const keys = [sp.labelKey, ...sp.bodyKeys].filter(Boolean) as string[];
       for (const k of keys) {
         for (const [locale, catalog] of Object.entries(catalogs)) {
-          expect(catalog, `${locale} is missing ${sp.id}'s ${k}`).toHaveProperty(k);
+          expect(
+            catalog,
+            `${locale} is missing ${sp.id}'s ${k}`,
+          ).toHaveProperty(k);
         }
       }
     }

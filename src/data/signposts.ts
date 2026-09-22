@@ -23,12 +23,7 @@
 // "not-scoped" is a legitimate status, not a gap to fill.
 
 import { applicability } from './colregs';
-import {
-  corpora as shippedCorpora,
-  editionOf,
-  jurisdictionOf,
-  type Corpus,
-} from './corpusText';
+import { corpora as shippedCorpora, type Corpus } from './corpusText';
 import {
   BASE_JURISDICTION,
   JURISDICTION_IDS,
@@ -68,6 +63,13 @@ export interface Signpost {
   language?: string;
   /** a live corpus: its id in colregs data/corpora.json */
   corpusId?: string;
+  /**
+   * a candidate corpus pinned to one named source (`unts`): superseded only
+   * when colregs ships that source in that language. A candidate with no
+   * sourceId stands for the language as a whole and is superseded by any
+   * shipped corpus in it.
+   */
+  sourceId?: string;
 }
 
 const COLREGS = 'https://github.com/mark-brannan/colregs';
@@ -76,7 +78,8 @@ const ADR1 = `${COLREGS}/blob/main/docs/adr/0001-name-and-jurisdiction-model.md`
 const ADR3 = `${COLREGS}/blob/main/docs/adr/0003-language-as-a-dimension.md`;
 const VERIF = `${COLREGS}/blob/main/docs/verification/2026-08-30-q6-q8.md`;
 const TEXT = `${COLREGS}/blob/main/data/text`;
-const DESIGN = 'https://github.com/mark-brannan/searoom/blob/main/docs/design.md';
+const DESIGN =
+  'https://github.com/mark-brannan/searoom/blob/main/docs/design.md';
 
 // ------------------------------------------------------------ jurisdictions
 
@@ -210,7 +213,6 @@ const CORPUS_NARRATIVE: Record<
 /** Every corpus colregs ships (`./corpusText`, generated from `data/corpora.json`). */
 const generatedCorpora: Signpost[] = shippedCorpora.map((c: Corpus) => {
   const narrative = CORPUS_NARRATIVE[c.id];
-  const edition = editionOf(c);
   return {
     id: narrative?.id ?? `${c.language}-${c.source_id}`,
     kind: 'corpus',
@@ -225,14 +227,27 @@ const generatedCorpora: Signpost[] = shippedCorpora.map((c: Corpus) => {
     // (REQ-LANG-1: display language and rule-text corpus are independent).
     label: narrative
       ? undefined
-      : `${c.language} — ${c.source_id.toUpperCase()} (${jurisdictionOf(c)}@${edition ? c.edition.split('@')[1] : '?'})`,
+      : `${c.language} — ${c.source_id.toUpperCase()} (${c.edition})`,
     bodyKeys: narrative?.bodyKeys ?? [],
     blockers: [],
     link: `${TEXT}/${c.edition.replace('@', '/')}/${c.language}.${c.source_id}.json`,
   };
 });
 
-const generatedCorpusIds = new Set(shippedCorpora.map((c) => c.id));
+/**
+ * Whether a shipped corpus makes a candidate row stale. A candidate names a
+ * language and, when it is about one source in particular, a sourceId — it
+ * cannot name colregs' corpus id, because the source is usually the very
+ * thing still unknown (Q-7: "a national gazette is the likely lawful route").
+ */
+export function supersededBy(candidate: Signpost, shipped: Corpus): boolean {
+  if (!candidate.language) return false;
+  const sameLanguage =
+    shipped.language === candidate.language ||
+    shipped.language.startsWith(`${candidate.language}-`);
+  if (!sameLanguage) return false;
+  return !candidate.sourceId || candidate.sourceId === shipped.source_id;
+}
 
 /**
  * Corpora on colregs' language queue (Q-7) that colregs has not shipped a
@@ -248,6 +263,7 @@ const candidateCorporaRaw: Signpost[] = [
     status: 'measured',
     tier: 'authentic',
     language: 'fr',
+    sourceId: 'unts',
     labelKey: 'sp.fr.label',
     bodyKeys: ['sp.fr.p1'],
     blockers: [{ id: 'Q-7', textKey: 'blocker.q7.unts' }],
@@ -259,6 +275,7 @@ const candidateCorporaRaw: Signpost[] = [
     status: 'measured',
     tier: 'authentic',
     language: 'en',
+    sourceId: 'unts',
     labelKey: 'sp.en-unts.label',
     bodyKeys: ['sp.en-unts.p1'],
     blockers: [{ id: 'Q-7', textKey: 'blocker.q7.unts' }],
@@ -319,7 +336,7 @@ const candidateCorporaRaw: Signpost[] = [
   },
 ];
 const candidateCorpora: Signpost[] = candidateCorporaRaw.filter(
-  (c) => !c.corpusId || !generatedCorpusIds.has(c.corpusId),
+  (c) => !shippedCorpora.some((shipped) => supersededBy(c, shipped)),
 );
 
 export const corpora: Signpost[] = [...generatedCorpora, ...candidateCorpora];
