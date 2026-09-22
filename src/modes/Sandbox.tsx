@@ -8,6 +8,7 @@ import type { Patch } from '../App';
 import { FactControls } from '../components/FactControls';
 import { RuleParagraphs } from '../components/RuleParagraphs';
 import { applicability, colregsVersion, lights } from '../data/colregs';
+import { conventionFor, usualDisplayIndex } from '../data/conventions';
 import { paragraphsForCite } from '../data/cites';
 import { corpusHandle, resolveParagraphs } from '../data/corpusText';
 import { useCorpus, useCorpusId } from '../state/corpusContext';
@@ -51,6 +52,10 @@ function DisplayChips({
 }) {
   const intl = useIntl();
   const current = Math.min(state.displayIndex, evaln.displays.length - 1);
+  const convention = conventionFor(state.jurisdiction, state.facts);
+  const usualIdx = convention
+    ? usualDisplayIndex(state.jurisdiction, state.facts, evaln.displays)
+    : undefined;
 
   const chipLabel = (d: Display, i: number) => {
     if (d.chosen.length === 0)
@@ -126,9 +131,19 @@ function DisplayChips({
             onClick={() => patch({ displayIndex: i })}
           >
             {chipLabel(d, i)}
+            {i === usualIdx && (
+              <span className="badge usual">
+                <FormattedMessage id="sandbox.display.usual" />
+              </span>
+            )}
           </button>
         ))}
       </div>
+      {usualIdx !== undefined && convention && (
+        <p className="elim usual-why">
+          <FormattedMessage id={convention.whyId} />
+        </p>
+      )}
       {evaln.displays[current]?.lights.length === 0 && (
         <p className="elim">
           <FormattedMessage id="sandbox.noDisplays" />
