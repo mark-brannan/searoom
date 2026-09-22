@@ -7,6 +7,8 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
 import type { AppState } from '../state/urlState';
 import type { FactRecord, FactValue } from '../engine/types';
+import { evaluateDisplayIn } from '../engine/evaluate';
+import { usualDisplayIndex } from '../data/conventions';
 
 // FactRecord (from colregs-engine/schema) types each key's value as its own
 // literal enum, with no index signature — exact for a validated record, too
@@ -111,7 +113,14 @@ export function FactControls({
   const setFacts = (updates: FactPatch, remove: string[] = []) => {
     const next: FactPatch = { ...facts, ...updates };
     for (const k of remove) delete next[k];
-    patch({ facts: next as FactRecord, displayIndex: 0, additionsOn: [] });
+    const nextFacts = next as FactRecord;
+    // Open on the display a mariner actually shows, not combination 0 —
+    // the engine's "no alternative chosen" (searoom issue #152). Falls
+    // back to 0 when no convention row matches this fact record.
+    const evaln = evaluateDisplayIn(state.jurisdiction, nextFacts);
+    const displayIndex =
+      usualDisplayIndex(state.jurisdiction, nextFacts, evaln.displays) ?? 0;
+    patch({ facts: nextFacts, displayIndex, additionsOn: [] });
   };
 
   const activity = facts['fact:activity'];

@@ -544,6 +544,12 @@ select {
   color: var(--yellow);
 }
 
+.badge.usual {
+  border-color: var(--green);
+  color: var(--green);
+  margin-left: 6px;
+}
+
 .badge.tier {
   border-color: var(--accent-soft);
   color: var(--accent-soft);
