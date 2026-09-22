@@ -13,6 +13,15 @@ import { BASE_JURISDICTION } from '../data/jurisdictions';
 import { CorpusRow } from './CorpusSwitcher';
 import { CorpusLine } from './RuleParagraphs';
 
+// A generated row with no app narrative yet carries a resolved literal
+// `label` (built from colregs' own corpus/jurisdiction metadata) instead of
+// a catalog key — same reasoning as the untranslated source/rights lines
+// SignpostBody already renders straight from live corpus data.
+function SignpostLabel({ sp }: { sp: Pick<Signpost, 'label' | 'labelKey'> }) {
+  if (sp.label) return <>{sp.label}</>;
+  return <FormattedMessage id={sp.labelKey!} />;
+}
+
 function StatusChip({
   status,
   kind,
@@ -110,7 +119,7 @@ function JurisdictionPickerBody({
             onClick={() => onOpen(j.id)}
           >
             <span className="grow label">
-              <FormattedMessage id={j.labelKey} />
+              <SignpostLabel sp={j} />
             </span>
             <StatusChip status={j.status} />
           </button>
@@ -127,7 +136,7 @@ function JurisdictionPickerBody({
             onClick={() => onOpen(p.id)}
           >
             <span className="grow label">
-              <FormattedMessage id={p.labelKey} />
+              <SignpostLabel sp={p} />
             </span>
             <StatusChip status={p.status} />
           </button>
@@ -211,7 +220,7 @@ function LocalePickerBody({
             onClick={() => onOpen(c.id)}
           >
             <span className="grow label">
-              <FormattedMessage id={c.labelKey} />
+              <SignpostLabel sp={c} />
             </span>
             {c.tier && (
               <span className="badge tier">
@@ -284,7 +293,7 @@ export function SignpostPanel({
   } else {
     const sp = findSignpost(id);
     if (!sp) return null;
-    title = intl.formatMessage({ id: sp.labelKey });
+    title = sp.label ?? intl.formatMessage({ id: sp.labelKey! });
     body = <SignpostBody sp={sp} />;
   }
 
