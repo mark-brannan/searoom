@@ -8,12 +8,24 @@ import type { Patch } from '../App';
 import { FactControls } from '../components/FactControls';
 import { RuleParagraphs } from '../components/RuleParagraphs';
 import { applicability, colregsVersion, lights } from '../data/colregs';
-import { reasonParts, type Gate } from '../components/displayReason';
+import {
+  gatesOf,
+  lightParts,
+  reasonParts,
+  type Gate,
+  type LightPart,
+} from '../components/displayReason';
 import { paragraphsForCite } from '../data/cites';
 import { corpusHandle, resolveParagraphs } from '../data/corpusText';
 import { useCorpus, useCorpusId } from '../state/corpusContext';
 import { evaluateDisplayIn } from '../engine/evaluate';
-import type { Display, Entry, DisplayEvaluation } from '../engine/types';
+import type {
+  Display,
+  DisplayLight,
+  Entry,
+  DisplayEvaluation,
+  Modality,
+} from '../engine/types';
 import { BearingView, PlanView, ProfileView, selectHull } from 'nav-wright';
 import { placeLights } from '../render/navWright';
 import type { Aspect } from 'nav-wright';
@@ -74,23 +86,88 @@ function DisplayChips({
       ? intl.formatMessage({ id: 'sandbox.display.gate.any' })
       : gates.map((g) => `${OP_SYMBOL[g.op]} ${g.value} ${unitFor(g.fact)}`).join(', ');
 
-  // One line per chip, read from the entry that makes this display differ
-  // from its neighbours: cite, modality, gate. "30(b) - may - < 50 m".
-  const chipLabel = (d: Display) =>
-    reasonParts(d, evaln.displays, entryById, evaln.modalities)
-      .map((part) =>
-        intl.formatMessage(
-          { id: 'sandbox.display.reason' },
-          {
-            cite: part.cite,
-            modality: intl.formatMessage({
-              id: `modality.${part.modality.replace(/^modality:/, '')}`,
-            }),
-            gate: gateText(part.gates),
-          },
-        ),
-      )
+  // What the chip shows, in the package catalog's own words: "1 × white
+  // all-round light + sidelights". The light's label is the package's
+  // (`light.all_round`), lowercased into the phrase; colour, character and
+  // count are composed around it by the app's messages, since word order is
+  // the language's to decide (REQ-LANG-6).
+  const lightText = (lights: readonly DisplayLight[]) => {
+    const parts = lightParts(lights);
+    if (parts.length === 0)
+      return intl.formatMessage({ id: 'sandbox.display.light.none' });
+    const one = (p: LightPart) => {
+      let light = intl
+        .formatMessage({ id: `light.${p.light.replace(/^light:/, '')}` })
+        .toLocaleLowerCase(intl.locale);
+      if (p.color)
+        light = intl.formatMessage(
+          { id: 'sandbox.display.light.colored' },
+          { color: intl.formatMessage({ id: `color.${p.color}` }), light },
+        );
+      if (p.character === 'flashing')
+        light = intl.formatMessage(
+          { id: 'sandbox.display.light.flashing' },
+          { light },
+        );
+      if (p.count !== undefined)
+        light = intl.formatMessage(
+          { id: 'sandbox.display.light.counted' },
+          { count: p.count, light },
+        );
+      return light;
+    };
+    const joined = parts.map(one).join(' + ');
+    return parts.some((p) => p.combined)
+      ? intl.formatMessage(
+          { id: 'sandbox.display.light.combined' },
+          { lights: joined },
+        )
+      : joined;
+  };
+
+  const modalityText = (m: Modality) =>
+    intl.formatMessage({ id: `modality.${m.replace(/^modality:/, '')}` });
+
+  // Why: one line per chip, read from the entry that makes this display
+  // differ from its neighbours: cite, modality, gate. "30(b) · Permitted ·
+  // < 50 m". Entries that share a modality and gate share the line —
+  // "23(a)(i) + 23(a)(iii)-(iv) · Required · any length".
+  const whyText = (d: Display) => {
+    const lines = reasonParts(d, evaln.displays, entryById, evaln.modalities).map(
+      (part) => ({
+        cite: part.cite,
+        modality: modalityText(part.modality),
+        gate: gateText(part.gates),
+      }),
+    );
+    const first = lines[0];
+    if (
+      first &&
+      lines.every((l) => l.modality === first.modality && l.gate === first.gate)
+    )
+      return intl.formatMessage(
+        { id: 'sandbox.display.reason' },
+        { ...first, cite: lines.map((l) => l.cite).join(' + ') },
+      );
+    return lines
+      .map((l) => intl.formatMessage({ id: 'sandbox.display.reason' }, l))
       .join(' + ');
+  };
+
+  // a lawful addition's why: its own cite, modality and gate
+  const additionWhyText = (id: string, cite: string) => {
+    const entry = entryById.get(id);
+    return intl.formatMessage(
+      { id: 'sandbox.display.reason' },
+      {
+        cite,
+        modality: modalityText(
+          evaln.modalities[id] ?? entry?.modality ?? 'modality:may',
+        ),
+        gate: gateText(entry ? gatesOf(entry) : []),
+      },
+    );
+  };
 
   // elimination lines for the alternatives in play
   const elimination: React.ReactNode[] = [];
@@ -151,17 +228,20 @@ function DisplayChips({
         {evaln.displays.map((d, i) => (
           <button
             key={i}
-            className={`chip${i === current ? ' active' : ''}`}
+            className={`chip stacked${i === current ? ' active' : ''}`}
             role="radio"
             aria-checked={i === current}
             onClick={() => patch({ displayIndex: i })}
           >
-            {chipLabel(d)}
-            {i === 0 && evaln.displays.length > 1 && (
-              <span className="badge usual">
-                <FormattedMessage id="sandbox.display.usual" />
-              </span>
-            )}
+            <span className="chip-what">
+              {lightText(d.lights)}
+              {i === 0 && evaln.displays.length > 1 && (
+                <span className="badge usual">
+                  <FormattedMessage id="sandbox.display.usual" />
+                </span>
+              )}
+            </span>
+            <span className="chip-why">{whyText(d)}</span>
           </button>
         ))}
       </div>
@@ -197,7 +277,7 @@ function DisplayChips({
               return (
                 <button
                   key={a.id}
-                  className={`chip addition${on ? ' active' : ''}`}
+                  className={`chip stacked addition${on ? ' active' : ''}`}
                   aria-pressed={on}
                   onClick={() =>
                     patch({
@@ -207,7 +287,10 @@ function DisplayChips({
                     })
                   }
                 >
-                  {a.cite}
+                  <span className="chip-what">{lightText(a.lights)}</span>
+                  <span className="chip-why">
+                    {additionWhyText(a.id, a.cite)}
+                  </span>
                 </button>
               );
             })}

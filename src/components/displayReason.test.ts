@@ -1,11 +1,17 @@
-// The chip reason line is read from the entry, never curated: cite,
-// modality, and the scalar gate in its `when`.
+// The chip leads with what the display shows, read from its lights, and
+// follows with why, read from the entry: cite, modality, and the scalar
+// gate in its `when`. Nothing here is curated.
 
 import { describe, expect, it } from 'vitest';
 import { applicability } from '../data/colregs';
 import { evaluateDisplayIn } from '../engine/evaluate';
 import type { FactRecord } from '../engine/types';
-import { distinguishingEntries, gatesOf, reasonParts } from './displayReason';
+import {
+  distinguishingEntries,
+  gatesOf,
+  lightParts,
+  reasonParts,
+} from './displayReason';
 
 const entryById = new Map(applicability.entries.map((e) => [e.id, e]));
 
@@ -72,5 +78,51 @@ describe('chip reason', () => {
     };
     // the torch alone: 25(d)(ii) is in every display, so it is its own reason
     expect(partsFor('intl', oars, 0).map((p) => p.cite)).toEqual(['25(d)(ii)']);
+  });
+});
+
+describe('what a display shows', () => {
+  it('merges same-light specs and adds their counts, in the data order', () => {
+    const evaln = evaluateDisplayIn('intl', anchoredSloop);
+    // 30(b): one all-round white; 30(a): fore and stern all-round whites
+    expect(lightParts(evaln.displays[0]!.lights)).toEqual([
+      { light: 'light:all_round', color: 'white', count: 1 },
+    ]);
+    expect(lightParts(evaln.displays[1]!.lights)).toEqual([
+      { light: 'light:all_round', color: 'white', count: 2 },
+    ]);
+  });
+
+  it('leaves uncounted lights uncounted and keeps the combined-lantern flag', () => {
+    const sloop: FactRecord = { ...anchoredSloop, 'fact:position': 'position:underway' };
+    const evaln = evaluateDisplayIn('intl', sloop);
+    // 25(b): sidelights and sternlight combined in one lantern
+    expect(lightParts(evaln.displays[0]!.lights)).toEqual([
+      { light: 'light:sidelights', combined: true },
+      { light: 'light:sternlight', combined: true },
+    ]);
+    // 25(a) + 25(c): the same two, then red over green — distinct colours
+    // stay distinct items, in order
+    expect(lightParts(evaln.displays[2]!.lights)).toEqual([
+      { light: 'light:sidelights' },
+      { light: 'light:sternlight' },
+      { light: 'light:all_round', color: 'red', count: 1 },
+      { light: 'light:all_round', color: 'green', count: 1 },
+    ]);
+  });
+
+  it('names the lights of a lawful addition the same way', () => {
+    const power: FactRecord = {
+      'fact:propulsion': 'propulsion:power',
+      'fact:activity': 'activity:none',
+      'fact:position': 'position:underway',
+      'fact:length_m': 30,
+    };
+    const evaln = evaluateDisplayIn('intl', power);
+    const second = evaln.optionalAdditions.find((a) => a.id === 'rule:23a_ii');
+    expect(second).toBeDefined();
+    expect(lightParts(second!.lights)).toEqual([
+      { light: 'light:masthead', count: 1 },
+    ]);
   });
 });

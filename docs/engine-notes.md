@@ -75,7 +75,10 @@ they can be reviewed as decisions, not archaeology. Each is tested in
    #137, ruled in searoom #152). So display 0 for a 10 m boat at anchor is
    30(b), not 30(a), and the app simply opens on index 0. Asserted here in
    `src/engine/displayRanking.test.ts` so an engine regression fails in
-   this repo too.
+   this repo too. Each chip leads with what that display shows — its
+   lights, in the package catalog's words — and the entry's cite, modality
+   and gate follow as the why; a lawful addition is named the same way
+   (ruled on #158).
 
 If any of these turn out to disagree with the data's intent, that is a
 colregs conversation (an issue with the failing fact record), not a
