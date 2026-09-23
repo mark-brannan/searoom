@@ -489,6 +489,29 @@ select {
   background: rgba(255, 210, 63, 0.1);
 }
 
+/* a display chip: what it shows on top, why underneath */
+.chip.stacked {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  border-radius: 14px;
+  padding: 7px 14px;
+  text-align: left;
+}
+
+.chip-what {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chip-why {
+  font-size: 11.5px;
+  font-weight: 400;
+  opacity: 0.75;
+}
+
 .elim {
   font-size: 13px;
   color: var(--dim);
