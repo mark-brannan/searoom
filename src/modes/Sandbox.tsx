@@ -157,7 +157,7 @@ function DisplayChips({
             onClick={() => patch({ displayIndex: i })}
           >
             {chipLabel(d)}
-            {i === 0 && (
+            {i === 0 && evaln.displays.length > 1 && (
               <span className="badge usual">
                 <FormattedMessage id="sandbox.display.usual" />
               </span>

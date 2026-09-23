@@ -1,8 +1,9 @@
 // colregs-engine ranks `displays[]` most specific concession first, base
 // rule last (colregs-engine #137, ruled in searoom #152), and searoom opens
 // every scene on index 0. The nine rows of that issue's acceptance table,
-// re-asserted here through this app's own seam, so an engine regression
-// fails in this repo and not only upstream.
+// re-asserted here through this app's own seam, plus the us/inland
+// mooring-buoy pair, so an engine regression fails in this repo and not
+// only upstream.
 
 import { describe, expect, it } from 'vitest';
 import { evaluateDisplayIn } from './evaluate';
@@ -116,6 +117,21 @@ const ROWS: Row[] = [
       'fact:length_m': 15,
     },
     display0: ['rule:29a', 'rule:30b'],
+  },
+  {
+    // not in the #137 table: the us/inland mooring-buoy pair, same shape as
+    // 30(a)/30(b) — kept from the deleted conventions test so the one
+    // non-intl case this app depends on stays asserted here
+    name: 'power 10 m on a mooring buoy, us/inland: 30(b) mooring-buoy form',
+    jurisdiction: 'us/inland',
+    facts: {
+      'fact:propulsion': 'propulsion:power',
+      'fact:activity': 'activity:none',
+      'fact:position': 'position:moored',
+      'fact:on_mooring_buoy': true,
+      'fact:length_m': 10,
+    },
+    display0: ['rule:30b:mooring_buoy'],
   },
 ];
 
