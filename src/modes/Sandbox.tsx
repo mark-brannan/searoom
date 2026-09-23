@@ -8,7 +8,7 @@ import type { Patch } from '../App';
 import { FactControls } from '../components/FactControls';
 import { RuleParagraphs } from '../components/RuleParagraphs';
 import { applicability, colregsVersion, lights } from '../data/colregs';
-import { conventionFor, usualDisplayIndex } from '../data/conventions';
+import { reasonParts, type Gate } from '../components/displayReason';
 import { paragraphsForCite } from '../data/cites';
 import { corpusHandle, resolveParagraphs } from '../data/corpusText';
 import { useCorpus, useCorpusId } from '../state/corpusContext';
@@ -37,6 +37,20 @@ const ASPECTS: Aspect[] = [
 // entries, so an overridden-by or in-lieu-of reference still renders its cite
 const entryById = new Map(applicability.entries.map((e) => [e.id, e]));
 
+const OP_SYMBOL: Record<Gate['op'], string> = {
+  lt: '<',
+  lte: '\u2264',
+  gt: '>',
+  gte: '\u2265',
+};
+
+// `fact:length_m` -> `m`, `fact:max_speed_kn` -> `kn`: the unit is the fact
+// id's own suffix, so a new scalar fact needs no table here.
+function unitFor(fact: string): string {
+  const suffix = fact.split('_').pop() ?? '';
+  return suffix;
+}
+
 function imageUrl(name: string): string {
   return `${import.meta.env.BASE_URL}rule-images/${name}`;
 }
@@ -52,19 +66,31 @@ function DisplayChips({
 }) {
   const intl = useIntl();
   const current = Math.min(state.displayIndex, evaln.displays.length - 1);
-  const convention = conventionFor(state.jurisdiction, state.facts);
-  const usualIdx = convention
-    ? usualDisplayIndex(state.jurisdiction, state.facts, evaln.displays)
-    : undefined;
 
-  const chipLabel = (d: Display, i: number) => {
-    if (d.chosen.length === 0)
-      return intl.formatMessage({ id: 'sandbox.display.base' });
-    return d.chosen
-      .map((id) => entryById.get(id)?.cite ?? id)
+  // `< 50 m`, `<= 7 kn`: symbols and SI units, not prose, so the only
+  // translated part is the "no gate" case.
+  const gateText = (gates: Gate[]) =>
+    gates.length === 0
+      ? intl.formatMessage({ id: 'sandbox.display.gate.any' })
+      : gates.map((g) => `${OP_SYMBOL[g.op]} ${g.value} ${unitFor(g.fact)}`).join(', ');
+
+  // One line per chip, read from the entry that makes this display differ
+  // from its neighbours: cite, modality, gate. "30(b) - may - < 50 m".
+  const chipLabel = (d: Display) =>
+    reasonParts(d, evaln.displays, entryById, evaln.modalities)
+      .map((part) =>
+        intl.formatMessage(
+          { id: 'sandbox.display.reason' },
+          {
+            cite: part.cite,
+            modality: intl.formatMessage({
+              id: `modality.${part.modality.replace(/^modality:/, '')}`,
+            }),
+            gate: gateText(part.gates),
+          },
+        ),
+      )
       .join(' + ');
-    void i;
-  };
 
   // elimination lines for the alternatives in play
   const elimination: React.ReactNode[] = [];
@@ -130,8 +156,8 @@ function DisplayChips({
             aria-checked={i === current}
             onClick={() => patch({ displayIndex: i })}
           >
-            {chipLabel(d, i)}
-            {i === usualIdx && (
+            {chipLabel(d)}
+            {i === 0 && (
               <span className="badge usual">
                 <FormattedMessage id="sandbox.display.usual" />
               </span>
@@ -139,9 +165,9 @@ function DisplayChips({
           </button>
         ))}
       </div>
-      {usualIdx !== undefined && convention && (
+      {evaln.displays.length > 1 && (
         <p className="elim usual-why">
-          <FormattedMessage id={convention.whyId} />
+          <FormattedMessage id="sandbox.display.usual.why" />
         </p>
       )}
       {evaln.displays[current]?.lights.length === 0 && (

@@ -69,6 +69,14 @@ they can be reviewed as decisions, not archaeology. Each is tested in
    every display records which choices produced it — that is the data
    behind the elimination UX.
 
+8. **Order is the engine's, not this app's.** `displays[]` arrives ranked
+   most specific concession first, general rule last — a `may` entry with
+   a scalar gate and `rel:in_lieu_of` outranks its base (colregs-engine
+   #137, ruled in searoom #152). So display 0 for a 10 m boat at anchor is
+   30(b), not 30(a), and the app simply opens on index 0. Asserted here in
+   `src/engine/displayRanking.test.ts` so an engine regression fails in
+   this repo too.
+
 If any of these turn out to disagree with the data's intent, that is a
 colregs conversation (an issue with the failing fact record), not a
 quiet app-side patch.
