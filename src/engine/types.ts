@@ -5,8 +5,12 @@ export type {
   Display,
   DisplayLight,
   DisplayEvaluation,
+  EncounterEvaluation,
   FactRecord,
   Modality,
+  Situation,
+  Subject,
+  Pair,
 } from 'colregs-engine';
 
 export type {

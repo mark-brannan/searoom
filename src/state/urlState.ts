@@ -3,6 +3,7 @@
 // GitHub Pages happy. Deep-link shape for rules: #/rules/27(a)(i).
 
 import type { FactRecord, FactValue } from '../engine/types';
+import type { EncounterState } from '../engine/situationBuilder';
 import { BASE_JURISDICTION, isJurisdiction } from '../data/jurisdictions';
 import { DEFAULT_TILT, MAX_TILT } from 'nav-wright/benchy';
 import {
@@ -19,7 +20,13 @@ import {
 // looser view and casts back to FactRecord at the boundary.
 type FactBag = Record<string, FactValue | undefined>;
 
-export type Mode = 'sandbox' | 'identify' | 'quiz' | 'rules' | 'sound';
+export type Mode =
+  | 'sandbox'
+  | 'identify'
+  | 'quiz'
+  | 'rules'
+  | 'sound'
+  | 'encounters';
 export type View = 'profile' | 'bearing' | 'plan' | 'benchy' | 'model';
 
 export interface AppState {
@@ -44,6 +51,7 @@ export interface AppState {
   rulePath: string | null;
   hullHint: boolean;
   drawer: boolean;
+  encounter: EncounterState;
 }
 
 export const DEFAULT_FACTS: FactRecord = {
@@ -52,6 +60,15 @@ export const DEFAULT_FACTS: FactRecord = {
   'fact:position': 'position:underway',
   'fact:making_way': true,
   'fact:length_m': 12,
+};
+
+export const DEFAULT_ENCOUNTER: EncounterState = {
+  situation: {
+    self: { fact: { ...DEFAULT_FACTS } },
+    other: { fact: { ...DEFAULT_FACTS, 'fact:propulsion': 'propulsion:power' } },
+    pair: { geo: {}, env: {} },
+  },
+  overrideGeometry: false,
 };
 
 // The 3D view's camera elevation bounds are nav-wright's; re-exported so
@@ -78,6 +95,7 @@ export const DEFAULT_STATE: AppState = {
   rulePath: null,
   hullHint: true,
   drawer: false,
+  encounter: DEFAULT_ENCOUNTER,
 };
 
 // short param <-> fact key. The 4th element, for 'enum' params, is the
@@ -154,6 +172,14 @@ export function serialize(state: AppState): string {
   if (cp !== defaultCorpusFor(state.jurisdiction)) params.set('cp', cp);
   if (!state.hullHint) params.set('hh', '0');
   if (state.drawer) params.set('dd', '1');
+  // The encounter situation schema (issue #95) is still `status: "pencil"`
+  // upstream and two-vessel, so unlike `FACT_PARAMS`' one-param-per-field
+  // table it round-trips as one JSON blob rather than a hand-maintained
+  // per-field short-code table that would need updating every time the
+  // upstream schema changes shape. Same "shareable URL" property `facts`
+  // gets, traded for less code against a schema known to still be moving.
+  if (JSON.stringify(state.encounter) !== JSON.stringify(DEFAULT_ENCOUNTER))
+    params.set('enc', JSON.stringify(state.encounter));
   const path =
     state.mode === 'rules' && state.rulePath
       ? `/rules/${encodeURIComponent(state.rulePath)}`
@@ -174,7 +200,14 @@ export function deserialize(hash: string): AppState {
   const path = qIndex === -1 ? h : h.slice(0, qIndex);
   const query = qIndex === -1 ? '' : h.slice(qIndex + 1);
   const segments = path.split('/').filter(Boolean);
-  const modes: Mode[] = ['sandbox', 'identify', 'quiz', 'rules', 'sound'];
+  const modes: Mode[] = [
+    'sandbox',
+    'identify',
+    'quiz',
+    'rules',
+    'sound',
+    'encounters',
+  ];
   if (segments[0] && (modes as string[]).includes(segments[0])) {
     state.mode = segments[0] as Mode;
   }
@@ -230,5 +263,16 @@ export function deserialize(hash: string): AppState {
   if (chosen && jurisdictionOf(chosen) === state.jurisdiction) state.corpus = chosen.id;
   if (params.get('hh') === '0') state.hullHint = false;
   if (params.get('dd') === '1') state.drawer = true;
+  const enc = params.get('enc');
+  if (enc) {
+    try {
+      // A hand-edited or stale URL is untrusted input, same caution
+      // `FACT_PARAMS` applies per-field — here there's one parse to guard
+      // rather than one check per field.
+      state.encounter = JSON.parse(enc) as EncounterState;
+    } catch {
+      // malformed -- keep DEFAULT_ENCOUNTER
+    }
+  }
   return state;
 }

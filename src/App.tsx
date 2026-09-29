@@ -16,6 +16,7 @@ import { Identify } from './modes/Identify';
 import { Quiz } from './modes/Quiz';
 import { Rules } from './modes/Rules';
 import { Sound } from './modes/Sound';
+import { Encounters } from './modes/Encounters';
 import { colregsVersion } from './data/colregs';
 import { corpusIn } from './data/corpusText';
 import { CorpusContext } from './state/corpusContext';
@@ -88,6 +89,8 @@ export function App() {
         return <Rules state={state} patch={patch} />;
       case 'sound':
         return <Sound state={state} patch={patch} />;
+      case 'encounters':
+        return <Encounters state={state} patch={patch} />;
     }
   }, [state, patch]);
 

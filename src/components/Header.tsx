@@ -4,7 +4,14 @@ import { JURISDICTIONS } from '../data/jurisdictions';
 import type { AppState, Mode } from '../state/urlState';
 import { useCorpus } from '../state/corpusContext';
 
-const MODES: Mode[] = ['sandbox', 'identify', 'quiz', 'rules', 'sound'];
+const MODES: Mode[] = [
+  'sandbox',
+  'encounters',
+  'identify',
+  'quiz',
+  'rules',
+  'sound',
+];
 
 export function Header({
   state,

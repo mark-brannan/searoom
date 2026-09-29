@@ -47,6 +47,18 @@ export const rules = rulesJson as unknown as RulesData & {
   deltas?: Record<string, SkeletonDelta>;
 };
 export const facts = factsJson as Record<string, unknown>;
+
+/**
+ * `data/facts.json`'s `situation` key: the schema for the two-subject
+ * `Situation` (kin/geo/hist/env), source of truth for Encounters mode's
+ * generated controls (issue #95). Richer than colregs-engine's generated
+ * `.d.ts` (cite/note per field) and not reachable via a deep import — the
+ * package's `exports` map only allows `"."` and `"./schema"` — so this
+ * reads it the same way `facts` above reads the vessel fact section: the
+ * raw upstream JSON, typed loosely since it's read, not validated, here.
+ */
+export const situation = (factsJson as { situation: Record<string, unknown> })
+  .situation;
 export const geometry = geometryJson as Record<string, unknown>;
 export const images = imagesJson as unknown as {
   images: Record<
