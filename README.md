@@ -26,9 +26,9 @@ Searoom is the consumer face of a small stack, each piece its own package:
 | **searoom** | the app: study, quiz, identify, reference |
 
 Engine and renderer were built inside this repo first and extracted later,
-not designed as standalone packages up front. Decisions for the whole family are ADRs in
-colregs `docs/adr/`, one sequence; a bare `ADR NNNN` here means colregs, and
-this repo keeps no ADRs of its own.
+not designed as standalone packages up front. Decisions for the whole
+family are ADRs in colregs `docs/adr/`, one sequence; a bare `ADR NNNN`
+here means colregs, and this repo keeps no ADRs of its own.
 
 ## Running this project
 
