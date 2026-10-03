@@ -54,11 +54,13 @@ jobs:
       # An explicit `prompt` puts the action in agent mode: no tracking
       # comment, and only the tools listed in --allowedTools beyond the
       # action's own. There is no `gh issue create` in that list, so the
-      # worker cannot open an issue; no bare node, npx or git either, so
-      # text injected through a public issue has no interpreter to reach
-      # and no push target but its own branch. id-token: write is the
-      # action's OIDC exchange for the app token; it stays. `allowed_bots` stays at its default
-      # (none): a person adds the label.
+      # worker cannot open an issue. The list guards against mistakes, not
+      # attacks: with Edit and `npm run`, the worker can write a script and
+      # run it, token in the environment. The trust boundary is the person
+      # who adds the label; main's ruleset (pull request required, no
+      # bypass actors) is what keeps a push off main. id-token: write is
+      # the action's OIDC exchange for the app token; it stays.
+      # `allowed_bots` stays at its default (none): a person adds the label.
       #
       # Opus for one run: change `--model sonnet` to `--model opus` here
       # on main and revert after. A branch edit does nothing: an `issues`
@@ -105,4 +107,4 @@ jobs:
           claude_args: |
             --model sonnet
             --max-turns 60
-            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(npm ci),Bash(npm install),Bash(npm run:*),Bash(npm test:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git checkout:*),Bash(git switch:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent-trial/*),Bash(gh issue view ${{ github.event.issue.number }}:*),Bash(gh issue comment ${{ github.event.issue.number }}:*),Bash(gh issue edit ${{ github.event.issue.number }} --add-label needs-ruling),Bash(gh pr create:*),Bash(gh pr view:*)"
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(npm ci),Bash(npm install),Bash(npm run:*),Bash(npm test:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git checkout:*),Bash(git switch:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent-trial/${{ github.event.issue.number }}),Bash(git push -u origin agent-trial/${{ github.event.issue.number }}),Bash(gh issue view ${{ github.event.issue.number }}),Bash(gh issue comment ${{ github.event.issue.number }} --body:*),Bash(gh issue comment ${{ github.event.issue.number }} --body-file:*),Bash(gh issue edit ${{ github.event.issue.number }} --add-label needs-ruling),Bash(gh pr create:*),Bash(gh pr view:*)"
