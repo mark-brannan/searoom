@@ -146,6 +146,6 @@ jobs:
           EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
         run: |
           jq -r '.[] | select(.type == "result")
-            | "denials: \(.permission_denials | length)",
-              (.permission_denials[] | "  \(.tool_name): \(.tool_input | tojson)"),
+            | "denials: \(.permission_denials // [] | length)",
+              (.permission_denials[]? | "  \(.tool_name): \(.tool_input | tojson)"),
               "result: \(.result // "")"' "$EXECUTION_FILE"
