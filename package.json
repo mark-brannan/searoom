@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
-    "@react-three/fiber": "^9.7.0",
+    "@react-three/fiber": "^9.8.1",
     "colregs": "github:mark-brannan/colregs#main",
     "colregs-engine": "github:mark-brannan/colregs-engine#main",
     "nav-wright": "github:mark-brannan/nav-wright#main",
