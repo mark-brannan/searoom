@@ -113,6 +113,18 @@ jobs:
             `gh issue edit ${{ env.ISSUE }} --add-label needs-ruling`,
             and stop. Do not open a pull request in that case.
 
+            Pass every comment and pull request body on stdin, never as
+            `--body "..."`: backticks inside double quotes are command
+            substitution, and the tool permissions refuse that command.
+            For example:
+
+                gh issue comment ${{ env.ISSUE }} --body-file - <<'EOF'
+                The `PlanView` component ...
+                EOF
+
+            and the same `--body-file - <<'EOF'` for `gh pr create`. If a
+            command is refused anyway, name it in your final message.
+
             Never create a GitHub issue. Never push to main.
 
             This runner has no one to look at a dev server: if a Stop hook
