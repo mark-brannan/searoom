@@ -20,6 +20,61 @@ import {
 } from '../../node_modules/nav-wright/dist/modelTransform.js';
 import type { StationProfile } from '../../node_modules/nav-wright/dist/modelTransform.js';
 
+/**
+ * Hull ids whose registered mesh is known not to fit, with the measured
+ * misses (Δ/LOA) at the time of writing. Remove an id here when a mesh that
+ * registers lands; hullRegistration.test.ts then fails until it does, and
+ * profilePose.test.ts, whose pose follows the mesh, reads the same set.
+ *
+ * Kenney Watercraft Kit meshes have cartoon proportions, so every one misses
+ * somewhere:
+ *
+ * open → boat-row-large: sidelight x -0.24, deck +0.09, half-beam +0.28;
+ * masthead x -0.12, top +0.09; stern x -0.10, transom top +0.17.
+ * power-small → boat-speed-j: sidelight x +0.11, deck +0.08, half-beam +0.06;
+ * masthead x -0.47; aft mast x -0.25; stern x -0.08, transom top +0.21.
+ * power-large → boat-house-c: sidelight x +0.29, half-beam +0.10; masthead
+ * x -0.21, top +0.27; stern x -0.06, transom top +0.10.
+ * sail-small → boat-sail-b: sidelight x +0.16, deck +0.16, half-beam +0.08;
+ * masthead x -0.13, top +0.73; stern x -0.06, transom top +0.16.
+ * sail-large → ship-small: sidelight deck +0.25, half-beam +0.07; masthead
+ * top +0.51; aft mast x +0.15; stern x -0.06, transom top +0.80.
+ * trawler → boat-fishing-small: sidelight x +0.33, deck +0.12, half-beam
+ * +0.07; masthead x -0.14, top +0.38; aft mast x +0.18; stern x -0.07,
+ * transom top +0.18.
+ * tug → boat-tow-b: sidelight x +0.29, deck +0.07, half-beam +0.07; masthead
+ * x +0.13, top +0.26; aft mast x +0.34; stern x -0.08, transom top +0.16.
+ * container-ship → ship-cargo-a: sidelight x +0.56, deck -0.12; masthead
+ * x -0.11; aft mast x +0.39.
+ *
+ * Every lofted mesh (nav-wright scripts/loft-hulls.mjs) misses here. The
+ * mesh is the hull's own profile and plan drawings, so the misses measure
+ * how far anchorLights' reading of a drawing (bow shoulder from the plan
+ * outline, mast band from the tallest structure) sits from the spec's
+ * hand-set stations. Closing that is nav-wright#50
+ * (place lights from Annex I geometry) or a per-spec retune.
+ */
+export const KNOWN_MISFITS: ReadonlySet<string> = new Set([
+  'open',
+  'power-small',
+  'power-large',
+  'sail-small',
+  'sail-large',
+  'square-rigger',
+  'trawler',
+  'seiner',
+  'tug',
+  'barge',
+  'pilot-boat',
+  'ferry',
+  'container-ship',
+  'tanker',
+  'bulker',
+  'cruise-ship',
+  'warship',
+  'dredger',
+]);
+
 /** Vite's `?url` import under vitest resolves to a root-relative path, with
  * the deploy base and `/@fs` prefixes in front of it depending on where the
  * file lives. Peel those back to something the filesystem can open. */
@@ -30,6 +85,14 @@ function modelPath(url: string): string {
   const rel = url.startsWith(base) ? url.slice(base.length) : url.replace(/^\//, '');
   return path.join(root, rel);
 }
+
+/** three's texture path reaches for browser globals under Node, and the
+ * Kenney meshes carry an embedded colormap where Benchy had none. The profile
+ * is geometry only, so stub them rather than decode an image (as nav-wright's
+ * hullMeshCheck does). */
+const g = globalThis as Record<string, unknown>;
+g.self ??= globalThis;
+g.createImageBitmap ??= async () => ({ width: 1, height: 1, close() {} });
 
 export async function loadHullScene(url: string): Promise<THREE.Group> {
   const buf = await readFile(modelPath(url));
