@@ -48,6 +48,8 @@ export interface AppState {
   sky: number;
   /** Bearing view draws Benchy in place of her own model, at her size. */
   benchy: boolean;
+  /** Bearing view mesh, by nav-wright file name; '' is the hull's default. */
+  mesh: string;
   drawer: boolean;
 }
 
@@ -84,6 +86,7 @@ export const DEFAULT_STATE: AppState = {
   hullHint: 30,
   sky: 0,
   benchy: false,
+  mesh: '',
   drawer: false,
 };
 
@@ -169,6 +172,7 @@ export function serialize(state: AppState): string {
     params.set('hh', String(Math.round(state.hullHint)));
   if (state.sky !== DEFAULT_STATE.sky) params.set('bg', String(Math.round(state.sky)));
   if (state.benchy) params.set('bn', '1');
+  if (state.mesh) params.set('ms', state.mesh);
   if (state.drawer) params.set('dd', '1');
   const path =
     state.mode === 'rules' && state.rulePath
@@ -247,6 +251,7 @@ export function deserialize(hash: string): AppState {
   state.hullHint = percent(params.get('hh')) ?? state.hullHint;
   state.sky = percent(params.get('bg')) ?? state.sky;
   if (params.get('bn') === '1') state.benchy = true;
+  state.mesh = params.get('ms') ?? '';
   if (params.get('dd') === '1') state.drawer = true;
   return state;
 }

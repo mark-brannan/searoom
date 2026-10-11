@@ -70,6 +70,49 @@ const HULL_MODEL_URLS: Readonly<Record<string, string>> = {
   dredger: dredgerLoft,
 };
 
+// Every mesh nav-wright ships, by file name. Files are named `<hull-id>-<variant>.glb`
+// (MODELS.md), so a hull's alternatives are the files that start with its id.
+const SHIPPED_MODELS: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(
+    import.meta.glob<string>('../../node_modules/nav-wright/models/*.glb', {
+      query: '?url',
+      import: 'default',
+      eager: true,
+    }),
+  ).map(([path, url]) => [path.split('/').pop()!, url]),
+);
+
+/** One mesh a hull can be drawn with. `name` is the file name, the URL key. */
+export interface ModelVariant {
+  name: string;
+  url: string;
+}
+
+/**
+ * Every mesh nav-wright ships for this hull: the registered one first, then
+ * the rest (sourced kit meshes and the loft) by name. Breadth on purpose —
+ * a kit mesh that fails a fit check is still offered; the default is the
+ * one that passes.
+ */
+export function modelVariantsForHull(hull: Hull): ModelVariant[] {
+  const id = hull.spec.id;
+  const registered = HULL_MODEL_URLS[id];
+  const others = Object.keys(SHIPPED_MODELS)
+    .filter((n) => n.startsWith(`${id}-`) && SHIPPED_MODELS[n] !== registered)
+    .sort()
+    .map((name) => ({ name, url: SHIPPED_MODELS[name] }));
+  const first = Object.entries(SHIPPED_MODELS).find(([, u]) => u === registered);
+  return first ? [{ name: first[0], url: first[1] }, ...others] : others;
+}
+
+/**
+ * The mesh to draw: the named variant when this hull has it, else the
+ * registered default. A stale or foreign name in a URL falls back quietly.
+ */
+export function modelUrlForVariant(hull: Hull, name: string): string {
+  return modelVariantsForHull(hull).find((v) => v.name === name)?.url ?? modelUrlForHull(hull);
+}
+
 /** True when this hull has a mesh of its own rather than the stand-in. */
 export function hasRegisteredModel(hull: Hull): boolean {
   return hull.spec.id in HULL_MODEL_URLS;
