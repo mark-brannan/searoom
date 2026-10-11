@@ -556,7 +556,7 @@ export function Sandbox({
               placed={placed}
               theta={state.theta}
               onTheta={(t) => patch({ theta: t })}
-              hullHint={state.hullHint}
+              hullHint={state.hullHint ? 0.3 : 0}
               labels={sceneLabels}
             />
           )}
