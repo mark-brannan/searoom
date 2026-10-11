@@ -42,7 +42,10 @@ export interface AppState {
    */
   corpus: string;
   rulePath: string | null;
-  hullHint: boolean;
+  /** Bearing view hull hint, percent: 0 is off, 100 is plain to see. */
+  hullHint: number;
+  /** Bearing view sky, percent: 0 is black, 100 is a lighter night blue. */
+  sky: number;
   drawer: boolean;
 }
 
@@ -76,8 +79,15 @@ export const DEFAULT_STATE: AppState = {
   locale: 'en',
   corpus: DEFAULT_CORPUS_ID,
   rulePath: null,
-  hullHint: true,
+  hullHint: 30,
+  sky: 0,
   drawer: false,
+};
+
+const percent = (v: string | null): number | null => {
+  if (v === null || v.trim() === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.round(Math.min(100, Math.max(0, n))) : null;
 };
 
 // short param <-> fact key. The 4th element, for 'enum' params, is the
@@ -152,7 +162,9 @@ export function serialize(state: AppState): string {
   if (state.locale !== 'en') params.set('loc', state.locale);
   const cp = corpusIn(state.jurisdiction, state.corpus).id;
   if (cp !== defaultCorpusFor(state.jurisdiction)) params.set('cp', cp);
-  if (!state.hullHint) params.set('hh', '0');
+  if (state.hullHint !== DEFAULT_STATE.hullHint)
+    params.set('hh', String(Math.round(state.hullHint)));
+  if (state.sky !== DEFAULT_STATE.sky) params.set('bg', String(Math.round(state.sky)));
   if (state.drawer) params.set('dd', '1');
   const path =
     state.mode === 'rules' && state.rulePath
@@ -228,7 +240,8 @@ export function deserialize(hash: string): AppState {
   const cp = params.get('cp');
   const chosen = cp ? corpusById(cp) : undefined;
   if (chosen && jurisdictionOf(chosen) === state.jurisdiction) state.corpus = chosen.id;
-  if (params.get('hh') === '0') state.hullHint = false;
+  state.hullHint = percent(params.get('hh')) ?? state.hullHint;
+  state.sky = percent(params.get('bg')) ?? state.sky;
   if (params.get('dd') === '1') state.drawer = true;
   return state;
 }
