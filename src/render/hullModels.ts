@@ -28,12 +28,10 @@ export const FALLBACK_MODEL_URL: string = benchyModelUrl;
  * Meshes registered to a hull id. Keys are `HullSpec.id` (`allHulls[k].spec.id`,
  * kebab-case), not the `allHulls` key.
  *
- * Kenney Watercraft Kit meshes (CC0, nav-wright's MODELS.md). nav-wright ships
- * several per hull; the one here passed nav-wright's hullMeshCheck and, of
- * those, registers to the spec with the fewest stations out of tolerance,
- * then the smallest worst miss (hullRegistration.test.ts). cruise-ship and
- * ferry have kit meshes but fail hullMeshCheck's single-mast test, so they
- * stay on the stand-in. Every other id falls back to Benchy for want of a mesh.
+ * One Kenney Watercraft Kit mesh (CC0) per hull; every other id falls back to
+ * Benchy. cruise-ship and ferry stay on Benchy because their kit meshes fail
+ * nav-wright's single-mast check. Fit per hull: hullRegistration.test.ts;
+ * sources and licence: nav-wright's MODELS.md.
  */
 const HULL_MODEL_URLS: Readonly<Record<string, string>> = {
   open: openModelUrl,

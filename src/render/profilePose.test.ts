@@ -99,7 +99,7 @@ const POSE_TOLERANCE = 0.08;
 
 /** Hull ids whose registered mesh is a known misfit (searoom#83's
  * KNOWN_MISFITS) — their pose necessarily disagrees with the profile too.
- * Measured misses (Δ/canvas) for the Kenney meshes, 2026-10-11:
+ * Measured misses (Δ/canvas) at the time of writing:
  *
  * open: starboard sidelight 0.19, port 0.16, sternlight 0.11.
  * power-small: masthead 0.25, sternlight 0.13.

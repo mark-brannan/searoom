@@ -48,8 +48,8 @@ export const REGISTRATION_TOLERANCE = 0.05;
  * misses (Δ/LOA) at the time of writing. Remove an id here when a mesh that
  * registers lands; the test then fails until it does.
  *
- * Kenney Watercraft Kit meshes (nav-wright#44), measured 2026-10-11. Cartoon
- * proportions, so every one misses somewhere:
+ * Kenney Watercraft Kit meshes have cartoon proportions, so every one misses
+ * somewhere:
  *
  * open → boat-row-large: sidelight x -0.24, deck +0.09, half-beam +0.28;
  * masthead x -0.12, top +0.09; stern x -0.10, transom top +0.17.
