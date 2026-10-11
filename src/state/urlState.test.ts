@@ -106,16 +106,30 @@ describe('URL state round-trip', () => {
   it('keeps the tilt between the waterline and overhead', () => {
     expect(deserialize('#/sandbox?tl=-20').tilt).toBe(0);
     expect(deserialize('#/sandbox?tl=200').tilt).toBe(85);
-    expect(serialize({ ...DEFAULT_STATE, tilt: 40, view: 'benchy' })).toContain('tl=40');
+    expect(serialize({ ...DEFAULT_STATE, tilt: 40, view: 'bearing' })).toContain('tl=40');
   });
 
-  it.each(['profile', 'bearing', 'benchy', 'plan'] as const)('round-trips the %s view', (view) => {
+  it.each(['profile', 'bearing', 'plan'] as const)('round-trips the %s view', (view) => {
     expect(deserialize(serialize({ ...DEFAULT_STATE, view })).view).toBe(view);
   });
 
   it('reads the retired Model tab as the merged bearing view, and junk as the default', () => {
     expect(deserialize('#/sandbox?view=model').view).toBe('bearing');
     expect(deserialize('#/sandbox?view=bogus').view).toBe(DEFAULT_STATE.view);
+  });
+
+  it('round-trips Benchy in place of her own model, and leaves it off by default', () => {
+    const state = { ...DEFAULT_STATE, view: 'bearing' as const, benchy: true };
+    expect(deserialize(serialize(state))).toEqual(state);
+    expect(deserialize(serialize(DEFAULT_STATE)).benchy).toBe(false);
+    expect(deserialize('#/sandbox?view=bearing&bn=0').benchy).toBe(false);
+  });
+
+  it('reads the retired Benchy tab as the bearing view with Benchy on', () => {
+    const state = deserialize('#/sandbox?view=benchy&tl=30');
+    expect(state.view).toBe('bearing');
+    expect(state.benchy).toBe(true);
+    expect(state.tilt).toBe(30);
   });
 
   it('round-trips the merged view with its camera and night settings', () => {

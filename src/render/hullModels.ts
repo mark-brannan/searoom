@@ -31,6 +31,9 @@ import cruiseShipLoft from 'nav-wright/models/cruise-ship-loft.glb?url';
 import warshipLoft from 'nav-wright/models/warship-loft.glb?url';
 import dredgerLoft from 'nav-wright/models/dredger-loft.glb?url';
 
+/** Benchy, which the bearing view can draw in place of any hull's own mesh. */
+export const BENCHY_MODEL_URL: string = benchyModelUrl;
+
 /** The mesh drawn for any hull id with no registered model of its own. */
 export const FALLBACK_MODEL_URL: string = benchyModelUrl;
 
