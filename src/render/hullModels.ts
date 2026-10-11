@@ -12,19 +12,19 @@
 
 import type { Hull } from 'nav-wright';
 import benchyModelUrl from 'nav-wright/models/3dbenchy-lowpoly.glb?url';
-import openLoft from 'nav-wright/models/open-loft.glb?url';
-import powerSmallLoft from 'nav-wright/models/power-small-loft.glb?url';
-import powerLargeLoft from 'nav-wright/models/power-large-loft.glb?url';
-import sailSmallLoft from 'nav-wright/models/sail-small-loft.glb?url';
-import sailLargeLoft from 'nav-wright/models/sail-large-loft.glb?url';
+import openModelUrl from 'nav-wright/models/open-kenney-boat-row-large.glb?url';
+import powerSmallModelUrl from 'nav-wright/models/power-small-kenney-boat-speed-j.glb?url';
+import powerLargeModelUrl from 'nav-wright/models/power-large-kenney-boat-house-c.glb?url';
+import sailSmallModelUrl from 'nav-wright/models/sail-small-kenney-boat-sail-b.glb?url';
+import sailLargeModelUrl from 'nav-wright/models/sail-large-kenney-ship-small.glb?url';
+import trawlerModelUrl from 'nav-wright/models/trawler-kenney-boat-fishing-small.glb?url';
+import tugModelUrl from 'nav-wright/models/tug-kenney-boat-tow-b.glb?url';
+import containerShipModelUrl from 'nav-wright/models/container-ship-kenney-ship-cargo-a.glb?url';
 import squareRiggerLoft from 'nav-wright/models/square-rigger-loft.glb?url';
-import trawlerLoft from 'nav-wright/models/trawler-loft.glb?url';
 import seinerLoft from 'nav-wright/models/seiner-loft.glb?url';
-import tugLoft from 'nav-wright/models/tug-loft.glb?url';
 import bargeLoft from 'nav-wright/models/barge-loft.glb?url';
 import pilotBoatLoft from 'nav-wright/models/pilot-boat-loft.glb?url';
 import ferryLoft from 'nav-wright/models/ferry-loft.glb?url';
-import containerShipLoft from 'nav-wright/models/container-ship-loft.glb?url';
 import tankerLoft from 'nav-wright/models/tanker-loft.glb?url';
 import bulkerLoft from 'nav-wright/models/bulker-loft.glb?url';
 import cruiseShipLoft from 'nav-wright/models/cruise-ship-loft.glb?url';
@@ -38,29 +38,33 @@ export const FALLBACK_MODEL_URL: string = benchyModelUrl;
  * Meshes registered to a hull id. Keys are `HullSpec.id` (`allHulls[k].spec.id`,
  * kebab-case), not the `allHulls` key.
  *
- * Every id has a mesh lofted from its own 2D profile and plan drawings
- * (nav-wright `scripts/loft-hulls.mjs`, nav-wright#44's fallback for hulls
- * with no sourced mesh). A sourced mesh for an id replaces its line here.
+ * A sourced mesh where one fits, else one lofted from the hull's own 2D
+ * profile and plan drawings (nav-wright `scripts/loft-hulls.mjs`,
+ * nav-wright#44's fallback), so no id falls back to Benchy. Sourced: one
+ * Kenney Watercraft Kit mesh (CC0) each for the first eight; cruise-ship and
+ * ferry are lofted because their kit meshes fail nav-wright's single-mast
+ * check. A sourced mesh for a lofted id replaces its line here. Fit per hull:
+ * hullRegistration.test.ts; sources and licence: nav-wright's MODELS.md.
  */
 const HULL_MODEL_URLS: Readonly<Record<string, string>> = {
-  'open': openLoft,
-  'power-small': powerSmallLoft,
-  'power-large': powerLargeLoft,
-  'sail-small': sailSmallLoft,
-  'sail-large': sailLargeLoft,
+  open: openModelUrl,
+  'power-small': powerSmallModelUrl,
+  'power-large': powerLargeModelUrl,
+  'sail-small': sailSmallModelUrl,
+  'sail-large': sailLargeModelUrl,
+  trawler: trawlerModelUrl,
+  tug: tugModelUrl,
+  'container-ship': containerShipModelUrl,
   'square-rigger': squareRiggerLoft,
-  'trawler': trawlerLoft,
-  'seiner': seinerLoft,
-  'tug': tugLoft,
-  'barge': bargeLoft,
+  seiner: seinerLoft,
+  barge: bargeLoft,
   'pilot-boat': pilotBoatLoft,
-  'ferry': ferryLoft,
-  'container-ship': containerShipLoft,
-  'tanker': tankerLoft,
-  'bulker': bulkerLoft,
+  ferry: ferryLoft,
+  tanker: tankerLoft,
+  bulker: bulkerLoft,
   'cruise-ship': cruiseShipLoft,
-  'warship': warshipLoft,
-  'dredger': dredgerLoft,
+  warship: warshipLoft,
+  dredger: dredgerLoft,
 };
 
 /** True when this hull has a mesh of its own rather than the stand-in. */

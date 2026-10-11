@@ -13,10 +13,12 @@
 // each seat the mesh yields with the spec station it stands in for, as a
 // fraction of the vessel's length.
 //
-// Every hull's mesh is lofted from its own 2D drawings (nav-wright
-// scripts/loft-hulls.mjs). None yet registers to its spec stations; each is
-// recorded in KNOWN_MISFITS (meshProfile.ts) as an expected failure
-// (`it.fails`), so the day one registers this test flips loudly.
+// Eight hulls carry a Kenney Watercraft Kit mesh (nav-wright#44): cartoon
+// boats, short and tall. The other ten carry a mesh lofted from their own 2D
+// drawings (nav-wright scripts/loft-hulls.mjs). None yet lands every light
+// within tolerance; each is recorded in KNOWN_MISFITS (meshProfile.ts) as an
+// expected failure (`it.fails`), so the day a mesh that fits lands, this test
+// flips loudly instead of silently passing a misfit.
 
 import { describe, expect, it } from 'vitest';
 import { allHulls } from 'nav-wright';

@@ -11,9 +11,9 @@
 // target, same theta/tilt-to-position math — onto that box, and compares the
 // result to ProfileView's PX/PZ pixel position for the same light.
 //
-// Every hull's mesh is lofted from its own drawings, and every one already
-// misses its stations in hullRegistration.test.ts; their poses are recorded
-// in KNOWN_POSE_MISFITS as expected failures for the same reason.
+// Every registered mesh is already known (KNOWN_MISFITS, meshProfile.ts) not
+// to fit its hull's stations; its pose is recorded in KNOWN_POSE_MISFITS as an
+// expected failure for the same reason.
 
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
@@ -98,7 +98,19 @@ const LENGTH_M = 12;
 const POSE_TOLERANCE = 0.08;
 
 /** A mesh that misses its stations (KNOWN_MISFITS) necessarily poses its
- * lights off the profile too. */
+ * lights off the profile too.
+ * Measured misses (Δ/canvas) at the time of writing:
+ *
+ * open: starboard sidelight 0.19, port 0.16, sternlight 0.11.
+ * power-small: masthead 0.25, sternlight 0.13.
+ * power-large: masthead 0.14, starboard sidelight 0.13, sternlight 0.14.
+ * sail-small: masthead 0.20, sternlight 0.14.
+ * sail-large: starboard sidelight 0.09, port 0.10, sternlight 0.35.
+ * trawler: masthead 0.11, starboard sidelight 0.14, port 0.10, sternlight 0.13.
+ * tug: starboard sidelight 0.13, port 0.09, sternlight 0.13.
+ * container-ship: masthead 0.26, starboard sidelight 0.38, port 0.34,
+ * sternlight 0.17.
+ */
 const KNOWN_POSE_MISFITS: ReadonlySet<string> = KNOWN_MISFITS;
 
 const registered = (Object.values(allHulls) as Hull[]).filter(hasRegisteredModel);
