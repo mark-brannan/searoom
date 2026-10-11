@@ -13,7 +13,6 @@
   "view.bearing": "Suuntima",
   "view.plan": "Sektorit",
   "view.benchy": "Benchy",
-  "view.model": "Malli",
   "view.label": "Näkymä",
   "fact.propulsion": "Kulkutapa",
   "fact.activity": "Toiminta",
@@ -52,7 +51,7 @@
   "scene.benchy.tiltLabel": "Kallistus",
   "scene.benchy.tiltValue": "{tilt} astetta vesirajan yläpuolella",
   "scene.plan.alt": "Sektorinäkymä: kunkin valon näkyvyyssektori rungon ympärillä",
-  "scene.hullHint": "Himmeä runkovihje",
+  "scene.hullHint": "Rungon näkyvyys",
   "sandbox.displays.title": "{count, plural, one {# laillinen valoyhdistelmä} other {# laillista valoyhdistelmää}}",
   "sandbox.displays.explain": "Missä säännöt sallivat valinnan, kaikki lailliset vaihtoehdot näytetään. Valitse yksi nähdäksesi sen — ja miksi muut jäivät pois.",
   "sandbox.display.chip": "Yhdistelmä {n}",
@@ -323,5 +322,12 @@
   "light.sidelights": "sivuvalot",
   "light.flashing": "vilkkuvalo",
   "light.torch": "sähkölamppu tai sytytetty lyhty",
-  "light.deck_lights": "työvalot tai vastaavat valot"
+  "light.deck_lights": "työvalot tai vastaavat valot",
+  "scene.sky": "Taivaan kirkkaus",
+  "scene.sky.value": "{percent} %",
+  "scene.variant.label": "Malli",
+  "scene.variant.prev": "Edellinen malli",
+  "scene.variant.next": "Seuraava malli",
+  "scene.variant.shuffle": "Satunnainen malli",
+  "scene.night.alt": "Suuntimanäkymä: alus 3D:nä yöllä, valot nähtynä suhteellisesta suuntimasta {theta} astetta, käännä vetämällä"
 }

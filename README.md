@@ -41,6 +41,13 @@ worktree is running at once:
 npx vite preview --port 4181
 ```
 
+Trying someone else's branch (a PR, say) from a clean checkout:
+
+```
+git clone https://github.com/mark-brannan/searoom && cd searoom
+git checkout <branch> && npm ci && npm run dev -- --host
+```
+
 Working in a git worktree (`.claude/worktrees/<name>`)? Run the command from
 inside it — Vite serves whatever worktree it's launched from, not `main`.
 

@@ -2,7 +2,7 @@
 // rules that fired on the right. Alternatives stay unresolved — the app
 // shows every lawful display and lets elimination teach the choice.
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
 import { FactControls } from '../components/FactControls';
@@ -26,12 +26,20 @@ import type {
   DisplayEvaluation,
   Modality,
 } from '../engine/types';
-import { BearingView, PlanView, ProfileView, selectHull } from 'nav-wright';
+import {
+  HULL_VARIANTS,
+  PlanView,
+  ProfileView,
+  SliderControl,
+  VariantControl,
+  hullVariantName,
+  selectHull,
+} from 'nav-wright';
 import { placeLights } from '../render/navWright';
 import type { Aspect } from 'nav-wright';
 import { BenchyView } from 'nav-wright/benchy';
 import type { BenchyLabels } from 'nav-wright/benchy';
-import { FALLBACK_MODEL_URL, modelUrlForHull } from '../render/hullModels';
+import { FALLBACK_MODEL_URL } from '../render/hullModels';
 import type { AppState, View } from '../state/urlState';
 
 const ASPECTS: Aspect[] = [
@@ -456,6 +464,29 @@ function DataDrawer({
   );
 }
 
+// Size classes the variant steps on: the length a vessel reads as, not the
+// slider tick it sits on, so dragging the length slider does not shuffle the
+// model on every pixel.
+const SIZE_CLASS_EDGES_M = [7, 12, 20, 30, 50, 75, 100, 150, 200, 300];
+
+function vesselClassKey(hullId: string, facts: AppState['facts']): string {
+  const length =
+    typeof facts['fact:length_m'] === 'number' ? facts['fact:length_m'] : 12;
+  const size = SIZE_CLASS_EDGES_M.filter((edge) => length >= edge).length;
+  return [
+    hullId,
+    size,
+    facts['fact:propulsion'],
+    facts['fact:activity'],
+    facts['fact:position'],
+  ].join('|');
+}
+
+function randomOther(current: number): number {
+  const step = 1 + Math.floor(Math.random() * (HULL_VARIANTS - 1));
+  return (current + step) % HULL_VARIANTS;
+}
+
 export function Sandbox({
   state,
   patch,
@@ -499,6 +530,16 @@ export function Sandbox({
 
   const display = evaln.displays[current];
   const hull = useMemo(() => selectHull(state.facts), [state.facts]);
+  // A new class of vessel gets a new model: cross a size-class boundary, or
+  // change propulsion, activity or position, and the 3D views step to the
+  // next variant so the same outline is not always the one shown.
+  const classKey = vesselClassKey(hull.spec.id, state.facts);
+  const lastClass = useRef(classKey);
+  useEffect(() => {
+    if (lastClass.current === classKey) return;
+    lastClass.current = classKey;
+    patch({ variant: (state.variant + 1) % HULL_VARIANTS });
+  }, [classKey, state.variant, patch]);
   const placed = useMemo(() => {
     if (!display) return [];
     const additionLights = evaln.optionalAdditions
@@ -512,7 +553,7 @@ export function Sandbox({
     );
   }, [display, evaln, hull, state.facts, state.additionsOn]);
 
-  const views: View[] = ['profile', 'bearing', 'plan', 'benchy', 'model'];
+  const views: View[] = ['profile', 'bearing', 'benchy', 'plan'];
 
   return (
     <div className="sandbox-grid">
@@ -531,16 +572,6 @@ export function Sandbox({
                 <FormattedMessage id={`view.${v}`} />
               </button>
             ))}
-            {state.view === 'bearing' && (
-              <label className="check-row" style={{ marginLeft: 'auto' }}>
-                <input
-                  type="checkbox"
-                  checked={state.hullHint}
-                  onChange={(e) => patch({ hullHint: e.target.checked })}
-                />
-                <FormattedMessage id="scene.hullHint" />
-              </label>
-            )}
           </div>
           {state.view === 'profile' && (
             <ProfileView
@@ -551,31 +582,60 @@ export function Sandbox({
             />
           )}
           {state.view === 'bearing' && (
-            <BearingView
-              hull={hull}
-              placed={placed}
-              theta={state.theta}
-              onTheta={(t) => patch({ theta: t })}
-              hullHint={state.hullHint}
-              labels={sceneLabels}
-            />
+            <>
+              <BenchyView
+                night
+                procedural
+                variant={state.variant}
+                hull={hull}
+                placed={placed}
+                facts={state.facts}
+                theta={state.theta}
+                onTheta={(t) => patch({ theta: t })}
+                tilt={state.tilt}
+                onTilt={(t) => patch({ tilt: t })}
+                hullOpacity={state.hullHint}
+                darkness={state.sky}
+                labels={sceneLabels}
+              />
+              <SliderControl
+                id="hull-visibility"
+                label={intl.formatMessage({ id: 'scene.hullHint' })}
+                value={Math.round(state.hullHint * 100)}
+                min={0}
+                max={100}
+                step={1}
+                onChange={(v) => patch({ hullHint: v / 100 })}
+                readout={`${Math.round(state.hullHint * 100)}%`}
+              />
+              <SliderControl
+                id="sky-brightness"
+                label={intl.formatMessage({ id: 'scene.sky' })}
+                value={Math.round(state.sky * 100)}
+                min={0}
+                max={100}
+                step={1}
+                onChange={(v) => patch({ sky: v / 100 })}
+                readout={intl.formatMessage({ id: 'scene.sky.value' }, { percent: Math.round(state.sky * 100) })}
+              />
+              <VariantControl
+                index={state.variant % HULL_VARIANTS}
+                count={HULL_VARIANTS}
+                name={hullVariantName(hull, state.variant)}
+                onChange={(i) => patch({ variant: i })}
+                onShuffle={() => patch({ variant: randomOther(state.variant) })}
+                labels={{
+                  label: intl.formatMessage({ id: 'scene.variant.label' }),
+                  prev: intl.formatMessage({ id: 'scene.variant.prev' }),
+                  next: intl.formatMessage({ id: 'scene.variant.next' }),
+                  shuffle: intl.formatMessage({ id: 'scene.variant.shuffle' }),
+                }}
+              />
+            </>
           )}
           {state.view === 'benchy' && (
             <BenchyView
               modelUrl={FALLBACK_MODEL_URL}
-              hull={hull}
-              placed={placed}
-              facts={state.facts}
-              theta={state.theta}
-              onTheta={(t) => patch({ theta: t })}
-              tilt={state.tilt}
-              onTilt={(t) => patch({ tilt: t })}
-              labels={sceneLabels}
-            />
-          )}
-          {state.view === 'model' && (
-            <BenchyView
-              modelUrl={modelUrlForHull(hull)}
               hull={hull}
               placed={placed}
               facts={state.facts}

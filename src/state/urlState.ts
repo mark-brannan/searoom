@@ -20,7 +20,7 @@ import {
 type FactBag = Record<string, FactValue | undefined>;
 
 export type Mode = 'sandbox' | 'identify' | 'quiz' | 'rules' | 'sound';
-export type View = 'profile' | 'bearing' | 'plan' | 'benchy' | 'model';
+export type View = 'profile' | 'bearing' | 'benchy' | 'plan';
 
 export interface AppState {
   mode: Mode;
@@ -42,7 +42,12 @@ export interface AppState {
    */
   corpus: string;
   rulePath: string | null;
-  hullHint: boolean;
+  /** Hull visibility in the bearing view, 0 (lights only) .. 1 (solid). */
+  hullHint: number;
+  /** Sky brightness, 0 (full black) .. 1 (lighter blue). */
+  sky: number;
+  /** Which model variant within the hull's class the 3D views draw. */
+  variant: number;
   drawer: boolean;
 }
 
@@ -63,6 +68,9 @@ export function defaultCorpusFor(jurisdiction: string): string {
   return referenceCorpusFor(jurisdiction)?.id ?? DEFAULT_CORPUS_ID;
 }
 
+/** Faint by default: the silhouette is a hint, the lights are the subject. */
+export const DEFAULT_HULL_HINT = 0.35;
+
 export const DEFAULT_STATE: AppState = {
   mode: 'sandbox',
   jurisdiction: BASE_JURISDICTION,
@@ -76,7 +84,9 @@ export const DEFAULT_STATE: AppState = {
   locale: 'en',
   corpus: DEFAULT_CORPUS_ID,
   rulePath: null,
-  hullHint: true,
+  hullHint: DEFAULT_HULL_HINT,
+  sky: 0,
+  variant: 0,
   drawer: false,
 };
 
@@ -152,7 +162,12 @@ export function serialize(state: AppState): string {
   if (state.locale !== 'en') params.set('loc', state.locale);
   const cp = corpusIn(state.jurisdiction, state.corpus).id;
   if (cp !== defaultCorpusFor(state.jurisdiction)) params.set('cp', cp);
-  if (!state.hullHint) params.set('hh', '0');
+  if (state.hullHint !== DEFAULT_STATE.hullHint)
+    params.set('hh', String(Math.round(state.hullHint * 100)));
+  if (state.sky !== DEFAULT_STATE.sky)
+    params.set('bg', String(Math.round(state.sky * 100)));
+  if (state.variant !== DEFAULT_STATE.variant)
+    params.set('vr', String(state.variant));
   if (state.drawer) params.set('dd', '1');
   const path =
     state.mode === 'rules' && state.rulePath
@@ -201,10 +216,11 @@ export function deserialize(hash: string): AppState {
     view === 'profile' ||
     view === 'bearing' ||
     view === 'plan' ||
-    view === 'benchy' ||
-    view === 'model'
+    view === 'benchy'
   )
     state.view = view;
+  // the retired Model tab is the bearing view now
+  else if (view === 'model') state.view = 'bearing';
   const th = Number(params.get('th'));
   if (params.has('th') && Number.isFinite(th))
     state.theta = ((th % 360) + 360) % 360;
@@ -228,7 +244,16 @@ export function deserialize(hash: string): AppState {
   const cp = params.get('cp');
   const chosen = cp ? corpusById(cp) : undefined;
   if (chosen && jurisdictionOf(chosen) === state.jurisdiction) state.corpus = chosen.id;
-  if (params.get('hh') === '0') state.hullHint = false;
+  const unit = (key: string): number | null => {
+    const n = Number(params.get(key));
+    return params.has(key) && Number.isFinite(n)
+      ? Math.min(1, Math.max(0, n / 100))
+      : null;
+  };
+  state.hullHint = unit('hh') ?? state.hullHint;
+  state.sky = unit('bg') ?? state.sky;
+  const vr = Number(params.get('vr'));
+  if (params.has('vr') && Number.isInteger(vr) && vr >= 0) state.variant = vr;
   if (params.get('dd') === '1') state.drawer = true;
   return state;
 }
