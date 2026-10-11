@@ -21,7 +21,7 @@
     "@react-three/fiber": "^9.8.1",
     "colregs": "github:mark-brannan/colregs#main",
     "colregs-engine": "github:mark-brannan/colregs-engine#main",
-    "nav-wright": "github:mark-brannan/nav-wright#claude/affectionate-sagan-ho6p9w",
+    "nav-wright": "github:mark-brannan/nav-wright#main",
     "react": "~19.3.0",
     "react-dom": "~19.3.0",
     "react-intl": "^10.2.2",
