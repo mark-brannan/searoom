@@ -1,0 +1,8 @@
+dist
+playground-dist
+node_modules
+package-lock.json
+CHANGELOG.md
+.release-please-manifest.json
+screenshots
+models
