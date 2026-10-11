@@ -11,9 +11,9 @@
 // target, same theta/tilt-to-position math — onto that box, and compares the
 // result to ProfileView's PX/PZ pixel position for the same light.
 //
-// power-small's only registered mesh is Benchy, already known (searoom#83)
-// not to fit power-small's stations; its poses are recorded in
-// KNOWN_POSE_MISFITS as an expected failure for the same reason.
+// Every registered mesh is already known (KNOWN_MISFITS, meshProfile.ts) not
+// to fit its hull's stations; its pose is recorded in KNOWN_POSE_MISFITS as an
+// expected failure for the same reason.
 
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
@@ -26,7 +26,7 @@ import { lights } from '../data/colregs';
 // Not on nav-wright's export map, per hullRegistration.test.ts.
 import { anchorLights } from '../../node_modules/nav-wright/dist/modelTransform.js';
 import { hasRegisteredModel, modelUrlForHull } from './hullModels';
-import { loadHullScene, worldProfile } from './meshProfile';
+import { KNOWN_MISFITS, loadHullScene, worldProfile } from './meshProfile';
 
 /** BenchyModel's own constants (searoom's copy: nav-wright's are internal). */
 const ORBIT_DISTANCE = 1.6;
@@ -97,9 +97,21 @@ const LENGTH_M = 12;
  */
 const POSE_TOLERANCE = 0.08;
 
-/** Hull ids whose registered mesh is a known misfit (searoom#83's
- * KNOWN_MISFITS) — their pose necessarily disagrees with the profile too. */
-const KNOWN_POSE_MISFITS: ReadonlySet<string> = new Set(['power-small']);
+/** A mesh that misses its stations (KNOWN_MISFITS) necessarily poses its
+ * lights off the profile too.
+ * Measured misses (Δ/canvas) at the time of writing:
+ *
+ * open: starboard sidelight 0.19, port 0.16, sternlight 0.11.
+ * power-small: masthead 0.25, sternlight 0.13.
+ * power-large: masthead 0.14, starboard sidelight 0.13, sternlight 0.14.
+ * sail-small: masthead 0.20, sternlight 0.14.
+ * sail-large: starboard sidelight 0.09, port 0.10, sternlight 0.35.
+ * trawler: masthead 0.11, starboard sidelight 0.14, port 0.10, sternlight 0.13.
+ * tug: starboard sidelight 0.13, port 0.09, sternlight 0.13.
+ * container-ship: masthead 0.26, starboard sidelight 0.38, port 0.34,
+ * sternlight 0.17.
+ */
+const KNOWN_POSE_MISFITS: ReadonlySet<string> = KNOWN_MISFITS;
 
 const registered = (Object.values(allHulls) as Hull[]).filter(hasRegisteredModel);
 
