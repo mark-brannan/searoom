@@ -12,6 +12,14 @@
 
 import type { Hull } from 'nav-wright';
 import benchyModelUrl from 'nav-wright/models/3dbenchy-lowpoly.glb?url';
+import openModelUrl from 'nav-wright/models/open-kenney-boat-row-large.glb?url';
+import powerSmallModelUrl from 'nav-wright/models/power-small-kenney-boat-speed-j.glb?url';
+import powerLargeModelUrl from 'nav-wright/models/power-large-kenney-boat-house-c.glb?url';
+import sailSmallModelUrl from 'nav-wright/models/sail-small-kenney-boat-sail-b.glb?url';
+import sailLargeModelUrl from 'nav-wright/models/sail-large-kenney-ship-small.glb?url';
+import trawlerModelUrl from 'nav-wright/models/trawler-kenney-boat-fishing-small.glb?url';
+import tugModelUrl from 'nav-wright/models/tug-kenney-boat-tow-b.glb?url';
+import containerShipModelUrl from 'nav-wright/models/container-ship-kenney-ship-cargo-a.glb?url';
 
 /** The mesh drawn for any hull id with no registered model of its own. */
 export const FALLBACK_MODEL_URL: string = benchyModelUrl;
@@ -20,11 +28,22 @@ export const FALLBACK_MODEL_URL: string = benchyModelUrl;
  * Meshes registered to a hull id. Keys are `HullSpec.id` (`allHulls[k].spec.id`,
  * kebab-case), not the `allHulls` key.
  *
- * Benchy is a small cabin motor boat, so `power-small` is the one id it is
- * plausibly shaped for. Every other id falls back to it for want of a mesh.
+ * Kenney Watercraft Kit meshes (CC0, nav-wright's MODELS.md). nav-wright ships
+ * several per hull; the one here passed nav-wright's hullMeshCheck and, of
+ * those, registers to the spec with the fewest stations out of tolerance,
+ * then the smallest worst miss (hullRegistration.test.ts). cruise-ship and
+ * ferry have kit meshes but fail hullMeshCheck's single-mast test, so they
+ * stay on the stand-in. Every other id falls back to Benchy for want of a mesh.
  */
 const HULL_MODEL_URLS: Readonly<Record<string, string>> = {
-  'power-small': benchyModelUrl,
+  open: openModelUrl,
+  'power-small': powerSmallModelUrl,
+  'power-large': powerLargeModelUrl,
+  'sail-small': sailSmallModelUrl,
+  'sail-large': sailLargeModelUrl,
+  trawler: trawlerModelUrl,
+  tug: tugModelUrl,
+  'container-ship': containerShipModelUrl,
 };
 
 /** True when this hull has a mesh of its own rather than the stand-in. */

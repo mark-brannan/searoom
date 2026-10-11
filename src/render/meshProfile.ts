@@ -31,6 +31,14 @@ function modelPath(url: string): string {
   return path.join(root, rel);
 }
 
+/** three's texture path reaches for browser globals under Node, and the
+ * Kenney meshes carry an embedded colormap where Benchy had none. The profile
+ * is geometry only, so stub them rather than decode an image (as nav-wright's
+ * hullMeshCheck does). */
+const g = globalThis as Record<string, unknown>;
+g.self ??= globalThis;
+g.createImageBitmap ??= async () => ({ width: 1, height: 1, close() {} });
+
 export async function loadHullScene(url: string): Promise<THREE.Group> {
   const buf = await readFile(modelPath(url));
   const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
