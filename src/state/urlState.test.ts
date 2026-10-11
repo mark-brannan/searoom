@@ -34,10 +34,25 @@ describe('URL state round-trip', () => {
       signpost: 'eu-cevni',
       locale: 'fi',
       corpus: 'intl@2016.es.boe',
-      hullHint: false,
+      hullHint: 0.6,
+      sky: 0.4,
+      variant: 2,
       drawer: true,
     };
     expect(deserialize(serialize(state))).toEqual(state);
+  });
+
+  it('reads the retired Model tab as the bearing view, and an old hh=0 as hull off', () => {
+    const s = deserialize('#/?view=model&hh=0');
+    expect(s.view).toBe('bearing');
+    expect(s.hullHint).toBe(0);
+  });
+
+  it('clamps hull visibility and sky to 0..1 and drops a bad variant', () => {
+    const s = deserialize('#/?hh=900&bg=-5&vr=x');
+    expect(s.hullHint).toBe(1);
+    expect(s.sky).toBe(0);
+    expect(s.variant).toBe(DEFAULT_STATE.variant);
   });
 
   it('drops a corpus id the package does not ship', () => {

@@ -13,7 +13,6 @@
   "view.bearing": "Bearing",
   "view.plan": "Arcs",
   "view.benchy": "Benchy",
-  "view.model": "Model",
   "view.label": "View",
   "fact.propulsion": "Propulsion",
   "fact.activity": "Activity",
@@ -52,7 +51,7 @@
   "scene.benchy.tiltLabel": "Tilt",
   "scene.benchy.tiltValue": "{tilt} degrees above the waterline",
   "scene.plan.alt": "Plan view: each light's arc of visibility around the hull",
-  "scene.hullHint": "Faint hull hint",
+  "scene.hullHint": "Hull visibility",
   "sandbox.displays.title": "{count, plural, one {# lawful display} other {# lawful displays}}",
   "sandbox.displays.explain": "Where the Rules permit a choice, every lawful option is shown. Pick one to see it and why the others were set aside.",
   "sandbox.display.chip": "Display {n}",
@@ -296,5 +295,12 @@
   "sp.es.p1": "Live: the Spanish instrument of accession as published by the Agencia Estatal Boletín Oficial del Estado. Licence verified 2026-09-09 under the BOE aviso legal — reuse permitted, commercial and non-commercial, with attribution; a consolidated text must not be represented as official.",
   "sp.es.p2": "Tier and source are shown beside every paragraph. Paragraphs not yet transcribed fall back to the en-US text and say so.",
   "sp.ru.p1": "Official tier: a deposited official translation, verified against Article IX. The source is the problem, not the text — IMO's consolidated editions are sold publications and probably not reproducible; a national gazette is the likely lawful route.",
-  "fallback.all": "Nothing in this set comes from the corpus you picked: all {total} paragraphs are shown from {shown}. This is the fallback corpus's rendering, not a mixed one."
+  "fallback.all": "Nothing in this set comes from the corpus you picked: all {total} paragraphs are shown from {shown}. This is the fallback corpus's rendering, not a mixed one.",
+  "scene.sky": "Sky brightness",
+  "scene.sky.value": "{percent}%",
+  "scene.variant.label": "Model",
+  "scene.variant.prev": "Previous model",
+  "scene.variant.next": "Next model",
+  "scene.variant.shuffle": "Random model",
+  "scene.night.alt": "Bearing view: the vessel in 3D at night with her lights as seen from relative bearing {theta} degrees, drag to rotate"
 }
