@@ -13,11 +13,12 @@
 // each seat the mesh yields with the spec station it stands in for, as a
 // fraction of the vessel's length.
 //
-// The registered meshes are Kenney Watercraft Kit hulls (nav-wright#44):
-// cartoon boats, short and tall, and none of them lands every light within
-// tolerance. Each failure is recorded in KNOWN_MISFITS as an expected failure
-// (`it.fails`), so the day a mesh that fits lands, this test flips loudly
-// instead of silently passing a misfit.
+// Eight hulls carry a Kenney Watercraft Kit mesh (nav-wright#44): cartoon
+// boats, short and tall. The other ten carry a mesh lofted from their own 2D
+// drawings (nav-wright scripts/loft-hulls.mjs). None yet lands every light
+// within tolerance; each is recorded in KNOWN_MISFITS (meshProfile.ts) as an
+// expected failure (`it.fails`), so the day a mesh that fits lands, this test
+// flips loudly instead of silently passing a misfit.
 
 import { describe, expect, it } from 'vitest';
 import { allHulls } from 'nav-wright';
@@ -32,7 +33,7 @@ import {
 } from '../../node_modules/nav-wright/dist/modelTransform.js';
 import type { StationProfile } from '../../node_modules/nav-wright/dist/modelTransform.js';
 import { hasRegisteredModel, modelUrlForHull } from './hullModels';
-import { loadHullScene, worldProfile } from './meshProfile';
+import { KNOWN_MISFITS, loadHullScene, worldProfile } from './meshProfile';
 
 /**
  * How far, as a fraction of LOA, a seat on the mesh may sit from the spec's
@@ -42,43 +43,6 @@ import { loadHullScene, worldProfile } from './meshProfile';
  * stations, set to two decimals of half-length, are inside the noise.
  */
 export const REGISTRATION_TOLERANCE = 0.05;
-
-/**
- * Hull ids whose registered mesh is known not to fit, with the measured
- * misses (Δ/LOA) at the time of writing. Remove an id here when a mesh that
- * registers lands; the test then fails until it does.
- *
- * Kenney Watercraft Kit meshes have cartoon proportions, so every one misses
- * somewhere:
- *
- * open → boat-row-large: sidelight x -0.24, deck +0.09, half-beam +0.28;
- * masthead x -0.12, top +0.09; stern x -0.10, transom top +0.17.
- * power-small → boat-speed-j: sidelight x +0.11, deck +0.08, half-beam +0.06;
- * masthead x -0.47; aft mast x -0.25; stern x -0.08, transom top +0.21.
- * power-large → boat-house-c: sidelight x +0.29, half-beam +0.10; masthead
- * x -0.21, top +0.27; stern x -0.06, transom top +0.10.
- * sail-small → boat-sail-b: sidelight x +0.16, deck +0.16, half-beam +0.08;
- * masthead x -0.13, top +0.73; stern x -0.06, transom top +0.16.
- * sail-large → ship-small: sidelight deck +0.25, half-beam +0.07; masthead
- * top +0.51; aft mast x +0.15; stern x -0.06, transom top +0.80.
- * trawler → boat-fishing-small: sidelight x +0.33, deck +0.12, half-beam
- * +0.07; masthead x -0.14, top +0.38; aft mast x +0.18; stern x -0.07,
- * transom top +0.18.
- * tug → boat-tow-b: sidelight x +0.29, deck +0.07, half-beam +0.07; masthead
- * x +0.13, top +0.26; aft mast x +0.34; stern x -0.08, transom top +0.16.
- * container-ship → ship-cargo-a: sidelight x +0.56, deck -0.12; masthead
- * x -0.11; aft mast x +0.39.
- */
-const KNOWN_MISFITS: ReadonlySet<string> = new Set([
-  'open',
-  'power-small',
-  'power-large',
-  'sail-small',
-  'sail-large',
-  'trawler',
-  'tug',
-  'container-ship',
-]);
 
 /** Any length works — every figure below is divided back out by it. */
 const LENGTH_M = 2;
