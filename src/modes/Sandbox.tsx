@@ -26,12 +26,12 @@ import type {
   DisplayEvaluation,
   Modality,
 } from '../engine/types';
-import { BearingView, PlanView, ProfileView, selectHull } from 'nav-wright';
+import { PlanView, ProfileView, selectHull } from 'nav-wright';
 import { placeLights } from '../render/navWright';
 import type { Aspect } from 'nav-wright';
-import { BenchyView } from 'nav-wright/benchy';
+import { BearingModelView } from 'nav-wright/benchy';
 import type { BenchyLabels } from 'nav-wright/benchy';
-import { FALLBACK_MODEL_URL, modelUrlForHull } from '../render/hullModels';
+import { modelUrlForHull } from '../render/hullModels';
 import type { AppState, View } from '../state/urlState';
 
 const ASPECTS: Aspect[] = [
@@ -521,7 +521,6 @@ export function Sandbox({
       ) as Record<Aspect, string>,
       planAlt: intl.formatMessage({ id: 'scene.plan.alt' }),
       profileAlt: intl.formatMessage({ id: 'scene.profile.alt' }),
-      benchyAlt: intl.formatMessage({ id: 'scene.benchy.alt' }),
       benchyTiltLabel: intl.formatMessage({ id: 'scene.benchy.tiltLabel' }),
       benchyTiltValue: (tilt) =>
         intl.formatMessage({ id: 'scene.benchy.tiltValue' }, { tilt }),
@@ -544,7 +543,7 @@ export function Sandbox({
     );
   }, [display, evaln, hull, state.facts, state.additionsOn]);
 
-  const views: View[] = ['profile', 'bearing', 'benchy', 'model', 'plan'];
+  const views: View[] = ['profile', 'bearing', 'plan'];
   const percentText = (v: number): string =>
     intl.formatNumber(v / 100, { style: 'percent' });
 
@@ -575,18 +574,20 @@ export function Sandbox({
             />
           )}
           {state.view === 'bearing' && (
-            <BearingView
-              hull={hull}
-              placed={placed}
-              theta={state.theta}
-              onTheta={(t) => patch({ theta: t })}
-              hullHint={state.hullHint / 100}
-              sky={state.sky / 100}
-              labels={sceneLabels}
-            />
-          )}
-          {state.view === 'bearing' && (
             <>
+              <BearingModelView
+                modelUrl={modelUrlForHull(hull)}
+                hull={hull}
+                placed={placed}
+                facts={state.facts}
+                theta={state.theta}
+                onTheta={(t) => patch({ theta: t })}
+                tilt={state.tilt}
+                onTilt={(t) => patch({ tilt: t })}
+                hullHint={state.hullHint / 100}
+                sky={state.sky / 100}
+                labels={sceneLabels}
+              />
               <SceneSlider
                 id="hull-hint"
                 label={intl.formatMessage({ id: 'scene.hullHint' })}
@@ -606,32 +607,6 @@ export function Sandbox({
                 onChange={(v) => patch({ sky: v })}
               />
             </>
-          )}
-          {state.view === 'benchy' && (
-            <BenchyView
-              modelUrl={FALLBACK_MODEL_URL}
-              hull={hull}
-              placed={placed}
-              facts={state.facts}
-              theta={state.theta}
-              onTheta={(t) => patch({ theta: t })}
-              tilt={state.tilt}
-              onTilt={(t) => patch({ tilt: t })}
-              labels={sceneLabels}
-            />
-          )}
-          {state.view === 'model' && (
-            <BenchyView
-              modelUrl={modelUrlForHull(hull)}
-              hull={hull}
-              placed={placed}
-              facts={state.facts}
-              theta={state.theta}
-              onTheta={(t) => patch({ theta: t })}
-              tilt={state.tilt}
-              onTilt={(t) => patch({ tilt: t })}
-              labels={sceneLabels}
-            />
           )}
           {state.view === 'plan' && (
             <PlanView

@@ -106,16 +106,17 @@ describe('URL state round-trip', () => {
   it('keeps the tilt between the waterline and overhead', () => {
     expect(deserialize('#/sandbox?tl=-20').tilt).toBe(0);
     expect(deserialize('#/sandbox?tl=200').tilt).toBe(85);
-    expect(serialize({ ...DEFAULT_STATE, tilt: 40, view: 'benchy' })).toContain('tl=40');
+    expect(serialize({ ...DEFAULT_STATE, tilt: 40, view: 'bearing' })).toContain('tl=40');
   });
 
-  it('round-trips the model view, which is distinct from benchy', () => {
-    expect(deserialize(serialize({ ...DEFAULT_STATE, view: 'model' })).view).toBe(
-      'model',
-    );
-    expect(deserialize(serialize({ ...DEFAULT_STATE, view: 'benchy' })).view).toBe(
-      'benchy',
-    );
+  it('opens an old Benchy or Model link on the bearing view, which now holds the 3D model', () => {
+    expect(deserialize('#/sandbox?view=model').view).toBe('bearing');
+    expect(deserialize('#/sandbox?view=benchy&th=200&tl=30')).toMatchObject({
+      view: 'bearing',
+      theta: 200,
+      tilt: 30,
+    });
+    expect(deserialize(serialize({ ...DEFAULT_STATE, view: 'plan' })).view).toBe('plan');
     expect(deserialize('#/sandbox?view=bogus').view).toBe(DEFAULT_STATE.view);
   });
 

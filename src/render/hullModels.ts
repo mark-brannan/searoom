@@ -1,6 +1,6 @@
 // Which mesh the 3D view draws for a given hull.
 //
-// nav-wright vends `BenchyView` with a `modelUrl` prop: the package ships one
+// nav-wright vends `BearingModelView` with a `modelUrl` prop: the package ships one
 // .glb but the mesh is the consumer's choice per render. This is where that
 // choice is made — one entry per hull id, once, so a new mesh is a line here
 // rather than a change at every call site.
