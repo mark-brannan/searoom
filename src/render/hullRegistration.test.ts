@@ -13,12 +13,12 @@
 // each seat the mesh yields with the spec station it stands in for, as a
 // fraction of the vessel's length.
 //
-// Benchy is registered for power-small only because it is the one mesh that
-// exists (searoom#82). It is a calibration print, 60 x 48 mm, nothing like a
-// hull drawn long and low, and it fails every station by a wide margin. That
-// failure is recorded in KNOWN_MISFITS as an expected failure (`it.fails`),
-// so the day a power-small mesh lands this test flips loudly instead of
-// silently passing a stand-in.
+// Eight hulls carry a Kenney Watercraft Kit mesh (nav-wright#44): cartoon
+// boats, short and tall. The other ten carry a mesh lofted from their own 2D
+// drawings (nav-wright scripts/loft-hulls.mjs). None yet lands every light
+// within tolerance; each is recorded in KNOWN_MISFITS (meshProfile.ts) as an
+// expected failure (`it.fails`), so the day a mesh that fits lands, this test
+// flips loudly instead of silently passing a misfit.
 
 import { describe, expect, it } from 'vitest';
 import { allHulls } from 'nav-wright';
@@ -33,7 +33,7 @@ import {
 } from '../../node_modules/nav-wright/dist/modelTransform.js';
 import type { StationProfile } from '../../node_modules/nav-wright/dist/modelTransform.js';
 import { hasRegisteredModel, modelUrlForHull } from './hullModels';
-import { loadHullScene, worldProfile } from './meshProfile';
+import { KNOWN_MISFITS, loadHullScene, worldProfile } from './meshProfile';
 
 /**
  * How far, as a fraction of LOA, a seat on the mesh may sit from the spec's
@@ -43,17 +43,6 @@ import { loadHullScene, worldProfile } from './meshProfile';
  * stations, set to two decimals of half-length, are inside the noise.
  */
 export const REGISTRATION_TOLERANCE = 0.05;
-
-/**
- * Hull ids whose registered mesh is known not to fit, with the measured
- * misses (Δ/LOA) at the time of writing. Remove an id here when a mesh that
- * registers lands; the test then fails until it does.
- *
- * power-small → Benchy: sidelight x +0.08, deck +0.34, half-beam +0.10;
- * masthead top +0.59; aft mast x +0.09; stern x -0.08, transom top +0.17.
- * Only the masthead's fore-aft station is inside tolerance, at -0.05.
- */
-const KNOWN_MISFITS: ReadonlySet<string> = new Set(['power-small']);
 
 /** Any length works — every figure below is divided back out by it. */
 const LENGTH_M = 2;
