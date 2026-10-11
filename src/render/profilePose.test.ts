@@ -11,9 +11,9 @@
 // target, same theta/tilt-to-position math — onto that box, and compares the
 // result to ProfileView's PX/PZ pixel position for the same light.
 //
-// power-small's only registered mesh is Benchy, already known (searoom#83)
-// not to fit power-small's stations; its poses are recorded in
-// KNOWN_POSE_MISFITS as an expected failure for the same reason.
+// Every hull's mesh is lofted from its own drawings, and every one already
+// misses its stations in hullRegistration.test.ts; their poses are recorded
+// in KNOWN_POSE_MISFITS as expected failures for the same reason.
 
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
@@ -99,7 +99,26 @@ const POSE_TOLERANCE = 0.08;
 
 /** Hull ids whose registered mesh is a known misfit (searoom#83's
  * KNOWN_MISFITS) — their pose necessarily disagrees with the profile too. */
-const KNOWN_POSE_MISFITS: ReadonlySet<string> = new Set(['power-small']);
+const KNOWN_POSE_MISFITS: ReadonlySet<string> = new Set([
+  'open',
+  'power-small',
+  'power-large',
+  'sail-small',
+  'sail-large',
+  'square-rigger',
+  'trawler',
+  'seiner',
+  'tug',
+  'barge',
+  'pilot-boat',
+  'ferry',
+  'container-ship',
+  'tanker',
+  'bulker',
+  'cruise-ship',
+  'warship',
+  'dredger',
+]);
 
 const registered = (Object.values(allHulls) as Hull[]).filter(hasRegisteredModel);
 

@@ -16,22 +16,10 @@ describe('modelUrlForHull', () => {
     }
   });
 
-  it('registers a mesh for power-small', () => {
-    const powerSmall = hulls.find((h) => h.spec.id === 'power-small');
-    expect(powerSmall).toBeDefined();
-    expect(hasRegisteredModel(powerSmall!)).toBe(true);
-    // Benchy is the only mesh nav-wright ships today, so the registered entry
-    // and the fallback resolve to the same file. What this pins is that the id
-    // is in the map at all — when a power-small mesh lands, this test keeps
-    // failing usefully by asserting the lookup answered.
-    expect(modelUrlForHull(powerSmall!)).toMatch(/\.glb/);
-  });
-
-  it('falls back to the stand-in for a hull id with no mesh', () => {
-    const unregistered = hulls.filter((h) => !hasRegisteredModel(h));
-    expect(unregistered.length).toBeGreaterThan(0);
-    for (const hull of unregistered) {
-      expect(modelUrlForHull(hull), hull.spec.id).toBe(FALLBACK_MODEL_URL);
+  it('registers a mesh of its own for every hull in the roster', () => {
+    for (const hull of hulls) {
+      expect(hasRegisteredModel(hull), hull.spec.id).toBe(true);
+      expect(modelUrlForHull(hull), hull.spec.id).not.toBe(FALLBACK_MODEL_URL);
     }
   });
 

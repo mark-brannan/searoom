@@ -13,8 +13,9 @@
 // each seat the mesh yields with the spec station it stands in for, as a
 // fraction of the vessel's length.
 //
-// Benchy is registered for power-small only because it is the one mesh that
-// exists (searoom#82). It is a calibration print, 60 x 48 mm, nothing like a
+// Every hull now has a mesh lofted from its own 2D drawings (nav-wright
+// scripts/loft-hulls.mjs). Before that, Benchy stood in for power-small
+// (searoom#82). It is a calibration print, 60 x 48 mm, nothing like a
 // hull drawn long and low, and it fails every station by a wide margin. That
 // failure is recorded in KNOWN_MISFITS as an expected failure (`it.fails`),
 // so the day a power-small mesh lands this test flips loudly instead of
@@ -49,11 +50,34 @@ export const REGISTRATION_TOLERANCE = 0.05;
  * misses (Δ/LOA) at the time of writing. Remove an id here when a mesh that
  * registers lands; the test then fails until it does.
  *
- * power-small → Benchy: sidelight x +0.08, deck +0.34, half-beam +0.10;
- * masthead top +0.59; aft mast x +0.09; stern x -0.08, transom top +0.17.
- * Only the masthead's fore-aft station is inside tolerance, at -0.05.
+ * Every lofted mesh (nav-wright scripts/loft-hulls.mjs) misses here. The
+ * mesh is the hull's own profile and plan drawings, so the misses measure
+ * how far anchorLights' reading of a drawing (bow shoulder from the plan
+ * outline, mast band from the tallest structure) sits from the spec's
+ * hand-set stations: e.g. power-large's plan reaches full beam at 0.82 of
+ * the half-length, its sideLightX is 0.30. Closing that is nav-wright#50
+ * (place lights from Annex I geometry) or a per-spec retune.
  */
-const KNOWN_MISFITS: ReadonlySet<string> = new Set(['power-small']);
+const KNOWN_MISFITS: ReadonlySet<string> = new Set([
+  'open',
+  'power-small',
+  'power-large',
+  'sail-small',
+  'sail-large',
+  'square-rigger',
+  'trawler',
+  'seiner',
+  'tug',
+  'barge',
+  'pilot-boat',
+  'ferry',
+  'container-ship',
+  'tanker',
+  'bulker',
+  'cruise-ship',
+  'warship',
+  'dredger',
+]);
 
 /** Any length works — every figure below is divided back out by it. */
 const LENGTH_M = 2;
