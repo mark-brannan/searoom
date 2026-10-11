@@ -456,6 +456,38 @@ function DataDrawer({
   );
 }
 
+// A 0-100 scene setting under the view, styled like the θ slider above it.
+function SceneSlider({
+  id,
+  label,
+  value,
+  readout,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: number;
+  readout: string;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="theta-control">
+      <label htmlFor={id}>{label}</label>
+      <input
+        id={id}
+        type="range"
+        min={0}
+        max={100}
+        step={1}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        aria-valuetext={readout}
+      />
+      <span className="theta-readout">{readout}</span>
+    </div>
+  );
+}
+
 export function Sandbox({
   state,
   patch,
@@ -512,7 +544,9 @@ export function Sandbox({
     );
   }, [display, evaln, hull, state.facts, state.additionsOn]);
 
-  const views: View[] = ['profile', 'bearing', 'plan', 'benchy', 'model'];
+  const views: View[] = ['profile', 'bearing', 'benchy', 'model', 'plan'];
+  const percentText = (v: number): string =>
+    intl.formatNumber(v / 100, { style: 'percent' });
 
   return (
     <div className="sandbox-grid">
@@ -531,16 +565,6 @@ export function Sandbox({
                 <FormattedMessage id={`view.${v}`} />
               </button>
             ))}
-            {state.view === 'bearing' && (
-              <label className="check-row" style={{ marginLeft: 'auto' }}>
-                <input
-                  type="checkbox"
-                  checked={state.hullHint}
-                  onChange={(e) => patch({ hullHint: e.target.checked })}
-                />
-                <FormattedMessage id="scene.hullHint" />
-              </label>
-            )}
           </div>
           {state.view === 'profile' && (
             <ProfileView
@@ -556,9 +580,32 @@ export function Sandbox({
               placed={placed}
               theta={state.theta}
               onTheta={(t) => patch({ theta: t })}
-              hullHint={state.hullHint ? 0.3 : 0}
+              hullHint={state.hullHint / 100}
+              sky={state.sky / 100}
               labels={sceneLabels}
             />
+          )}
+          {state.view === 'bearing' && (
+            <>
+              <SceneSlider
+                id="hull-hint"
+                label={intl.formatMessage({ id: 'scene.hullHint' })}
+                value={state.hullHint}
+                readout={
+                  state.hullHint === 0
+                    ? intl.formatMessage({ id: 'scene.hullHint.off' })
+                    : percentText(state.hullHint)
+                }
+                onChange={(v) => patch({ hullHint: v })}
+              />
+              <SceneSlider
+                id="sky"
+                label={intl.formatMessage({ id: 'scene.sky' })}
+                value={state.sky}
+                readout={percentText(state.sky)}
+                onChange={(v) => patch({ sky: v })}
+              />
+            </>
           )}
           {state.view === 'benchy' && (
             <BenchyView
