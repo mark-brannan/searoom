@@ -13,13 +13,10 @@
 // each seat the mesh yields with the spec station it stands in for, as a
 // fraction of the vessel's length.
 //
-// Every hull now has a mesh lofted from its own 2D drawings (nav-wright
-// scripts/loft-hulls.mjs). Before that, Benchy stood in for power-small
-// (searoom#82). It is a calibration print, 60 x 48 mm, nothing like a
-// hull drawn long and low, and it fails every station by a wide margin. That
-// failure is recorded in KNOWN_MISFITS as an expected failure (`it.fails`),
-// so the day a power-small mesh lands this test flips loudly instead of
-// silently passing a stand-in.
+// Every hull's mesh is lofted from its own 2D drawings (nav-wright
+// scripts/loft-hulls.mjs). None yet registers to its spec stations; each is
+// recorded in KNOWN_MISFITS (meshProfile.ts) as an expected failure
+// (`it.fails`), so the day one registers this test flips loudly.
 
 import { describe, expect, it } from 'vitest';
 import { allHulls } from 'nav-wright';
@@ -34,7 +31,7 @@ import {
 } from '../../node_modules/nav-wright/dist/modelTransform.js';
 import type { StationProfile } from '../../node_modules/nav-wright/dist/modelTransform.js';
 import { hasRegisteredModel, modelUrlForHull } from './hullModels';
-import { loadHullScene, worldProfile } from './meshProfile';
+import { KNOWN_MISFITS, loadHullScene, worldProfile } from './meshProfile';
 
 /**
  * How far, as a fraction of LOA, a seat on the mesh may sit from the spec's
@@ -44,40 +41,6 @@ import { loadHullScene, worldProfile } from './meshProfile';
  * stations, set to two decimals of half-length, are inside the noise.
  */
 export const REGISTRATION_TOLERANCE = 0.05;
-
-/**
- * Hull ids whose registered mesh is known not to fit, with the measured
- * misses (Δ/LOA) at the time of writing. Remove an id here when a mesh that
- * registers lands; the test then fails until it does.
- *
- * Every lofted mesh (nav-wright scripts/loft-hulls.mjs) misses here. The
- * mesh is the hull's own profile and plan drawings, so the misses measure
- * how far anchorLights' reading of a drawing (bow shoulder from the plan
- * outline, mast band from the tallest structure) sits from the spec's
- * hand-set stations: e.g. power-large's plan reaches full beam at 0.82 of
- * the half-length, its sideLightX is 0.30. Closing that is nav-wright#50
- * (place lights from Annex I geometry) or a per-spec retune.
- */
-const KNOWN_MISFITS: ReadonlySet<string> = new Set([
-  'open',
-  'power-small',
-  'power-large',
-  'sail-small',
-  'sail-large',
-  'square-rigger',
-  'trawler',
-  'seiner',
-  'tug',
-  'barge',
-  'pilot-boat',
-  'ferry',
-  'container-ship',
-  'tanker',
-  'bulker',
-  'cruise-ship',
-  'warship',
-  'dredger',
-]);
 
 /** Any length works — every figure below is divided back out by it. */
 const LENGTH_M = 2;

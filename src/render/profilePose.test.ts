@@ -26,7 +26,7 @@ import { lights } from '../data/colregs';
 // Not on nav-wright's export map, per hullRegistration.test.ts.
 import { anchorLights } from '../../node_modules/nav-wright/dist/modelTransform.js';
 import { hasRegisteredModel, modelUrlForHull } from './hullModels';
-import { loadHullScene, worldProfile } from './meshProfile';
+import { KNOWN_MISFITS, loadHullScene, worldProfile } from './meshProfile';
 
 /** BenchyModel's own constants (searoom's copy: nav-wright's are internal). */
 const ORBIT_DISTANCE = 1.6;
@@ -97,28 +97,9 @@ const LENGTH_M = 12;
  */
 const POSE_TOLERANCE = 0.08;
 
-/** Hull ids whose registered mesh is a known misfit (searoom#83's
- * KNOWN_MISFITS) — their pose necessarily disagrees with the profile too. */
-const KNOWN_POSE_MISFITS: ReadonlySet<string> = new Set([
-  'open',
-  'power-small',
-  'power-large',
-  'sail-small',
-  'sail-large',
-  'square-rigger',
-  'trawler',
-  'seiner',
-  'tug',
-  'barge',
-  'pilot-boat',
-  'ferry',
-  'container-ship',
-  'tanker',
-  'bulker',
-  'cruise-ship',
-  'warship',
-  'dredger',
-]);
+/** A mesh that misses its stations (KNOWN_MISFITS) necessarily poses its
+ * lights off the profile too. */
+const KNOWN_POSE_MISFITS: ReadonlySet<string> = KNOWN_MISFITS;
 
 const registered = (Object.values(allHulls) as Hull[]).filter(hasRegisteredModel);
 

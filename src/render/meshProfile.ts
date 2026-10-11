@@ -20,6 +20,41 @@ import {
 } from '../../node_modules/nav-wright/dist/modelTransform.js';
 import type { StationProfile } from '../../node_modules/nav-wright/dist/modelTransform.js';
 
+/**
+ * Hull ids whose registered mesh is known not to fit, with the measured
+ * misses (Δ/LOA) at the time of writing. Remove an id here when a mesh that
+ * registers lands; hullRegistration.test.ts then fails until it does, and
+ * profilePose.test.ts, whose pose follows the mesh, reads the same set.
+ *
+ * Every lofted mesh (nav-wright scripts/loft-hulls.mjs) misses here. The
+ * mesh is the hull's own profile and plan drawings, so the misses measure
+ * how far anchorLights' reading of a drawing (bow shoulder from the plan
+ * outline, mast band from the tallest structure) sits from the spec's
+ * hand-set stations: e.g. power-large's plan reaches full beam at 0.82 of
+ * the half-length, its sideLightX is 0.30. Closing that is nav-wright#50
+ * (place lights from Annex I geometry) or a per-spec retune.
+ */
+export const KNOWN_MISFITS: ReadonlySet<string> = new Set([
+  'open',
+  'power-small',
+  'power-large',
+  'sail-small',
+  'sail-large',
+  'square-rigger',
+  'trawler',
+  'seiner',
+  'tug',
+  'barge',
+  'pilot-boat',
+  'ferry',
+  'container-ship',
+  'tanker',
+  'bulker',
+  'cruise-ship',
+  'warship',
+  'dredger',
+]);
+
 /** Vite's `?url` import under vitest resolves to a root-relative path, with
  * the deploy base and `/@fs` prefixes in front of it depending on where the
  * file lives. Peel those back to something the filesystem can open. */
