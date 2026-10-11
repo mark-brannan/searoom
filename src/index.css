@@ -371,6 +371,13 @@ select {
   border-radius: 0;
 }
 
+/* nav-wright's SVG stand-in over the canvas while the model downloads */
+.scene-3d-loading > .scene-svg {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
 .scene-3d-stack canvas {
   /* The view orbits on drag, so the canvas takes the pointer. */
   touch-action: none;
