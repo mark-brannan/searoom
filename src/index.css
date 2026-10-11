@@ -371,6 +371,15 @@ select {
   border-radius: 0;
 }
 
+/* The 2D bearing scene standing in on the 3D canvas while three.js or the
+   model loads: borderless, filling the frame. */
+.scene-3d-stack > .scene-svg,
+.scene-3d-loading > .scene-svg {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
 .scene-3d-stack canvas {
   /* The view orbits on drag, so the canvas takes the pointer. */
   touch-action: none;
@@ -448,6 +457,19 @@ select {
 .bearing-empty {
   fill: var(--dim);
   font-size: 14px;
+}
+
+/* The merged bearing view's "no lights visible" note, over the canvas. */
+.bearing-empty-overlay {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dim);
+  font-size: 14px;
+  pointer-events: none;
 }
 
 @keyframes light-flash {

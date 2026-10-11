@@ -20,7 +20,7 @@ import {
 type FactBag = Record<string, FactValue | undefined>;
 
 export type Mode = 'sandbox' | 'identify' | 'quiz' | 'rules' | 'sound';
-export type View = 'profile' | 'bearing' | 'plan' | 'benchy' | 'model';
+export type View = 'profile' | 'bearing' | 'plan';
 
 export interface AppState {
   mode: Mode;
@@ -29,7 +29,7 @@ export interface AppState {
   facts: FactRecord;
   view: View;
   theta: number;
-  /** Camera elevation above the waterline in the 3D view, degrees. */
+  /** Camera elevation above the waterline in the 3D views, degrees. */
   tilt: number;
   displayIndex: number;
   additionsOn: string[];
@@ -46,6 +46,8 @@ export interface AppState {
   hullHint: number;
   /** Bearing view sky, percent: 0 is black, 100 is a lighter night blue. */
   sky: number;
+  /** Bearing view draws Benchy in place of her own model, at her size. */
+  benchy: boolean;
   drawer: boolean;
 }
 
@@ -81,6 +83,7 @@ export const DEFAULT_STATE: AppState = {
   rulePath: null,
   hullHint: 30,
   sky: 0,
+  benchy: false,
   drawer: false,
 };
 
@@ -165,6 +168,7 @@ export function serialize(state: AppState): string {
   if (state.hullHint !== DEFAULT_STATE.hullHint)
     params.set('hh', String(Math.round(state.hullHint)));
   if (state.sky !== DEFAULT_STATE.sky) params.set('bg', String(Math.round(state.sky)));
+  if (state.benchy) params.set('bn', '1');
   if (state.drawer) params.set('dd', '1');
   const path =
     state.mode === 'rules' && state.rulePath
@@ -209,14 +213,14 @@ export function deserialize(hash: string): AppState {
   if (Object.keys(facts).length > 0)
     state.facts = { ...DEFAULT_FACTS, ...facts } as FactRecord;
   const view = params.get('view');
-  if (
-    view === 'profile' ||
-    view === 'bearing' ||
-    view === 'plan' ||
-    view === 'benchy' ||
-    view === 'model'
-  )
-    state.view = view;
+  if (view === 'profile' || view === 'bearing' || view === 'plan') state.view = view;
+  // the Model and Benchy tabs merged into the bearing view; an old link
+  // lands there, Benchy's with Benchy on
+  else if (view === 'model') state.view = 'bearing';
+  else if (view === 'benchy') {
+    state.view = 'bearing';
+    state.benchy = true;
+  }
   const th = Number(params.get('th'));
   if (params.has('th') && Number.isFinite(th))
     state.theta = ((th % 360) + 360) % 360;
@@ -242,6 +246,7 @@ export function deserialize(hash: string): AppState {
   if (chosen && jurisdictionOf(chosen) === state.jurisdiction) state.corpus = chosen.id;
   state.hullHint = percent(params.get('hh')) ?? state.hullHint;
   state.sky = percent(params.get('bg')) ?? state.sky;
+  if (params.get('bn') === '1') state.benchy = true;
   if (params.get('dd') === '1') state.drawer = true;
   return state;
 }
