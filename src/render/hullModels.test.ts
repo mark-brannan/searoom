@@ -5,6 +5,8 @@ import {
   FALLBACK_MODEL_URL,
   hasRegisteredModel,
   modelUrlForHull,
+  modelUrlForVariant,
+  modelVariantsForHull,
 } from './hullModels';
 
 const hulls = Object.values(allHulls) as Hull[];
@@ -27,5 +29,26 @@ describe('modelUrlForHull', () => {
     const fake = { spec: { id: 'no-such-hull' } } as Hull;
     expect(hasRegisteredModel(fake)).toBe(false);
     expect(modelUrlForHull(fake)).toBe(FALLBACK_MODEL_URL);
+  });
+});
+
+describe('modelVariantsForHull', () => {
+  it('offers the registered mesh first, then every other shipped mesh, lofts included', () => {
+    for (const hull of hulls) {
+      const variants = modelVariantsForHull(hull);
+      expect(variants[0].url, hull.spec.id).toBe(modelUrlForHull(hull));
+      expect(variants.map((v) => v.name), hull.spec.id).toContain(`${hull.spec.id}-loft.glb`);
+    }
+  });
+
+  it('gives a hull its kit meshes as well as its loft', () => {
+    const tug = hulls.find((h) => h.spec.id === 'tug')!;
+    expect(modelVariantsForHull(tug).length).toBe(6);
+  });
+
+  it('falls back to the default for a name the hull does not have', () => {
+    const tug = hulls.find((h) => h.spec.id === 'tug')!;
+    expect(modelUrlForVariant(tug, 'tug-loft.glb')).toMatch(/tug-loft/);
+    expect(modelUrlForVariant(tug, 'ferry-loft.glb')).toBe(modelUrlForHull(tug));
   });
 });

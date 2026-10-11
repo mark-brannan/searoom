@@ -31,7 +31,7 @@ import { placeLights } from '../render/navWright';
 import type { Aspect } from 'nav-wright';
 import { BearingModelView } from 'nav-wright/benchy';
 import type { BenchyLabels } from 'nav-wright/benchy';
-import { BENCHY_MODEL_URL, modelUrlForHull } from '../render/hullModels';
+import { BENCHY_MODEL_URL, modelUrlForVariant, modelVariantsForHull } from '../render/hullModels';
 import type { AppState, View } from '../state/urlState';
 
 const ASPECTS: Aspect[] = [
@@ -576,7 +576,7 @@ export function Sandbox({
           )}
           {state.view === 'bearing' && (
             <BearingModelView
-              modelUrl={state.benchy ? BENCHY_MODEL_URL : modelUrlForHull(hull)}
+              modelUrl={state.benchy ? BENCHY_MODEL_URL : modelUrlForVariant(hull, state.mesh)}
               hull={hull}
               placed={placed}
               facts={state.facts}
@@ -609,6 +609,21 @@ export function Sandbox({
                 readout={percentText(state.sky)}
                 onChange={(v) => patch({ sky: v })}
               />
+              <label className="check-row" htmlFor="mesh">
+                <FormattedMessage id="scene.mesh" />
+                <select
+                  id="mesh"
+                  value={modelVariantsForHull(hull).some((v) => v.name === state.mesh) ? state.mesh : ''}
+                  disabled={state.benchy}
+                  onChange={(e) => patch({ mesh: e.target.value })}
+                >
+                  {modelVariantsForHull(hull).map((v, i) => (
+                    <option key={v.name} value={i === 0 ? '' : v.name}>
+                      {v.name.slice(hull.spec.id.length + 1).replace(/\.glb$/, '')}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label className="check-row" htmlFor="benchy">
                 <input
                   id="benchy"

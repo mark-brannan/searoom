@@ -47,6 +47,7 @@
   "scene.bearing.thetaLabel": "Suhteellinen suuntima θ",
   "scene.bearing.thetaValue": "{theta} astetta, {aspect}",
   "scene.benchy.alt": "Benchy-näkymä: alus 3D-mallina valoineen, vapaasti käännettävissä",
+  "scene.mesh": "Malli",
   "scene.benchy.toggle": "Benchy aluksen oman mallin tilalla",
   "scene.benchy.tiltLabel": "Kallistus",
   "scene.benchy.tiltValue": "{tilt} astetta vesirajan yläpuolella",
