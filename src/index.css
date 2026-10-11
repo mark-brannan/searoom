@@ -413,6 +413,7 @@ select {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
   margin-top: 10px;
 }
 
@@ -430,6 +431,18 @@ select {
   font-variant-numeric: tabular-nums;
   font-size: 13.5px;
   min-width: 11em;
+}
+
+/* ThetaControl's dial: the native input is visually hidden, so its focus
+   ring is drawn on the dial. */
+.theta-dial-input:focus-visible + .theta-dial .theta-dial-ring {
+  stroke: var(--focus, #f5f5f0);
+  stroke-width: 3;
+}
+
+.theta-dial:active,
+.bearing-view .scene-svg:active {
+  cursor: grabbing !important;
 }
 
 .bearing-empty {
