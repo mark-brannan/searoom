@@ -34,10 +34,41 @@ describe('URL state round-trip', () => {
       signpost: 'eu-cevni',
       locale: 'fi',
       corpus: 'intl@2016.es.boe',
-      hullHint: false,
+      hullHint: 65,
+      sky: 40,
       drawer: true,
     };
     expect(deserialize(serialize(state))).toEqual(state);
+  });
+
+  it('keeps the bearing view black with a faint hull unless the URL says otherwise', () => {
+    expect(DEFAULT_STATE.sky).toBe(0);
+    expect(DEFAULT_STATE.hullHint).toBeGreaterThan(0);
+    const url = serialize(DEFAULT_STATE);
+    expect(url).not.toContain('hh=');
+    expect(url).not.toContain('bg=');
+  });
+
+  it('reads hull hint and sky as percent, so hh=0 still turns the hull off', () => {
+    const s = deserialize('#/?view=bearing&hh=0&bg=100');
+    expect(s.hullHint).toBe(0);
+    expect(s.sky).toBe(100);
+    expect(serialize(s)).toContain('hh=0');
+  });
+
+  it.each([
+    ['900', 100],
+    ['-5', 0],
+    ['42.6', 43],
+  ])('clamps and rounds hh=%s to %d', (raw, want) => {
+    expect(deserialize(`#/?hh=${raw}&bg=${raw}`).hullHint).toBe(want);
+    expect(deserialize(`#/?hh=${raw}&bg=${raw}`).sky).toBe(want);
+  });
+
+  it.each(['x', '', 'NaN'])('ignores a non-number hh/bg (%j)', (raw) => {
+    const s = deserialize(`#/?hh=${raw}&bg=${raw}`);
+    expect(s.hullHint).toBe(DEFAULT_STATE.hullHint);
+    expect(s.sky).toBe(DEFAULT_STATE.sky);
   });
 
   it('drops a corpus id the package does not ship', () => {
