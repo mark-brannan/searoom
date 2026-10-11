@@ -109,14 +109,18 @@ describe('URL state round-trip', () => {
     expect(serialize({ ...DEFAULT_STATE, tilt: 40, view: 'benchy' })).toContain('tl=40');
   });
 
-  it('round-trips the model view, which is distinct from benchy', () => {
-    expect(deserialize(serialize({ ...DEFAULT_STATE, view: 'model' })).view).toBe(
-      'model',
-    );
-    expect(deserialize(serialize({ ...DEFAULT_STATE, view: 'benchy' })).view).toBe(
-      'benchy',
-    );
+  it.each(['profile', 'bearing', 'benchy', 'plan'] as const)('round-trips the %s view', (view) => {
+    expect(deserialize(serialize({ ...DEFAULT_STATE, view })).view).toBe(view);
+  });
+
+  it('reads the retired Model tab as the merged bearing view, and junk as the default', () => {
+    expect(deserialize('#/sandbox?view=model').view).toBe('bearing');
     expect(deserialize('#/sandbox?view=bogus').view).toBe(DEFAULT_STATE.view);
+  });
+
+  it('round-trips the merged view with its camera and night settings', () => {
+    const state = { ...DEFAULT_STATE, view: 'bearing' as const, theta: 135, tilt: 25, hullHint: 0, sky: 60 };
+    expect(deserialize(serialize(state))).toEqual(state);
   });
 
   it('drops an out-of-range enum param instead of producing a fact evaluate() rejects', () => {

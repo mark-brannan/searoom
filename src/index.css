@@ -450,6 +450,19 @@ select {
   font-size: 14px;
 }
 
+/* The merged bearing view's "no lights visible" note, over the canvas. */
+.bearing-empty-overlay {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dim);
+  font-size: 14px;
+  pointer-events: none;
+}
+
 @keyframes light-flash {
   0%,
   40% {

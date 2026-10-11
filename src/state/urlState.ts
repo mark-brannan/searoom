@@ -20,7 +20,7 @@ import {
 type FactBag = Record<string, FactValue | undefined>;
 
 export type Mode = 'sandbox' | 'identify' | 'quiz' | 'rules' | 'sound';
-export type View = 'profile' | 'bearing' | 'plan' | 'benchy' | 'model';
+export type View = 'profile' | 'bearing' | 'plan' | 'benchy';
 
 export interface AppState {
   mode: Mode;
@@ -29,7 +29,7 @@ export interface AppState {
   facts: FactRecord;
   view: View;
   theta: number;
-  /** Camera elevation above the waterline in the 3D view, degrees. */
+  /** Camera elevation above the waterline in the 3D views, degrees. */
   tilt: number;
   displayIndex: number;
   additionsOn: string[];
@@ -213,10 +213,11 @@ export function deserialize(hash: string): AppState {
     view === 'profile' ||
     view === 'bearing' ||
     view === 'plan' ||
-    view === 'benchy' ||
-    view === 'model'
+    view === 'benchy'
   )
     state.view = view;
+  // the Model tab merged into the bearing view; an old link lands there
+  else if (view === 'model') state.view = 'bearing';
   const th = Number(params.get('th'));
   if (params.has('th') && Number.isFinite(th))
     state.theta = ((th % 360) + 360) % 360;
