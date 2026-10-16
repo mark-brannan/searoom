@@ -2,19 +2,8 @@ import { Suspense, lazy, useEffect, useMemo } from 'react';
 import { FormattedMessage, IntlProvider } from 'react-intl';
 import fi from './i18n/fi.json';
 import { catalogs } from './i18n';
-<<<<<<< HEAD
-import type { AppState, Mode } from './state/urlState';
-import {
-  DEFAULT_STATE,
-  defaultCorpusFor,
-  deserialize,
-  serialize,
-} from './state/urlState';
-import { saveSettings, stateFromHash } from './state/settings';
-=======
 import { DEFAULT_STATE } from './state/urlState';
 import { startSync, useAppState, usePatch } from './state/store';
->>>>>>> origin/main
 import { Header } from './components/Header';
 import { SignpostPanel } from './components/SignpostPanel';
 import { colregsVersion } from './data/colregs';
@@ -40,67 +29,10 @@ const Sound = lazy(() =>
 );
 
 export function App() {
-<<<<<<< HEAD
-  const [state, setState] = useState<AppState>(() =>
-    stateFromHash(window.location.hash),
-  );
-  const stateRef = useRef(state);
-  stateRef.current = state;
-
-  // hash -> state (back button, hand-edited URL)
-  useEffect(() => {
-    const onHash = () => {
-      const s = deserialize(window.location.hash);
-      if (serialize(s) !== serialize(stateRef.current)) setState(s);
-    };
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
-  }, []);
-
-  // state -> hash
-  useEffect(() => {
-    const target = serialize(state);
-    if (window.location.hash !== target) {
-      history.replaceState(null, '', target);
-    }
-  }, [state]);
-
-  // preferences that outlive the visit
-  useEffect(() => {
-    saveSettings({ locale: state.locale, jurisdiction: state.jurisdiction });
-  }, [state.locale, state.jurisdiction]);
-
-  const patch = useCallback((p: Patch) => {
-    setState((s) => {
-      const next = { ...s, ...p };
-      // the corpus belongs to the jurisdiction in view: switching jurisdiction
-      // re-picks that jurisdiction's reference corpus unless the patch names one
-      if (
-        p.jurisdiction !== undefined &&
-        p.jurisdiction !== s.jurisdiction &&
-        p.corpus === undefined
-      ) {
-        next.corpus = defaultCorpusFor(p.jurisdiction);
-      }
-      return next;
-    });
-  }, []);
-
-  const setMode = useCallback(
-    (mode: Mode) => {
-      // mode switches get a history entry so back works between modes
-      const next = { ...stateRef.current, mode };
-      history.pushState(null, '', serialize(next));
-      setState(next);
-    },
-    [],
-  );
-=======
   const state = useAppState();
   const patch = usePatch();
   const layout = useVariant('layout');
   useEffect(() => startSync(), []);
->>>>>>> origin/main
 
   const locale = state.locale === 'fi' ? 'fi' : 'en';
   const messages = catalogs[locale];
