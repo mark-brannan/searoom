@@ -2,10 +2,10 @@
 // rules that fired on the right. Alternatives stay unresolved — the app
 // shows every lawful display and lets elimination teach the choice.
 
-import { rovingKeyDown } from '../components/roving';
 import { useEffect, useMemo } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
+import { rovingKeyDown } from '../components/roving';
 import { Presets } from '../components/Presets';
 import { FactControls } from '../components/FactControls';
 import { RuleParagraphs } from '../components/RuleParagraphs';

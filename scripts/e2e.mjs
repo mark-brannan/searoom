@@ -64,18 +64,27 @@ for (const view of ['profile', 'bearing', 'plan']) {
   check(`Sandbox ${view} view axe: zero serious or critical violations`, serious.length === 0);
 }
 await page.goto(`${base}#/sandbox?p=power&a=none&pos=underway&len=30&view=bearing&th=45`, { waitUntil: 'networkidle' });
-const dial = page.locator('.sandbox-grid input[type=range][aria-valuetext], .sandbox-grid [role=slider]').first();
-const dialOk = (await dial.count()) > 0;
-if (dialOk) {
+const settles = (fn) => page.waitForFunction(fn, null, { timeout: 5000 }).then(() => true, () => false);
+const dial = page.locator('.sandbox-grid input#theta');
+if ((await dial.count()) > 0) {
   await dial.focus();
   await page.keyboard.press('PageUp');
-  check('theta dial moves by keyboard', page.url().includes('th=60'));
+  check('theta dial moves by keyboard (PageUp, 45 -> 60)', await settles(() => location.hash.includes('th=60')));
 } else check('theta dial is focusable', false);
-await page.locator('.mode-nav .mode-tab').first().focus();
-const tabsEl = page.locator('[role=tablist] [role=tab]');
+const tabsEl = page.locator('.view-tabs [role=tab]');
 await tabsEl.first().focus();
 await page.keyboard.press('ArrowRight');
-check('view tabs move by arrow key', (await tabsEl.nth(1).getAttribute('aria-selected')) === 'true');
+const tabMoved = await settles(() => document.activeElement?.getAttribute('aria-selected') === 'true' && location.hash.includes('view=bearing'));
+check('view tabs move by arrow key', tabMoved && (await tabsEl.nth(1).getAttribute('tabindex')) === '0');
+// a sailing vessel under 20 m has several lawful displays, so the chips have somewhere to go
+await page.goto(`${base}#/sandbox?p=sail&a=none&pos=underway&len=10&view=profile`, { waitUntil: 'networkidle' });
+const chipsEl = page.locator('.chips [role=radio]');
+const nChips = await chipsEl.count();
+await chipsEl.first().focus();
+await page.keyboard.press('ArrowRight');
+const chipMoved = await settles(() => document.activeElement?.getAttribute('aria-checked') === 'true');
+const second = [await chipsEl.nth(1).getAttribute('aria-checked'), await chipsEl.nth(1).getAttribute('tabindex')];
+check(`display chips move by arrow key (${nChips} chips)`, nChips > 1 && chipMoved && second[0] === 'true' && second[1] === '0');
 
 check('no uncaught page errors', errors.length === 0);
 await browser.close();

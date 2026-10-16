@@ -6,9 +6,15 @@ import type { KeyboardEvent } from 'react';
 // tabIndex 0 and the rest -1, so Tab enters and leaves the group in one stop.
 export function rovingKeyDown(e: KeyboardEvent<HTMLElement>): void {
   const items = Array.from(
-    e.currentTarget.querySelectorAll<HTMLElement>('[role="radio"],[role="tab"]'),
+    e.currentTarget.querySelectorAll<HTMLElement>(
+      '[role="radio"],[role="tab"]',
+    ),
   );
-  const at = items.indexOf(document.activeElement as HTMLElement);
+  const at = items.indexOf(
+    (e.target as HTMLElement).closest<HTMLElement>(
+      '[role="radio"],[role="tab"]',
+    ) as HTMLElement,
+  );
   if (at < 0) return;
   let to: number;
   switch (e.key) {
