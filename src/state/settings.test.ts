@@ -28,9 +28,16 @@ describe('settings persistence', () => {
 
   it('fills what the URL leaves out', () => {
     saveSettings({ locale: 'fi', jurisdiction: other });
-    const s = stateFromHash('#/sandbox');
+    const s = stateFromHash('');
     expect(s.locale).toBe('fi');
     expect(s.jurisdiction).toBe(other);
+  });
+
+  it('does not overlay stored settings on a query-less path link', () => {
+    saveSettings({ locale: 'fi', jurisdiction: other });
+    const s = stateFromHash('#/quiz');
+    expect(s.locale).toBe('en');
+    expect(s.jurisdiction).not.toBe(other);
   });
 
   it('does not overlay stored settings on a link that has a query', () => {
