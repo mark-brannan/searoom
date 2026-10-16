@@ -1,7 +1,8 @@
 // The Profile view drawn from the hull's selected mesh: a silhouette in the
 // existing wireframe palette (no colour, no texture), lights seated where the
 // 3D view seats them (anchorLights on the same profile). The hand-drawn SVG
-// profile stays as the fallback while a mesh loads, if it fails, or when
+// profile stays as the fallback while a mesh loads, if it fails, when the
+// seats break Annex I horizontal positioning (annexISeats.ts), or when
 // profileSource() says 'svg'.
 
 import { useEffect, useMemo, useState } from 'react';
@@ -24,12 +25,36 @@ import {
   xPixel,
   yPixel,
 } from './silhouette';
+import { meshOnlyBreaches } from './annexISeats';
 
 /** Which profile to draw. The hand-drawn SVG is kept behind `?profile=svg`. */
 export function profileSource(
   search: string = globalThis.location?.search ?? '',
 ): 'mesh' | 'svg' {
   return new URLSearchParams(search).get('profile') === 'svg' ? 'svg' : 'mesh';
+}
+
+/** The lights seated on a mesh's profile as the 3D view seats them, with
+ * its clearance (BenchyModel), so a light clears the structure it is seated
+ * on instead of centring on its edge. */
+export function seatLights(
+  profile: StationProfile,
+  placed: PlacedLight[],
+  length: number,
+  hull: Hull,
+): [number, number, number][] {
+  return anchorLights(placed, length, hull.spec, profile, lightRadius(length));
+}
+
+/** False when the mesh's seats break an Annex I 3(a)/3(b) requirement the
+ * hand-drawn profile keeps: the view then draws the hand-drawn one. */
+export function meshSeatsLawful(
+  placed: PlacedLight[],
+  seats: readonly (readonly [number, number, number])[],
+  length: number,
+  facts: FactRecord,
+): boolean {
+  return meshOnlyBreaches(placed, seats, length, facts).length === 0;
 }
 
 const scenes = new Map<string, Promise<Group>>();
@@ -88,13 +113,12 @@ export function MeshProfileView({
     [loaded, modelUrl, length, hull],
   );
   const seats = useMemo(
-    // The 3D view's clearance too (BenchyModel), so a light clears the
-    // structure it is seated on instead of centring on its edge.
-    () =>
-      profile
-        ? anchorLights(placed, length, hull.spec, profile, lightRadius(length))
-        : null,
+    () => (profile ? seatLights(profile, placed, length, hull) : null),
     [profile, placed, length, hull],
+  );
+  const lawful = useMemo(
+    () => (seats ? meshSeatsLawful(placed, seats, length, facts) : false),
+    [seats, placed, length, facts],
   );
 
   const fit = useMemo(
@@ -112,7 +136,13 @@ export function MeshProfileView({
     [profile, outline, seats, length],
   );
 
-  if (profileSource() === 'svg' || !profile || !outline || !seats) {
+  if (
+    profileSource() === 'svg' ||
+    !profile ||
+    !outline ||
+    !seats ||
+    !lawful
+  ) {
     return (
       <ProfileView hull={hull} placed={placed} facts={facts} labels={labels} />
     );
