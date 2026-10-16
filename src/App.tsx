@@ -60,11 +60,16 @@ export function App() {
   }, []);
 
   // state -> hash
+  const lastQuizN = useRef(state.quizN);
   useEffect(() => {
     const target = serialize(state);
     if (window.location.hash !== target) {
-      history.replaceState(null, '', target);
+      // each quiz question is a history entry, so back reopens the last one
+      const step = state.mode === 'quiz' && state.quizN !== lastQuizN.current;
+      if (step) history.pushState(null, '', target);
+      else history.replaceState(null, '', target);
     }
+    lastQuizN.current = state.quizN;
   }, [state]);
 
   const patch = useCallback((p: Patch) => {
@@ -103,7 +108,7 @@ export function App() {
       case 'identify':
         return <Identify state={state} patch={patch} />;
       case 'quiz':
-        return <Quiz state={state} />;
+        return <Quiz state={state} patch={patch} />;
       case 'rules':
         return <Rules state={state} patch={patch} />;
       case 'sound':

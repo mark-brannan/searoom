@@ -74,10 +74,16 @@ function MiniBearing({
   );
 }
 
-export function Quiz({ state }: { state: AppState }) {
+export function Quiz({
+  state,
+  patch,
+}: {
+  state: AppState;
+  patch: (p: Partial<AppState>) => void;
+}) {
   const intl = useIntl();
-  const [direction, setDirection] = useState<'forward' | 'reverse'>('forward');
-  const [seed, setSeed] = useState(1);
+  const direction = state.quizDirection;
+  const seed = state.quizSeed + state.quizN - 1;
   const [picked, setPicked] = useState<number | null>(null);
   const [score, setScore] = useState({ right: 0, total: 0 });
 
@@ -100,7 +106,7 @@ export function Quiz({ state }: { state: AppState }) {
 
   const next = () => {
     setPicked(null);
-    setSeed((s) => s + 1);
+    patch({ quizN: state.quizN + 1 });
   };
 
   const optionClass = (i: number) => {
@@ -126,7 +132,7 @@ export function Quiz({ state }: { state: AppState }) {
             role="radio"
             aria-checked={direction === 'forward'}
             onClick={() => {
-              setDirection('forward');
+              patch({ quizDirection: 'forward' });
               setPicked(null);
             }}
           >
@@ -137,7 +143,7 @@ export function Quiz({ state }: { state: AppState }) {
             role="radio"
             aria-checked={direction === 'reverse'}
             onClick={() => {
-              setDirection('reverse');
+              patch({ quizDirection: 'reverse' });
               setPicked(null);
             }}
           >
