@@ -9,13 +9,17 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const load = (p) => JSON.parse(readFileSync(new URL(p, import.meta.url), 'utf8'));
+const load = (p) =>
+  JSON.parse(readFileSync(new URL(p, import.meta.url), 'utf8'));
 const en = load('../src/i18n/en.json');
 const fi = load('../src/i18n/fi.json');
 
 // Package ids come qualified as the app sees them (see src/i18n/index.ts).
 const pkgEn = JSON.parse(
-  readFileSync(new URL('../node_modules/colregs/data/i18n/en.json', import.meta.url), 'utf8'),
+  readFileSync(
+    new URL('../node_modules/colregs/data/i18n/en.json', import.meta.url),
+    'utf8',
+  ),
 );
 const pkgKeys = new Set();
 for (const [cat, group] of Object.entries(pkgEn.strings))
@@ -27,7 +31,8 @@ const walk = (d) => {
   for (const e of readdirSync(d, { withFileTypes: true })) {
     const p = join(d, e.name);
     if (e.isDirectory()) walk(p);
-    else if (/\.tsx?$/.test(e.name) && !/\.test\.tsx?$/.test(e.name)) files.push(p);
+    else if (/\.tsx?$/.test(e.name) && !/\.test\.tsx?$/.test(e.name))
+      files.push(p);
   }
 };
 walk(fileURLToPath(new URL('../src', import.meta.url)));
@@ -49,7 +54,8 @@ for (const f of files) {
   }
   // Keys written anywhere else (ternaries, data tables) count as uses too.
   for (const m of src.matchAll(keyLit))
-    if (spaces.has(m[1].split('.')[0])) literal.add(m[1]);
+    if (spaces.has(m[1].split('.')[0]) && !/\.(json|tsx?|css|mjs)$/.test(m[1]))
+      literal.add(m[1]);
 }
 
 const fiKeys = new Set(Object.keys(fi));
@@ -63,14 +69,21 @@ const onlyFi = [...fiKeys].filter(
 );
 // Only ids that look like catalog keys; DOM ids and rule ids (34a.port) are not.
 const missing = [...literal].filter(
-  (id) => /^[a-z][\w-]*\./i.test(id) && !enKeys.has(id) && !pkgKeys.has(id),
+  (id) =>
+    /^[a-z][\w-]*\./i.test(id) &&
+    !enKeys.has(id) &&
+    !pkgKeys.has(id) &&
+    !FI_ONLY.has(id),
 );
 const unused = [...enKeys].filter(
   (k) => !literal.has(k) && ![...prefixes].some((p) => p && k.startsWith(p)),
 );
 
 const show = (title, list) => {
-  if (list.length) console.log(`${title} (${list.length}):\n${list.map((k) => `  ${k}`).join('\n')}`);
+  if (list.length)
+    console.log(
+      `${title} (${list.length}):\n${list.map((k) => `  ${k}`).join('\n')}`,
+    );
 };
 show('In en.json, not fi.json', onlyEn);
 show('In fi.json, not en.json', onlyFi);
