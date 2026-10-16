@@ -1200,6 +1200,10 @@ table.corpora th {
     overscroll-behavior: contain;
   }
 
+  .sandbox-grid:has(.fact-sheet.collapsed) {
+    padding-bottom: 60px;
+  }
+
   .sandbox-grid:has(.fact-sheet.collapsed) .scene-panel {
     max-height: none;
   }
@@ -1215,6 +1219,13 @@ table.corpora th {
   .scene-panel .scene-3d-stack {
     max-height: max(120px, calc(55dvh - 290px));
     margin-inline: auto;
+  }
+
+  /* collapsed, the sheet is only its handle: the scene gets that room */
+  .sandbox-grid:has(.fact-sheet.collapsed) .scene-panel .scene-svg,
+  .sandbox-grid:has(.fact-sheet.collapsed) .scene-panel .plan-svg,
+  .sandbox-grid:has(.fact-sheet.collapsed) .scene-panel .scene-3d-stack {
+    max-height: max(120px, calc(100dvh - 350px));
   }
 
   .scene-panel .scene-3d-stack {
