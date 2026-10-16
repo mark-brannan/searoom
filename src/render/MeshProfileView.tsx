@@ -185,13 +185,16 @@ export function MeshProfileView({
           strokeDasharray="3 4"
         />
       )}
-      <path
-        d={silhouettePath(outline, length, fit)}
-        fill="var(--hull-fill)"
-        stroke="var(--hull-stroke)"
-        strokeWidth={1}
-        strokeLinejoin="round"
-      />
+      {/* A bare <g>, like the hand-drawn hull, so the hull hint dims it. */}
+      <g>
+        <path
+          d={silhouettePath(outline, length, fit)}
+          fill="var(--hull-fill)"
+          stroke="var(--hull-stroke)"
+          strokeWidth={1}
+          strokeLinejoin="round"
+        />
+      </g>
       {placed.map((l, i) => (
         <Glow
           key={l.key}
