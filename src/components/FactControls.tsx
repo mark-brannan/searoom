@@ -4,8 +4,8 @@
 // would be noise, not caution.
 
 import { FormattedMessage, useIntl } from 'react-intl';
-import type { Patch } from '../App';
-import type { AppState } from '../state/urlState';
+import type { Patch } from '../state/store';
+import { useAppState, usePatch } from '../state/store';
 import type { FactRecord, FactValue } from '../engine/types';
 import { meshOnChange } from '../render/hullModels';
 
@@ -104,13 +104,9 @@ function Check({
   );
 }
 
-export function FactControls({
-  state,
-  patch,
-}: {
-  state: AppState;
-  patch: (p: Patch) => void;
-}) {
+export function FactControls() {
+  const state = useAppState();
+  const patch = usePatch();
   const intl = useIntl();
   const facts = state.facts;
   const setFacts = (updates: FactPatch, remove: string[] = []) => {

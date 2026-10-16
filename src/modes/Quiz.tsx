@@ -9,7 +9,7 @@ import type { QuizQuestion } from '../engine/quiz';
 import { Glow, PX, PZ, bearingInArc, bearingLabel, selectHull } from 'nav-wright';
 import { placeLights } from '../render/navWright';
 import { lights } from '../data/colregs';
-import type { AppState } from '../state/urlState';
+import { useAppState, usePatch } from '../state/store';
 import type { Display, FactRecord } from '../engine/types';
 
 function MiniProfile({
@@ -74,13 +74,9 @@ function MiniBearing({
   );
 }
 
-export function Quiz({
-  state,
-  patch,
-}: {
-  state: AppState;
-  patch: (p: Partial<AppState>) => void;
-}) {
+export function Quiz() {
+  const state = useAppState();
+  const patch = usePatch();
   const intl = useIntl();
   const direction = state.quizDirection;
   const seed = state.quizSeed + state.quizN - 1;
