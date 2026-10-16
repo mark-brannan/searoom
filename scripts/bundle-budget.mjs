@@ -15,7 +15,7 @@ if (!mainJs) throw new Error('main chunk not found in dist/index.html');
 
 const main = gz(mainJs);
 const total = files.reduce((n, f) => n + gz(f), 0);
-const hasThree = /WebGLRenderer/.test(readFileSync(`${dir}/${mainJs}`, 'utf8'));
+const hasThree = /__THREE__|WebGLRenderer/.test(readFileSync(`${dir}/${mainJs}`, 'utf8'));
 const row = (k, v, c) => `${k.padEnd(6)} ${String(v).padStart(8)} B gzip  ceiling ${c}`;
 console.log(row('main', main, CEILING.main));
 console.log(row('total', total, CEILING.total));

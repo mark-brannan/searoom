@@ -23,7 +23,7 @@ import { colregsVersion } from './data/colregs';
 import { corpusIn } from './data/corpusText';
 import { CorpusContext } from './state/corpusContext';
 
-// Each mode loads on first open; the shell and the first mode stay small.
+// Each mode loads on first open, so the shell chunk carries none of them.
 const Sandbox = lazy(() =>
   import('./modes/Sandbox').then((m) => ({ default: m.Sandbox })),
 );
@@ -129,7 +129,7 @@ export function App() {
         <Suspense
           fallback={
             <p className="mode-loading" role="status">
-              Loading…
+              <FormattedMessage id="app.loading" />
             </p>
           }
         >

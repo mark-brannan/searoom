@@ -2,6 +2,7 @@
   "app.title": "Searoom",
   "app.tagline": "See the rules of the road.",
   "app.disclaimer": "Study tool only — not navigation equipment. Not fit for navigation; navigate by the published rules.",
+  "app.loading": "Loading…",
   "app.poweredBy": "Rules data: colregs v{version} ({jurisdiction}, night)",
   "mode.sandbox": "Sandbox",
   "mode.identify": "Identify",
