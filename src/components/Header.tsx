@@ -80,7 +80,10 @@ export function Header() {
             {': '}
             {state.locale === 'fi' ? 'FI' : 'EN'}
             {' · '}
-            <FormattedMessage id="header.text" values={{ language: corpus.language }} />
+            <FormattedMessage
+              id="header.text"
+              values={{ language: corpus.language }}
+            />
           </button>
         </div>
       </div>

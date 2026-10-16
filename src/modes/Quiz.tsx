@@ -6,73 +6,9 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import { describeFacts } from '../components/factLabel';
 import { makeForward, makeReverse } from '../engine/quiz';
 import type { QuizQuestion } from '../engine/quiz';
-import { Glow, PX, PZ, bearingInArc, bearingLabel, selectHull } from 'nav-wright';
-import { placeLights } from '../render/navWright';
-import { lights } from '../data/colregs';
+import { bearingLabel } from 'nav-wright';
+import { Scene } from '../components/Scene';
 import { useAppState, usePatch } from '../state/store';
-import type { Display, FactRecord } from '../engine/types';
-
-function MiniProfile({
-  facts,
-  display,
-}: {
-  facts: FactRecord;
-  display: Display;
-}) {
-  const hull = selectHull(facts);
-  const placed = placeLights(display.lights, hull.spec, facts, lights);
-  return (
-    <svg viewBox="0 0 440 240" className="scene-svg" aria-hidden="true">
-      <rect width="440" height="240" fill="var(--sea-night)" />
-      <line x1="0" y1={PZ(0)} x2="440" y2={PZ(0)} stroke="var(--waterline)" />
-      <hull.Profile />
-      {placed.map((l) => (
-        <Glow
-          key={l.key}
-          x={PX(l.fx) + l.py * 10}
-          y={PZ(l.z)}
-          color={l.color}
-          flashing={l.character === 'flashing'}
-          dim={l.py < -0.05}
-        />
-      ))}
-    </svg>
-  );
-}
-
-function MiniBearing({
-  facts,
-  display,
-  theta,
-}: {
-  facts: FactRecord;
-  display: Display;
-  theta: number;
-}) {
-  const hull = selectHull(facts);
-  const placed = placeLights(display.lights, hull.spec, facts, lights);
-  const rad = (theta * Math.PI) / 180;
-  return (
-    <svg viewBox="0 0 440 240" className="scene-svg scene-svg-black" aria-hidden="true">
-      <rect width="440" height="240" fill="#000" />
-      {placed
-        .filter(
-          (l) =>
-            bearingInArc(theta, l.arc) && l.lightId !== 'light:deck_lights',
-        )
-        .map((l) => (
-          <Glow
-            key={l.key}
-            x={220 + (l.fx * Math.sin(rad) - l.py * Math.cos(rad)) * 150}
-            y={150 - l.z * 95}
-            color={l.color}
-            flashing={l.character === 'flashing'}
-            r={5.5}
-          />
-        ))}
-    </svg>
-  );
-}
 
 export function Quiz() {
   const state = useAppState();
@@ -172,7 +108,12 @@ export function Quiz() {
                   aria-pressed={picked === i}
                   aria-label={describeFacts(intl, o.facts)}
                 >
-                  <MiniProfile facts={o.facts} display={o.display} />
+                  <Scene
+                    facts={o.facts}
+                    lights={o.display.lights}
+                    settings={{ view: 'profile', theta: 0 }}
+                    presentation="mini"
+                  />
                 </button>
               ))}
             </div>
@@ -189,10 +130,11 @@ export function Quiz() {
                 }}
               />
             </p>
-            <MiniBearing
+            <Scene
               facts={question.facts}
-              display={question.display}
-              theta={question.theta}
+              lights={question.display.lights}
+              settings={{ view: 'bearing', theta: question.theta }}
+              presentation="mini"
             />
             <div className="quiz-options">
               {question.options.map((o, i) => (
