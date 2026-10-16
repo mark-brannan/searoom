@@ -336,5 +336,13 @@
   "light.sidelights": "sivuvalot",
   "light.flashing": "vilkkuvalo",
   "light.torch": "sähkölamppu tai sytytetty lyhty",
-  "light.deck_lights": "työvalot tai vastaavat valot"
+  "light.deck_lights": "työvalot tai vastaavat valot",
+  "rules.search.placeholder": "Hae sääntötekstistä (esim. troolaus, kartio)",
+  "rules.search.label": "Hae sääntötekstistä",
+  "rules.search.count": "{count, plural, =0 {Ei osumia.} one {1 kappale täsmää.} other {# kappaletta täsmää.}}",
+  "rules.tree.label": "Selaa sääntöjä osan, säännön ja kappaleen mukaan",
+  "rules.part.A": "A-osa — Yleistä",
+  "rules.part.B": "B-osa — Ohjaus ja kulku",
+  "rules.part.C": "C-osa — Valot ja merkkikuviot",
+  "rules.part.D": "D-osa — Ääni- ja valomerkit"
 }

@@ -309,5 +309,13 @@
   "sp.es.p1": "Live: the Spanish instrument of accession as published by the Agencia Estatal Boletín Oficial del Estado. Licence verified 2026-09-09 under the BOE aviso legal — reuse permitted, commercial and non-commercial, with attribution; a consolidated text must not be represented as official.",
   "sp.es.p2": "Tier and source are shown beside every paragraph. Paragraphs not yet transcribed fall back to the en-US text and say so.",
   "sp.ru.p1": "Official tier: a deposited official translation, verified against Article IX. The source is the problem, not the text — IMO's consolidated editions are sold publications and probably not reproducible; a national gazette is the likely lawful route.",
-  "fallback.all": "Nothing in this set comes from the corpus you picked: all {total} paragraphs are shown from {shown}. This is the fallback corpus's rendering, not a mixed one."
+  "fallback.all": "Nothing in this set comes from the corpus you picked: all {total} paragraphs are shown from {shown}. This is the fallback corpus's rendering, not a mixed one.",
+  "rules.search.placeholder": "Search the rule text (e.g. trawling, cone, impede)",
+  "rules.search.label": "Search rule text",
+  "rules.search.count": "{count, plural, =0 {No paragraphs match.} one {1 paragraph matches.} other {# paragraphs match.}}",
+  "rules.tree.label": "Browse the rules by part, rule and paragraph",
+  "rules.part.A": "Part A — General",
+  "rules.part.B": "Part B — Steering and Sailing",
+  "rules.part.C": "Part C — Lights and Shapes",
+  "rules.part.D": "Part D — Sound and Light Signals"
 }
