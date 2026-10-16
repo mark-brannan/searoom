@@ -86,7 +86,7 @@ export function Quiz({
   const seed = state.quizSeed + state.quizN - 1;
   const [picked, setPicked] = useState<number | null>(null);
   // back/forward or a pasted URL changes the question: drop the old pick
-  useEffect(() => setPicked(null), [seed, direction]);
+  useEffect(() => setPicked(null), [seed, direction, state.jurisdiction]);
   const [score, setScore] = useState({ right: 0, total: 0 });
 
   const question: QuizQuestion = useMemo(
