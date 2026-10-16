@@ -48,3 +48,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261016t073132z
 - searoom#210: Intro on Sandbox only; undo: move FirstRunIntro in App.tsx (no PR, branch main)
+
+### 20261016t073135z
+- searoom#210: Escape and click-outside dismiss; undo: drop handlers in FirstRunIntro.tsx (no PR, branch main)
