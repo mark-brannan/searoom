@@ -57,7 +57,13 @@ export interface AppState {
   /** Quiz question number within the run, from 1. */
   quizN: number;
   quizDirection: 'forward' | 'reverse';
+  quizMode: QuizMode;
+  /** Quiz drill: only scenarios exercising this rule number; '' is all. */
+  quizRule: string;
 }
+
+export type QuizMode = 'practice' | 'drill' | 'exam';
+export const QUIZ_MODES: QuizMode[] = ['practice', 'drill', 'exam'];
 
 export const DEFAULT_FACTS: FactRecord = {
   'fact:propulsion': 'propulsion:sail',
@@ -97,6 +103,8 @@ export const DEFAULT_STATE: AppState = {
   quizSeed: 1,
   quizN: 1,
   quizDirection: 'forward',
+  quizMode: 'practice',
+  quizRule: '',
 };
 
 const percent = (v: string | null): number | null => {
@@ -199,6 +207,8 @@ export function serialize(state: AppState): string {
     path = `/rules/${encodeURIComponent(state.rulePath)}`;
   else if (state.mode === 'quiz') {
     if (state.quizDirection !== 'forward') params.set('dir', state.quizDirection);
+    if (state.quizMode !== 'practice') params.set('qm', state.quizMode);
+    if (state.quizRule) params.set('qr', state.quizRule);
     if (state.quizSeed !== 1 || state.quizN !== 1)
       path = `/quiz/${state.quizSeed}/${state.quizN}`;
   } else if (state.mode === 'sandbox') {
@@ -297,5 +307,9 @@ export function deserialize(hash: string): AppState {
   if (params.get('bn') === '1') state.benchy = true;
   state.mesh = params.get('ms') ?? '';
   if (params.get('dd') === '1') state.drawer = true;
+  const qm = params.get('qm');
+  if (qm === 'drill' || qm === 'exam') state.quizMode = qm;
+  const qr = params.get('qr');
+  if (qr && /^\d{1,2}$/.test(qr)) state.quizRule = qr;
   return state;
 }
