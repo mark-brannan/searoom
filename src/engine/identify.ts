@@ -6,7 +6,8 @@
 import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
 import { BASE_JURISDICTION } from '../data/jurisdictions';
 import { evaluateDisplayIn } from './evaluate';
-import { visibleSignature } from './quiz';
+import { placedVisibility } from './quiz';
+import type { VisibleLight } from './quiz';
 import type { Display, FactRecord } from './types';
 
 const fixtures = fixturesJson as unknown as {
@@ -17,7 +18,17 @@ const fixtures = fixturesJson as unknown as {
 export interface SeenLight {
   color: 'white' | 'red' | 'green' | 'yellow';
   flashing: boolean;
+  /** masthead (shows over an arc) versus all-round; unset when the user can't tell */
+  kind?: 'masthead' | 'all_round';
 }
+
+/**
+ * How the seen lights relate. 'free': a bag of lights, order unknown (the
+ * original behaviour). 'vertical': the list is one vertical line, top to
+ * bottom, so "white over red" is an order — it must appear, in that order,
+ * as a run of the centreline lights visible from the bearing.
+ */
+export type Arrangement = 'free' | 'vertical';
 
 export interface Candidate {
   facts: FactRecord;
@@ -84,21 +95,70 @@ export function signatureOf(seen: SeenLight[]): string {
     .join(',');
 }
 
+const KIND_ID = {
+  masthead: 'light:masthead',
+  all_round: 'light:all_round',
+} as const;
+
+const fits = (s: SeenLight, v: VisibleLight): boolean =>
+  s.color === v.color &&
+  s.flashing === v.flashing &&
+  (s.kind === undefined || KIND_ID[s.kind] === v.lightId);
+
+/**
+ * How far apart (in the hull's fore-aft units, where the hull spans 2) two
+ * lights may look side to side and still read as one vertical line: about
+ * 2% of the hull's length.
+ */
+const IN_LINE = 0.04;
+
+const inOneLine = (run: VisibleLight[]): boolean => {
+  const xs = run.map((v) => v.across);
+  return Math.max(...xs) - Math.min(...xs) <= IN_LINE;
+};
+
+/** Do the seen lights explain exactly the visible ones, in this arrangement? */
+export function matchesSeen(
+  seen: SeenLight[],
+  visible: VisibleLight[],
+  arrangement: Arrangement,
+): boolean {
+  if (arrangement === 'vertical') {
+    const stack = visible.filter((v) => v.centreline).sort((a, b) => b.z - a.z);
+    for (let i = 0; i + seen.length <= stack.length; i++) {
+      const run = stack.slice(i, i + seen.length);
+      if (inOneLine(run) && seen.every((s, j) => fits(s, run[j]))) return true;
+    }
+    return false;
+  }
+  if (visible.length !== seen.length) return false;
+  // constrained lights first, so an unconstrained one never steals their partner
+  const pool = [...visible];
+  const order = [...seen].sort((a, b) => Number(!!b.kind) - Number(!!a.kind));
+  for (const s of order) {
+    const at = pool.findIndex((v) => fits(s, v));
+    if (at < 0) return false;
+    pool.splice(at, 1);
+  }
+  return true;
+}
+
 /** All candidate explanations for the given lights. */
 export function identifyCandidates(
   seen: SeenLight[],
   jurisdiction: string = BASE_JURISDICTION,
+  arrangement: Arrangement = 'free',
 ): Candidate[] {
   if (seen.length === 0) return [];
-  const wanted = signatureOf(seen);
   const out: Candidate[] = [];
   for (const facts of poolFor(jurisdiction)) {
     const evaln = evaluateDisplayIn(jurisdiction, facts);
     for (const display of evaln.displays) {
       if (display.lights.length === 0) continue;
       const thetas: number[] = [];
+      const visibleAt = placedVisibility(facts, display);
       for (let t = 0; t < 360; t += THETA_STEP) {
-        if (visibleSignature(facts, display, t) === wanted) thetas.push(t);
+        if (matchesSeen(seen, visibleAt(t), arrangement)) thetas.push(t);
       }
       if (thetas.length > 0) out.push({ facts, display, thetas });
     }

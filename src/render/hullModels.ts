@@ -10,7 +10,8 @@
 // idealized profile's. Registering a mesh to a hull's HullSpec stations is
 // searoom#22 facet 2; which meshes exist at all is nav-wright#34 and #44.
 
-import type { Hull } from 'nav-wright';
+import { selectHull, type Hull } from 'nav-wright';
+import type { FactRecord } from '../engine/types';
 import benchyModelUrl from 'nav-wright/models/3dbenchy-lowpoly.glb?url';
 import openModelUrl from 'nav-wright/models/open-kenney-boat-row-large.glb?url';
 import powerSmallModelUrl from 'nav-wright/models/power-small-kenney-boat-speed-j.glb?url';
@@ -101,7 +102,9 @@ export function modelVariantsForHull(hull: Hull): ModelVariant[] {
     .filter((n) => n.startsWith(`${id}-`) && SHIPPED_MODELS[n] !== registered)
     .sort()
     .map((name) => ({ name, url: SHIPPED_MODELS[name] }));
-  const first = Object.entries(SHIPPED_MODELS).find(([, u]) => u === registered);
+  const first = Object.entries(SHIPPED_MODELS).find(
+    ([, u]) => u === registered,
+  );
   return first ? [{ name: first[0], url: first[1] }, ...others] : others;
 }
 
@@ -110,7 +113,10 @@ export function modelVariantsForHull(hull: Hull): ModelVariant[] {
  * registered default. A stale or foreign name in a URL falls back quietly.
  */
 export function modelUrlForVariant(hull: Hull, name: string): string {
-  return modelVariantsForHull(hull).find((v) => v.name === name)?.url ?? modelUrlForHull(hull);
+  return (
+    modelVariantsForHull(hull).find((v) => v.name === name)?.url ??
+    modelUrlForHull(hull)
+  );
 }
 
 /** True when this hull has a mesh of its own rather than the stand-in. */
@@ -121,4 +127,54 @@ export function hasRegisteredModel(hull: Hull): boolean {
 /** The .glb URL the 3D view should draw for this hull. Never empty. */
 export function modelUrlForHull(hull: Hull): string {
   return HULL_MODEL_URLS[hull.spec.id] ?? FALLBACK_MODEL_URL;
+}
+
+/**
+ * A random mesh among those fitting this hull's class, as the `AppState.mesh`
+ * value: '' for the hull's default (first variant), else the file name.
+ * `rand` returns [0, 1); injectable so a test can walk every index.
+ */
+export function pickMesh(hull: Hull, rand: () => number = Math.random): string {
+  const variants = modelVariantsForHull(hull);
+  const i = Math.min(variants.length - 1, Math.floor(rand() * variants.length));
+  return i <= 0 ? '' : variants[i].name;
+}
+
+const MESH_AXES = [
+  'fact:propulsion',
+  'fact:activity',
+  'fact:position',
+] as const;
+
+/**
+ * A fresh mesh when a fact change redraws it (searoom#174): a new size class,
+ * propulsion, activity or position draws one from the class; any other edit
+ * returns undefined and keeps the mesh on screen.
+ */
+export function meshOnChange(
+  prev: FactRecord,
+  next: FactRecord,
+): string | undefined {
+  const nextHull = selectHull(next);
+  if (
+    nextHull.spec.id !== selectHull(prev).spec.id ||
+    MESH_AXES.some((k) => next[k] !== prev[k])
+  ) {
+    return pickMesh(nextHull);
+  }
+  return undefined;
+}
+
+/**
+ * The mesh `step` places along from the current one, wrapping, as the
+ * `AppState.mesh` value. A name this hull lacks counts as the default.
+ */
+export function stepMesh(hull: Hull, current: string, step: 1 | -1): string {
+  const variants = modelVariantsForHull(hull);
+  const at = Math.max(
+    0,
+    variants.findIndex((v) => v.name === current),
+  );
+  const i = (at + step + variants.length) % variants.length;
+  return i === 0 ? '' : variants[i].name;
 }

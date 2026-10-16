@@ -4,9 +4,10 @@
 // would be noise, not caution.
 
 import { FormattedMessage, useIntl } from 'react-intl';
-import type { Patch } from '../App';
-import type { AppState } from '../state/urlState';
+import type { Patch } from '../state/store';
+import { useAppState, usePatch } from '../state/store';
 import type { FactRecord, FactValue } from '../engine/types';
+import { meshOnChange } from '../render/hullModels';
 
 // FactRecord (from colregs-engine/schema) types each key's value as its own
 // literal enum, with no index signature — exact for a validated record, too
@@ -55,7 +56,11 @@ function Segmented({
 }) {
   const intl = useIntl();
   return (
-    <div className="segmented" role="radiogroup" aria-label={intl.formatMessage({ id: `fact.${name}` })}>
+    <div
+      className="segmented"
+      role="radiogroup"
+      aria-label={intl.formatMessage({ id: `fact.${name}` })}
+    >
       {values.map((v) => {
         const suffix = v.slice(v.indexOf(':') + 1);
         return (
@@ -99,13 +104,9 @@ function Check({
   );
 }
 
-export function FactControls({
-  state,
-  patch,
-}: {
-  state: AppState;
-  patch: (p: Patch) => void;
-}) {
+export function FactControls() {
+  const state = useAppState();
+  const patch = usePatch();
   const intl = useIntl();
   const facts = state.facts;
   const setFacts = (updates: FactPatch, remove: string[] = []) => {
@@ -116,7 +117,14 @@ export function FactControls({
     // displays most specific concession first (colregs-engine #137), so
     // index 0 is the display the Convention wrote for this vessel — no
     // app-side pick needed.
-    patch({ facts: nextFacts, displayIndex: 0, additionsOn: [] });
+    const change: Patch = {
+      facts: nextFacts,
+      displayIndex: 0,
+      additionsOn: [],
+    };
+    const mesh = meshOnChange(facts, nextFacts);
+    if (mesh !== undefined) change.mesh = mesh;
+    patch(change);
   };
 
   const activity = facts['fact:activity'];
@@ -248,8 +256,7 @@ export function FactControls({
           value={length}
           onChange={(e) => {
             const n = Number(e.target.value);
-            if (Number.isFinite(n) && n > 0)
-              setFacts({ 'fact:length_m': n });
+            if (Number.isFinite(n) && n > 0) setFacts({ 'fact:length_m': n });
           }}
           aria-label={intl.formatMessage({ id: 'fact.length' })}
         />{' '}
@@ -335,7 +342,10 @@ export function FactControls({
               checked={facts['fact:wig'] === true}
               onChange={(v) =>
                 v
-                  ? setFacts({ 'fact:wig': true, 'fact:wig_near_surface': true })
+                  ? setFacts({
+                      'fact:wig': true,
+                      'fact:wig_near_surface': true,
+                    })
                   : setFacts({}, ['fact:wig', 'fact:wig_near_surface'])
               }
             />
