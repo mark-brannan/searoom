@@ -3,6 +3,7 @@
 // the 'mini' presentation is the tab-less card the Quiz uses.
 
 import { useMemo } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { rovingKeyDown } from './roving';
 import { lights as lightCatalog } from '../data/colregs';
@@ -15,10 +16,13 @@ import {
   ProfileView,
   bearingInArc,
   selectHull,
+  skyColor,
 } from 'nav-wright';
 import type { Aspect } from 'nav-wright';
 import { placeLights } from '../render/navWright';
-import { BearingModelView } from 'nav-wright/benchy';
+import { profileSide, seenFrom } from '../render/profileSide';
+import type { ProfileSide } from '../render/profileSide';
+import { BearingModelView, bearingHullOpacity } from 'nav-wright/benchy';
 import type { BenchyLabels } from 'nav-wright/benchy';
 import {
   BENCHY_MODEL_URL,
@@ -76,31 +80,76 @@ function SceneSlider({
   );
 }
 
+/** The profile from the observer's side: mirrored from port. With sky and
+ * hull hint it matches the 3D view's night. */
+function ProfileStage({
+  side,
+  sky,
+  hullHint,
+  children,
+}: {
+  side: ProfileSide;
+  sky?: number;
+  hullHint?: number;
+  children: ReactNode;
+}) {
+  const style: Record<string, string | number> = {};
+  if (sky !== undefined) {
+    style['--sea-night'] = skyColor(sky / 100);
+    style['--sea-below'] = skyColor((sky / 100) * 0.7);
+  }
+  if (hullHint !== undefined)
+    style['--hull-opacity'] = bearingHullOpacity(hullHint / 100);
+  return (
+    <div
+      className="profile-stage"
+      data-side={side}
+      style={style as CSSProperties}
+    >
+      {children}
+    </div>
+  );
+}
+
 function MiniProfile({
   facts,
   lights,
+  theta,
 }: {
   facts: FactRecord;
   lights: DisplayLight[];
+  theta: number;
 }) {
   const hull = selectHull(facts);
-  const placed = placeLights(lights, hull.spec, facts, lightCatalog);
+  const side = profileSide(theta);
+  const placed = seenFrom(
+    placeLights(lights, hull.spec, facts, lightCatalog),
+    side,
+  );
   return (
-    <svg viewBox="0 0 440 240" className="scene-svg" aria-hidden="true">
-      <rect width="440" height="240" fill="var(--sea-night)" />
-      <line x1="0" y1={PZ(0)} x2="440" y2={PZ(0)} stroke="var(--waterline)" />
-      <hull.Profile />
-      {placed.map((l) => (
-        <Glow
-          key={l.key}
-          x={PX(l.fx) + l.py * 10}
-          y={PZ(l.z)}
-          color={l.color}
-          flashing={l.character === 'flashing'}
-          dim={l.py < -0.05}
+    <ProfileStage side={side}>
+      <svg viewBox="0 0 440 240" className="scene-svg" aria-hidden="true">
+        <rect width="440" height="240" fill="var(--sea-night)" />
+        <line
+          x1="0"
+          y1={PZ(0)}
+          x2="440"
+          y2={PZ(0)}
+          stroke="var(--waterline)"
         />
-      ))}
-    </svg>
+        <hull.Profile />
+        {placed.map((l) => (
+          <Glow
+            key={l.key}
+            x={PX(l.fx) + l.py * 10}
+            y={PZ(l.z)}
+            color={l.color}
+            flashing={l.character === 'flashing'}
+            dim={l.py < -0.05}
+          />
+        ))}
+      </svg>
+    </ProfileStage>
   );
 }
 
@@ -148,6 +197,7 @@ export function Scene({
   settings,
   onChange,
   presentation = 'full',
+  views = ALL_VIEWS,
 }: {
   facts: FactRecord;
   /** the lights to draw: a display's, plus any optional additions switched on */
@@ -156,12 +206,14 @@ export function Scene({
   settings: Pick<SceneSettings, 'view' | 'theta'> & Partial<SceneSettings>;
   onChange?: (patch: Partial<SceneSettings>) => void;
   presentation?: 'full' | 'mini';
+  /** the view tabs offered; a view outside them shows the first */
+  views?: View[];
 }) {
   if (presentation === 'mini')
     return settings.view === 'bearing' ? (
       <MiniBearing facts={facts} lights={lights} theta={settings.theta} />
     ) : (
-      <MiniProfile facts={facts} lights={lights} />
+      <MiniProfile facts={facts} lights={lights} theta={settings.theta} />
     );
   return (
     <FullScene
@@ -169,23 +221,14 @@ export function Scene({
       lights={lights}
       settings={{ ...DEFAULT_STATE, ...settings }}
       onChange={onChange ?? (() => {})}
+      views={views}
     />
   );
 }
 
-function FullScene({
-  facts,
-  lights,
-  settings,
-  onChange,
-}: {
-  facts: FactRecord;
-  lights: DisplayLight[];
-  settings: SceneSettings;
-  onChange: (patch: Partial<SceneSettings>) => void;
-}) {
+function useSceneLabels(): BenchyLabels {
   const intl = useIntl();
-  const sceneLabels: BenchyLabels = useMemo(
+  return useMemo(
     () => ({
       bearingAlt: (theta) =>
         intl.formatMessage({ id: 'scene.bearing.alt' }, { theta }),
@@ -208,13 +251,62 @@ function FullScene({
     }),
     [intl],
   );
+}
 
+function usePlaced(facts: FactRecord, lights: DisplayLight[]) {
   const hull = useMemo(() => selectHull(facts), [facts]);
   const placed = useMemo(
     () => placeLights(lights, hull.spec, facts, lightCatalog),
     [lights, hull, facts],
   );
-  const views: View[] = ['profile', 'bearing', 'plan'];
+  return { hull, placed };
+}
+
+/** The overhead arcs on their own, for a layout that shows them beside the scene. */
+export function Arcs({
+  facts,
+  lights,
+  theta,
+  onTheta,
+}: {
+  facts: FactRecord;
+  lights: DisplayLight[];
+  theta: number;
+  onTheta: (theta: number) => void;
+}) {
+  const labels = useSceneLabels();
+  const { hull, placed } = usePlaced(facts, lights);
+  return (
+    <PlanView
+      hull={hull}
+      placed={placed}
+      theta={theta}
+      onTheta={onTheta}
+      labels={labels}
+    />
+  );
+}
+
+export const ALL_VIEWS: View[] = ['profile', 'bearing', 'plan'];
+
+function FullScene({
+  facts,
+  lights,
+  settings,
+  onChange,
+  views,
+}: {
+  facts: FactRecord;
+  lights: DisplayLight[];
+  settings: SceneSettings;
+  onChange: (patch: Partial<SceneSettings>) => void;
+  views: View[];
+}) {
+  const intl = useIntl();
+  const sceneLabels = useSceneLabels();
+  const { hull, placed } = usePlaced(facts, lights);
+  const view = views.includes(settings.view) ? settings.view : views[0];
+  const side = profileSide(settings.theta);
   const percentText = (v: number): string =>
     intl.formatNumber(v / 100, { style: 'percent' });
 
@@ -230,24 +322,35 @@ function FullScene({
           <button
             key={v}
             role="tab"
-            aria-selected={settings.view === v}
-            tabIndex={settings.view === v ? 0 : -1}
-            className={`view-tab${settings.view === v ? ' active' : ''}`}
+            aria-selected={view === v}
+            tabIndex={view === v ? 0 : -1}
+            className={`view-tab${view === v ? ' active' : ''}`}
             onClick={() => onChange({ view: v })}
           >
             <FormattedMessage id={`view.${v}`} />
           </button>
         ))}
       </div>
-      {settings.view === 'profile' && (
-        <ProfileView
-          hull={hull}
-          placed={placed}
-          facts={facts}
-          labels={sceneLabels}
-        />
+      {view === 'profile' && (
+        <>
+          <ProfileStage
+            side={side}
+            sky={settings.sky}
+            hullHint={settings.hullHint}
+          >
+            <ProfileView
+              hull={hull}
+              placed={seenFrom(placed, side)}
+              facts={facts}
+              labels={sceneLabels}
+            />
+          </ProfileStage>
+          <p className="profile-side">
+            <FormattedMessage id={`scene.profile.side.${side}`} />
+          </p>
+        </>
       )}
-      {settings.view === 'bearing' && (
+      {view === 'bearing' && (
         <BearingModelView
           modelUrl={
             settings.benchy
@@ -266,7 +369,7 @@ function FullScene({
           labels={sceneLabels}
         />
       )}
-      {settings.view === 'bearing' && (
+      {(view === 'profile' || view === 'bearing') && (
         <>
           <SceneSlider
             id="hull-hint"
@@ -286,6 +389,10 @@ function FullScene({
             readout={percentText(settings.sky)}
             onChange={(v) => onChange({ sky: v })}
           />
+        </>
+      )}
+      {view === 'bearing' && (
+        <>
           <label className="check-row" htmlFor="mesh">
             <FormattedMessage id="scene.mesh" />
             <select
@@ -336,7 +443,7 @@ function FullScene({
           </label>
         </>
       )}
-      {settings.view === 'plan' && (
+      {view === 'plan' && (
         <PlanView
           hull={hull}
           placed={placed}
