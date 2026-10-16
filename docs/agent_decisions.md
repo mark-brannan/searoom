@@ -27,3 +27,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261016t042144z
 - searoom C17 PR190: 14 stale screenshots not regenerated; undo: rerun scripts/screenshots.mjs (no PR, branch main)
+
+### 20261016t044105z
+- Light-seating reference is spec stations, not Annex I (nav-wright#50 open) Undo: switch compareToSpec to Annex I seats when nav-wright#50 lands ([#192](https://github.com/mark-brannan/searoom/pull/192))
