@@ -11,7 +11,7 @@ import { useAppState, usePatch } from '../state/store';
 import { useVariant } from '../state/experiments';
 import { Presets } from '../components/Presets';
 import { FactControls } from '../components/FactControls';
-import { ALL_VIEWS, Arcs, Scene } from '../components/Scene';
+import { ALL_VIEWS, Arcs, BearingAside, Scene } from '../components/Scene';
 import { DisplayChips } from '../components/DisplayChips';
 import { RulesPanel } from '../components/RulesPanel';
 import { DataDrawer } from '../components/DataDrawer';
@@ -133,10 +133,35 @@ export function Sandbox() {
     />
   );
   const toggle = <ArcsToggle shown={arcsShown} onShown={setArcsShown} />;
+  // the lights-only bearing view, beside the scene; shown unless the URL
+  // says it was hidden
+  const bearing = (
+    <section className="panel bearing-panel">
+      <div className="arcs-head">
+        <h2>
+          <FormattedMessage id="scene.aside.title" />
+        </h2>
+        <ArcsToggle
+          shown={state.bearingAside}
+          onShown={(bearingAside) => patch({ bearingAside })}
+        />
+      </div>
+      {state.bearingAside && (
+        <BearingAside
+          facts={state.facts}
+          lights={lights}
+          theta={state.theta}
+          onTheta={(theta) => patch({ theta })}
+          sky={state.sky}
+        />
+      )}
+    </section>
+  );
 
   return layout === 'c' ? (
     <LayoutC
       scene={scene}
+      bearing={bearing}
       arcs={arcs}
       arcsShown={arcsShown}
       toggle={toggle}
@@ -148,6 +173,8 @@ export function Sandbox() {
   ) : (
     <LayoutA
       scene={scene}
+      bearing={bearing}
+      bearingShown={state.bearingAside}
       arcs={arcs}
       arcsShown={arcsShown}
       toggle={toggle}
@@ -160,6 +187,7 @@ export function Sandbox() {
 
 type Pieces = {
   scene: ReactNode;
+  bearing: ReactNode;
   arcs: ReactNode;
   arcsShown: boolean;
   toggle: ReactNode;
@@ -171,13 +199,15 @@ type Pieces = {
 /** A · rail, stage, arcs. */
 function LayoutA({
   scene,
+  bearing,
+  bearingShown,
   arcs,
   arcsShown,
   toggle,
   chips,
   rules,
   drawer,
-}: Pieces) {
+}: Pieces & { bearingShown: boolean }) {
   // Under 520 px the fact controls are a bottom sheet (CSS); this is its
   // open/closed state and is inert on wider screens.
   const [sheetOpen, setSheetOpen] = useState(true);
@@ -186,7 +216,7 @@ function LayoutA({
     <>
       <Presets />
       <div
-        className={`sandbox-grid sandbox-a${arcsShown ? '' : ' arcs-hidden'}`}
+        className={`sandbox-grid sandbox-a${arcsShown ? '' : ' arcs-hidden'}${bearingShown ? '' : ' bearing-hidden'}`}
       >
         <div className={`fact-sheet${sheetOpen ? '' : ' collapsed'}`}>
           <button
@@ -205,15 +235,18 @@ function LayoutA({
           </div>
         </div>
         <div className="sandbox-stage">{scene}</div>
-        <section className="panel arcs-panel">
-          <div className="arcs-head">
-            <h2>
-              <FormattedMessage id="view.plan" />
-            </h2>
-            {toggle}
-          </div>
-          {arcsShown && arcs}
-        </section>
+        <div className="sandbox-side">
+          {bearing}
+          <section className="panel arcs-panel">
+            <div className="arcs-head">
+              <h2>
+                <FormattedMessage id="view.plan" />
+              </h2>
+              {toggle}
+            </div>
+            {arcsShown && arcs}
+          </section>
+        </div>
         <div className="sandbox-rest">
           {chips}
           {rules}
@@ -227,6 +260,7 @@ function LayoutA({
 /** C · scene first. */
 function LayoutC({
   scene,
+  bearing,
   arcs,
   arcsShown,
   toggle,
@@ -252,6 +286,7 @@ function LayoutC({
           {arcsShown && arcs}
         </aside>
       </div>
+      {bearing}
       {chips}
       <div className="fact-row">
         <FactControls />

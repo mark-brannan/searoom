@@ -36,6 +36,7 @@ describe('URL state round-trip', () => {
       corpus: 'intl@2016.es.boe',
       hullHint: 65,
       sky: 40,
+      bearingAside: false,
       drawer: true,
     };
     expect(deserialize(serialize(state))).toEqual(state);
@@ -177,6 +178,15 @@ describe('URL state round-trip', () => {
     expect(deserialize('#/sandbox?j=xx%2Fnowhere').jurisdiction).toBe(
       DEFAULT_STATE.jurisdiction,
     );
+  });
+
+  it('shows the bearing view alongside by default, and a hidden one survives a reload', () => {
+    expect(DEFAULT_STATE.bearingAside).toBe(true);
+    expect(serialize(DEFAULT_STATE)).not.toContain('ba=');
+    const hidden = { ...DEFAULT_STATE, bearingAside: false };
+    expect(serialize(hidden)).toContain('ba=0');
+    expect(deserialize(serialize(hidden)).bearingAside).toBe(false);
+    expect(deserialize('#/sandbox?ba=junk').bearingAside).toBe(true);
   });
 
   it('round-trips the picked mesh for every hull, and omits the default', async () => {

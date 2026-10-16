@@ -3,7 +3,7 @@
 // the 'mini' presentation is the tab-less card the Quiz uses.
 
 import { useMemo } from 'react';
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties, HTMLAttributes, ReactNode } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { rovingKeyDown } from './roving';
 import { lights as lightCatalog } from '../data/colregs';
@@ -13,9 +13,12 @@ import {
   PX,
   PZ,
   PlanView,
+  ThetaControl,
   bearingInArc,
   selectHull,
   skyColor,
+  useDragRotate,
+  wrapDegrees,
 } from 'nav-wright';
 import type { Aspect } from 'nav-wright';
 import { placeLights } from '../render/navWright';
@@ -32,6 +35,7 @@ import {
 } from '../render/hullModels';
 import {
   DEFAULT_STATE,
+  MAX_TILT,
   RANGE_MAX_NM,
   RANGE_MIN_NM,
   RANGE_STEP_NM,
@@ -63,6 +67,7 @@ function SceneSlider({
   min = 0,
   max = 100,
   step = 1,
+  disabled = false,
 }: {
   id: string;
   label: string;
@@ -72,9 +77,11 @@ function SceneSlider({
   min?: number;
   max?: number;
   step?: number;
+  /** shown but inert: the control does not apply to this view */
+  disabled?: boolean;
 }) {
   return (
-    <div className="theta-control">
+    <div className={`theta-control${disabled ? ' disabled' : ''}`}>
       <label htmlFor={id}>{label}</label>
       <input
         id={id}
@@ -83,6 +90,7 @@ function SceneSlider({
         max={max}
         step={step}
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(Number(e.target.value))}
         aria-valuetext={readout}
       />
@@ -91,17 +99,22 @@ function SceneSlider({
   );
 }
 
-/** The profile from the observer's side: mirrored from port. With sky and
- * hull hint it matches the 3D view's night. */
+/** The profile from the observer's side: mirrored from port. With sky,
+ * hull hint and range it matches the 3D view's night. `drag` makes the
+ * vessel a handle: grabbing it turns θ, as the 3D view's orbit does. */
 function ProfileStage({
   side,
   sky,
   hullHint,
+  range,
+  drag,
   children,
 }: {
   side: ProfileSide;
   sky?: number;
   hullHint?: number;
+  range?: number;
+  drag?: HTMLAttributes<HTMLDivElement>;
   children: ReactNode;
 }) {
   const style: Record<string, string | number> = {};
@@ -110,12 +123,13 @@ function ProfileStage({
     style['--sea-below'] = skyColor((sky / 100) * 0.7);
   }
   if (hullHint !== undefined)
-    style['--hull-opacity'] = bearingHullOpacity(hullHint / 100);
+    style['--hull-opacity'] = bearingHullOpacity(hullHint / 100, range);
   return (
     <div
-      className="profile-stage"
+      className={`profile-stage${drag ? ' grab' : ''}`}
       data-side={side}
       style={style as CSSProperties}
+      {...drag}
     >
       {children}
     </div>
@@ -141,13 +155,7 @@ function MiniProfile({
     <ProfileStage side={side}>
       <svg viewBox="0 0 440 240" className="scene-svg" aria-hidden="true">
         <rect width="440" height="240" fill="var(--sea-night)" />
-        <line
-          x1="0"
-          y1={PZ(0)}
-          x2="440"
-          y2={PZ(0)}
-          stroke="var(--waterline)"
-        />
+        <line x1="0" y1={PZ(0)} x2="440" y2={PZ(0)} stroke="var(--waterline)" />
         <hull.Profile />
         {placed.map((l) => (
           <Glow
@@ -164,14 +172,20 @@ function MiniProfile({
   );
 }
 
+/** Her lights alone, as seen from θ: the exam view. Black unless a sky is
+ * given; `drag` turns θ by grabbing it. */
 function MiniBearing({
   facts,
   lights,
   theta,
+  sky,
+  drag,
 }: {
   facts: FactRecord;
   lights: DisplayLight[];
   theta: number;
+  sky?: number;
+  drag?: HTMLAttributes<SVGSVGElement>;
 }) {
   const hull = selectHull(facts);
   const placed = placeLights(lights, hull.spec, facts, lightCatalog);
@@ -179,10 +193,15 @@ function MiniBearing({
   return (
     <svg
       viewBox="0 0 440 240"
-      className="scene-svg scene-svg-black"
+      className={`scene-svg scene-svg-black${drag ? ' grab' : ''}`}
       aria-hidden="true"
+      {...drag}
     >
-      <rect width="440" height="240" fill="#000" />
+      <rect
+        width="440"
+        height="240"
+        fill={sky ? skyColor(sky / 100) : '#000'}
+      />
       {placed
         .filter(
           (l) =>
@@ -273,6 +292,35 @@ function usePlaced(facts: FactRecord, lights: DisplayLight[]) {
   return { hull, placed };
 }
 
+/** The bearing view on its own, lights only, for a layout that shows it
+ * beside the scene: grabbing it turns θ like the views it sits beside. */
+export function BearingAside({
+  facts,
+  lights,
+  theta,
+  onTheta,
+  sky,
+}: {
+  facts: FactRecord;
+  lights: DisplayLight[];
+  theta: number;
+  onTheta: (theta: number) => void;
+  sky?: number;
+}) {
+  const drag = useDragRotate<SVGSVGElement>(theta, (t) =>
+    onTheta(wrapDegrees(t)),
+  );
+  return (
+    <MiniBearing
+      facts={facts}
+      lights={lights}
+      theta={theta}
+      sky={sky}
+      drag={drag}
+    />
+  );
+}
+
 /** The overhead arcs on their own, for a layout that shows them beside the scene. */
 export function Arcs({
   facts,
@@ -300,6 +348,8 @@ export function Arcs({
 
 export const ALL_VIEWS: View[] = ['profile', 'bearing', 'plan'];
 
+// The three tabs are three views of one vessel, so each draws the same
+// controls; one that does not apply to the view stays in place, disabled.
 function FullScene({
   facts,
   lights,
@@ -318,8 +368,12 @@ function FullScene({
   const { hull, placed } = usePlaced(facts, lights);
   const view = views.includes(settings.view) ? settings.view : views[0];
   const side = profileSide(settings.theta);
+  const onTheta = (t: number) => onChange({ theta: wrapDegrees(t) });
+  const stageDrag = useDragRotate<HTMLDivElement>(settings.theta, onTheta);
   const percentText = (v: number): string =>
     intl.formatNumber(v / 100, { style: 'percent' });
+  const variants = modelVariantsForHull(hull);
+  const meshOff = view === 'plan' || (view === 'bearing' && settings.benchy);
 
   return (
     <div className="panel scene-panel">
@@ -342,149 +396,169 @@ function FullScene({
           </button>
         ))}
       </div>
-      {view === 'profile' && (
-        <>
-          <ProfileStage
-            side={side}
-            sky={settings.sky}
-            hullHint={settings.hullHint}
-          >
-            <MeshProfileView
-              modelUrl={modelUrlForVariant(hull, settings.mesh)}
-              hull={hull}
-              placed={seenFrom(placed, side)}
-              facts={facts}
-              labels={sceneLabels}
-            />
-          </ProfileStage>
-          <p className="profile-side">
-            <FormattedMessage id={`scene.profile.side.${side}`} />
-          </p>
-        </>
-      )}
-      {view === 'bearing' && (
-        <BearingModelView
-          modelUrl={
-            settings.benchy
-              ? BENCHY_MODEL_URL
-              : modelUrlForVariant(hull, settings.mesh)
-          }
-          hull={hull}
-          placed={placed}
-          facts={facts}
-          theta={settings.theta}
-          onTheta={(t) => onChange({ theta: t })}
-          tilt={settings.tilt}
-          onTilt={(t) => onChange({ tilt: t })}
-          hullHint={settings.hullHint / 100}
-          range={settings.range}
-          sky={settings.sky / 100}
-          labels={sceneLabels}
-        />
-      )}
-      {(view === 'profile' || view === 'bearing') && (
-        <>
-          <SceneSlider
-            id="hull-hint"
-            label={intl.formatMessage({ id: 'scene.hullHint' })}
-            value={settings.hullHint}
-            readout={
-              settings.hullHint === 0
-                ? intl.formatMessage({ id: 'scene.hullHint.off' })
-                : percentText(settings.hullHint)
+      <div className="scene-main">
+        {view === 'profile' && (
+          <>
+            <ProfileStage
+              side={side}
+              sky={settings.sky}
+              hullHint={settings.hullHint}
+              range={settings.range}
+              drag={stageDrag}
+            >
+              <MeshProfileView
+                modelUrl={modelUrlForVariant(hull, settings.mesh)}
+                hull={hull}
+                placed={seenFrom(placed, side)}
+                facts={facts}
+                labels={sceneLabels}
+              />
+            </ProfileStage>
+            <p className="profile-side">
+              <FormattedMessage id={`scene.profile.side.${side}`} />
+            </p>
+          </>
+        )}
+        {view === 'bearing' && (
+          <BearingModelView
+            modelUrl={
+              settings.benchy
+                ? BENCHY_MODEL_URL
+                : modelUrlForVariant(hull, settings.mesh)
             }
-            onChange={(v) => onChange({ hullHint: v })}
+            hull={hull}
+            placed={placed}
+            facts={facts}
+            theta={settings.theta}
+            onTheta={onTheta}
+            tilt={settings.tilt}
+            onTilt={(t) => onChange({ tilt: t })}
+            hullHint={settings.hullHint / 100}
+            range={settings.range}
+            sky={settings.sky / 100}
+            labels={sceneLabels}
           />
-          {view === 'bearing' && (
+        )}
+        {view === 'plan' && (
+          <PlanView
+            hull={hull}
+            placed={placed}
+            theta={settings.theta}
+            onTheta={onTheta}
+            labels={sceneLabels}
+          />
+        )}
+        {/* the 3D view draws its own dial and tilt; the flat views borrow
+              the same dial, and tilt waits for the camera there */}
+        {view !== 'bearing' && (
+          <>
+            <ThetaControl
+              theta={settings.theta}
+              onTheta={onTheta}
+              labels={sceneLabels}
+              plan={hull.plan}
+            />
             <SceneSlider
-              id="range"
-              label={intl.formatMessage({ id: 'scene.range' })}
-              value={settings.range}
-              min={RANGE_MIN_NM}
-              max={RANGE_MAX_NM}
-              step={RANGE_STEP_NM}
-              readout={intl.formatMessage(
-                { id: 'scene.range.value' },
-                {
-                  range: intl.formatNumber(settings.range, {
-                    minimumFractionDigits: 1,
-                    maximumFractionDigits: 1,
-                  }),
-                },
-              )}
-              onChange={(v) => onChange({ range: v })}
+              id="tilt"
+              label={sceneLabels.benchyTiltLabel}
+              value={settings.tilt}
+              readout={`${Math.round(settings.tilt)}°`}
+              max={MAX_TILT}
+              disabled
+              onChange={(t) => onChange({ tilt: t })}
             />
-          )}
-          <SceneSlider
-            id="sky"
-            label={intl.formatMessage({ id: 'scene.sky' })}
-            value={settings.sky}
-            readout={percentText(settings.sky)}
-            onChange={(v) => onChange({ sky: v })}
-          />
-        </>
-      )}
-      {view === 'bearing' && (
-        <>
-          <label className="check-row" htmlFor="mesh">
-            <FormattedMessage id="scene.mesh" />
-            <select
-              id="mesh"
-              value={
-                modelVariantsForHull(hull).some((v) => v.name === settings.mesh)
-                  ? settings.mesh
-                  : ''
-              }
-              disabled={settings.benchy}
-              onChange={(e) => onChange({ mesh: e.target.value })}
-            >
-              {modelVariantsForHull(hull).map((v, i) => (
-                <option key={v.name} value={i === 0 ? '' : v.name}>
-                  {v.name.slice(hull.spec.id.length + 1).replace(/\.glb$/, '')}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              disabled={settings.benchy}
-              aria-label={intl.formatMessage({ id: 'scene.mesh.prev' })}
-              onClick={() =>
-                onChange({ mesh: stepMesh(hull, settings.mesh, -1) })
-              }
-            >
-              {'\u2039'}
-            </button>
-            <button
-              type="button"
-              disabled={settings.benchy}
-              aria-label={intl.formatMessage({ id: 'scene.mesh.next' })}
-              onClick={() =>
-                onChange({ mesh: stepMesh(hull, settings.mesh, 1) })
-              }
-            >
-              {'\u203A'}
-            </button>
-          </label>
-          <label className="check-row" htmlFor="benchy">
-            <input
-              id="benchy"
-              type="checkbox"
-              checked={settings.benchy}
-              onChange={(e) => onChange({ benchy: e.target.checked })}
-            />
-            <FormattedMessage id="scene.benchy.toggle" />
-          </label>
-        </>
-      )}
-      {view === 'plan' && (
-        <PlanView
-          hull={hull}
-          placed={placed}
-          theta={settings.theta}
-          onTheta={(t) => onChange({ theta: t })}
-          labels={sceneLabels}
+          </>
+        )}
+        <SceneSlider
+          id="hull-hint"
+          label={intl.formatMessage({ id: 'scene.hullHint' })}
+          value={settings.hullHint}
+          readout={
+            settings.hullHint === 0
+              ? intl.formatMessage({ id: 'scene.hullHint.off' })
+              : percentText(settings.hullHint)
+          }
+          disabled={view === 'plan'}
+          onChange={(v) => onChange({ hullHint: v })}
         />
-      )}
+        <SceneSlider
+          id="range"
+          label={intl.formatMessage({ id: 'scene.range' })}
+          value={settings.range}
+          min={RANGE_MIN_NM}
+          max={RANGE_MAX_NM}
+          step={RANGE_STEP_NM}
+          readout={intl.formatMessage(
+            { id: 'scene.range.value' },
+            {
+              range: intl.formatNumber(settings.range, {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+              }),
+            },
+          )}
+          disabled={view === 'plan'}
+          onChange={(v) => onChange({ range: v })}
+        />
+        <SceneSlider
+          id="sky"
+          label={intl.formatMessage({ id: 'scene.sky' })}
+          value={settings.sky}
+          readout={percentText(settings.sky)}
+          disabled={view === 'plan'}
+          onChange={(v) => onChange({ sky: v })}
+        />
+        <label className="check-row" htmlFor="mesh">
+          <FormattedMessage id="scene.mesh" />
+          <select
+            id="mesh"
+            value={
+              variants.some((v) => v.name === settings.mesh)
+                ? settings.mesh
+                : ''
+            }
+            disabled={meshOff}
+            onChange={(e) => onChange({ mesh: e.target.value })}
+          >
+            {variants.map((v, i) => (
+              <option key={v.name} value={i === 0 ? '' : v.name}>
+                {v.name.slice(hull.spec.id.length + 1).replace(/\.glb$/, '')}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            disabled={meshOff}
+            aria-label={intl.formatMessage({ id: 'scene.mesh.prev' })}
+            onClick={() =>
+              onChange({ mesh: stepMesh(hull, settings.mesh, -1) })
+            }
+          >
+            {'‹'}
+          </button>
+          <button
+            type="button"
+            disabled={meshOff}
+            aria-label={intl.formatMessage({ id: 'scene.mesh.next' })}
+            onClick={() => onChange({ mesh: stepMesh(hull, settings.mesh, 1) })}
+          >
+            {'›'}
+          </button>
+        </label>
+        <label
+          className={`check-row${view === 'bearing' ? '' : ' disabled'}`}
+          htmlFor="benchy"
+        >
+          <input
+            id="benchy"
+            type="checkbox"
+            checked={settings.benchy}
+            disabled={view !== 'bearing'}
+            onChange={(e) => onChange({ benchy: e.target.checked })}
+          />
+          <FormattedMessage id="scene.benchy.toggle" />
+        </label>
+      </div>
     </div>
   );
 }
