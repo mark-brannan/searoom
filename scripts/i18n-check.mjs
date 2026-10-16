@@ -48,7 +48,11 @@ const fiKeys = new Set(Object.keys(fi));
 const onlyEn = [...enKeys].filter((k) => !fiKeys.has(k));
 // Finnish may carry package-owned vocabulary keys until colregs ships them in
 // Finnish (see i18n.test.ts); those need an English string only from the package.
-const onlyFi = [...fiKeys].filter((k) => !enKeys.has(k) && !pkgKeys.has(k));
+// app.draftBanner is Finnish-only on purpose: App.tsx reads it from fi.json.
+const FI_ONLY = new Set(['app.draftBanner']);
+const onlyFi = [...fiKeys].filter(
+  (k) => !enKeys.has(k) && !pkgKeys.has(k) && !FI_ONLY.has(k),
+);
 // Only ids that look like catalog keys; DOM ids and rule ids (34a.port) are not.
 const missing = [...literal].filter(
   (id) => /^[a-z][\w-]*\./i.test(id) && !enKeys.has(id) && !pkgKeys.has(id),
