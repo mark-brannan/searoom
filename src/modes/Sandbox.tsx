@@ -26,7 +26,8 @@ import type {
   DisplayEvaluation,
   Modality,
 } from '../engine/types';
-import { PlanView, ProfileView, selectHull } from 'nav-wright';
+import { MeshProfileView } from '../render/MeshProfileView';
+import { PlanView, selectHull } from 'nav-wright';
 import { placeLights } from '../render/navWright';
 import type { Aspect } from 'nav-wright';
 import { BearingModelView } from 'nav-wright/benchy';
@@ -567,7 +568,8 @@ export function Sandbox({
             ))}
           </div>
           {state.view === 'profile' && (
-            <ProfileView
+            <MeshProfileView
+              modelUrl={modelUrlForVariant(hull, state.mesh)}
               hull={hull}
               placed={placed}
               facts={state.facts}
