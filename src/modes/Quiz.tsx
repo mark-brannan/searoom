@@ -1,7 +1,7 @@
 // Quiz v1, both directions. Every question is generated from the data —
 // scenarios from fixture fact records, distractors from near-miss records.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { describeFacts } from '../components/factLabel';
 import { makeForward, makeReverse } from '../engine/quiz';
@@ -74,11 +74,19 @@ function MiniBearing({
   );
 }
 
-export function Quiz({ state }: { state: AppState }) {
+export function Quiz({
+  state,
+  patch,
+}: {
+  state: AppState;
+  patch: (p: Partial<AppState>) => void;
+}) {
   const intl = useIntl();
-  const [direction, setDirection] = useState<'forward' | 'reverse'>('forward');
-  const [seed, setSeed] = useState(1);
+  const direction = state.quizDirection;
+  const seed = state.quizSeed + state.quizN - 1;
   const [picked, setPicked] = useState<number | null>(null);
+  // back/forward or a pasted URL changes the question: drop the old pick
+  useEffect(() => setPicked(null), [seed, direction, state.jurisdiction]);
   const [score, setScore] = useState({ right: 0, total: 0 });
 
   const question: QuizQuestion = useMemo(
@@ -100,7 +108,7 @@ export function Quiz({ state }: { state: AppState }) {
 
   const next = () => {
     setPicked(null);
-    setSeed((s) => s + 1);
+    patch({ quizN: state.quizN + 1 });
   };
 
   const optionClass = (i: number) => {
@@ -126,7 +134,7 @@ export function Quiz({ state }: { state: AppState }) {
             role="radio"
             aria-checked={direction === 'forward'}
             onClick={() => {
-              setDirection('forward');
+              patch({ quizDirection: 'forward' });
               setPicked(null);
             }}
           >
@@ -137,7 +145,7 @@ export function Quiz({ state }: { state: AppState }) {
             role="radio"
             aria-checked={direction === 'reverse'}
             onClick={() => {
-              setDirection('reverse');
+              patch({ quizDirection: 'reverse' });
               setPicked(null);
             }}
           >
