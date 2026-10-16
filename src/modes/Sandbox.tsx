@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
-import type { Patch } from '../App';
+import { useAppState, usePatch } from '../state/store';
 import { rovingKeyDown } from '../components/roving';
 import { Presets } from '../components/Presets';
 import { FactControls } from '../components/FactControls';
@@ -74,15 +74,9 @@ function imageUrl(name: string): string {
   return `${import.meta.env.BASE_URL}rule-images/${name}`;
 }
 
-function DisplayChips({
-  evaln,
-  state,
-  patch,
-}: {
-  evaln: DisplayEvaluation;
-  state: AppState;
-  patch: (p: Patch) => void;
-}) {
+function DisplayChips({ evaln }: { evaln: DisplayEvaluation }) {
+  const state = useAppState();
+  const patch = usePatch();
   const intl = useIntl();
   const current = Math.min(state.displayIndex, evaln.displays.length - 1);
 
@@ -427,15 +421,9 @@ function EntryRow({
   );
 }
 
-function DataDrawer({
-  evaln,
-  state,
-  patch,
-}: {
-  evaln: DisplayEvaluation;
-  state: AppState;
-  patch: (p: Patch) => void;
-}) {
+function DataDrawer({ evaln }: { evaln: DisplayEvaluation }) {
+  const state = useAppState();
+  const patch = usePatch();
   const applied = evaln.applied.map((id) => entryById.get(id));
   const corpus = useCorpus();
   return (
@@ -509,13 +497,9 @@ function SceneSlider({
   );
 }
 
-export function Sandbox({
-  state,
-  patch,
-}: {
-  state: AppState;
-  patch: (p: Patch) => void;
-}) {
+export function Sandbox() {
+  const state = useAppState();
+  const patch = usePatch();
   const intl = useIntl();
   const evaln = useMemo(
     () => evaluateDisplayIn(state.jurisdiction, state.facts),
@@ -574,9 +558,9 @@ export function Sandbox({
 
   return (
     <>
-      <Presets state={state} patch={patch} />
+      <Presets />
       <div className="sandbox-grid">
-        <FactControls state={state} patch={patch} />
+        <FactControls />
         <div>
           <div className="panel">
             <div
@@ -710,7 +694,7 @@ export function Sandbox({
             )}
           </div>
 
-          <DisplayChips evaln={evaln} state={state} patch={patch} />
+          <DisplayChips evaln={evaln} />
 
           <div className="panel">
             <h2>
@@ -726,7 +710,7 @@ export function Sandbox({
               ))}
           </div>
 
-          <DataDrawer evaln={evaln} state={state} patch={patch} />
+          <DataDrawer evaln={evaln} />
         </div>
       </div>
     </>

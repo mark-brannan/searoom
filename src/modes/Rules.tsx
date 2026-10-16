@@ -13,7 +13,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
-import type { Patch } from '../App';
+import { useAppState, usePatch } from '../state/store';
 import { CorpusSwitcher } from '../components/CorpusSwitcher';
 import { CorpusLine, MixedNote, Paragraph } from '../components/RuleParagraphs';
 import {
@@ -50,7 +50,6 @@ import {
 import { jurisdictionExplainers } from '../data/signposts';
 import { useCorpus } from '../state/corpusContext';
 import { serialize, DEFAULT_STATE, defaultCorpusFor } from '../state/urlState';
-import type { AppState } from '../state/urlState';
 
 function imageUrl(name: string): string {
   return `${import.meta.env.BASE_URL}rule-images/${name}`;
@@ -69,13 +68,9 @@ function sandboxLink(entryId: string, jurisdiction: string): string | undefined 
   });
 }
 
-export function Rules({
-  state,
-  patch,
-}: {
-  state: AppState;
-  patch: (p: Patch) => void;
-}) {
+export function Rules() {
+  const state = useAppState();
+  const patch = usePatch();
   const intl = useIntl();
   const containerRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState('');

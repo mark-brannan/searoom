@@ -6,7 +6,6 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { IntlProvider } from 'react-intl';
 import { Header, pickJurisdiction } from './Header';
 import { catalogs } from '../i18n';
-import { DEFAULT_STATE } from '../state/urlState';
 import { JURISDICTIONS } from '../data/jurisdictions';
 import { jurisdictions as signposted } from '../data/signposts';
 
@@ -16,7 +15,7 @@ describe('jurisdiction picker', () => {
   it('lists every non-live signposted jurisdiction under its own group', () => {
     const html = renderToStaticMarkup(
       <IntlProvider locale="en" messages={catalogs.en} defaultLocale="en">
-        <Header state={DEFAULT_STATE} patch={() => {}} setMode={() => {}} />
+        <Header />
       </IntlProvider>,
     );
     expect(pending.length).toBeGreaterThan(0);

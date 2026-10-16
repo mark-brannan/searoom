@@ -1,7 +1,8 @@
 import { FormattedMessage, useIntl } from 'react-intl';
-import type { Patch } from '../App';
+import { useApp } from '../state/store';
+import type { Patch } from '../state/store';
 import { JURISDICTIONS } from '../data/jurisdictions';
-import type { AppState, Mode } from '../state/urlState';
+import type { Mode } from '../state/urlState';
 import { jurisdictions as signposted } from '../data/signposts';
 import { useCorpus } from '../state/corpusContext';
 
@@ -19,15 +20,10 @@ export function pickJurisdiction(value: string): Patch {
 }
 const MODES: Mode[] = ['sandbox', 'identify', 'quiz', 'rules', 'sound'];
 
-export function Header({
-  state,
-  patch,
-  setMode,
-}: {
-  state: AppState;
-  patch: (p: Patch) => void;
-  setMode: (m: Mode) => void;
-}) {
+export function Header() {
+  const state = useApp((s) => s.state);
+  const patch = useApp((s) => s.patch);
+  const setMode = useApp((s) => s.setMode);
   const intl = useIntl();
   const corpus = useCorpus();
   return (
