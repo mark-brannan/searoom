@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.2](https://github.com/mark-brannan/searoom/compare/v0.1.1...v0.1.2) (2026-10-16)
+
+
+### Added
+
+* **bearing:** range control in URL state, seascape under Identify's lights ([#93](https://github.com/mark-brannan/searoom/issues/93)) ([#215](https://github.com/mark-brannan/searoom/issues/215)) ([17862cb](https://github.com/mark-brannan/searoom/commit/17862cb5006cf6962fea42f561d92a5617d3547c))
+* **profile:** silhouettes from each hull's selected mesh ([#174](https://github.com/mark-brannan/searoom/issues/174), [#99](https://github.com/mark-brannan/searoom/issues/99)) ([#191](https://github.com/mark-brannan/searoom/issues/191)) ([c9226ae](https://github.com/mark-brannan/searoom/commit/c9226ae6b54dd4cc84d34d5fe92685caca83ba9b))
+* **sandbox:** layouts A and C under a runtime A/B switch ([#213](https://github.com/mark-brannan/searoom/issues/213)) ([e57d4ad](https://github.com/mark-brannan/searoom/commit/e57d4ad905aa2de0ff045f3947d26c02eb70ca02))
+* **scene:** one control set on every tab, grab to rotate, bearing view alongside (refs [#174](https://github.com/mark-brannan/searoom/issues/174)) ([#216](https://github.com/mark-brannan/searoom/issues/216)) ([6a4dbef](https://github.com/mark-brannan/searoom/commit/6a4dbef8f49110a628d6405040a3fa1a30e3c456))
+* **scene:** open on a random mesh from the hull's class (refs [#174](https://github.com/mark-brannan/searoom/issues/174)) ([#217](https://github.com/mark-brannan/searoom/issues/217)) ([6b92e61](https://github.com/mark-brannan/searoom/commit/6b92e61135c407fd870cf6bf8e305c8ac269bef7))
+* **state:** persist language and jurisdiction, URL wins (refs [#105](https://github.com/mark-brannan/searoom/issues/105)) ([#199](https://github.com/mark-brannan/searoom/issues/199)) ([6cf33c9](https://github.com/mark-brannan/searoom/commit/6cf33c9fd2ce245d64fb8b613c9f601bf1daeba9))
+
 ## [0.1.1](https://github.com/mark-brannan/searoom/compare/v0.1.0...v0.1.1) (2026-10-16)
 
 
