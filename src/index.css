@@ -200,10 +200,158 @@ button {
   align-items: start;
 }
 
-@media (max-width: 860px) {
-  .sandbox-grid {
-    grid-template-columns: 1fr;
+/* A: facts rail | scene, then chips, rules, data | arcs panel */
+.sandbox-a {
+  grid-template-columns: 300px minmax(0, 1fr) 280px;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    'rail stage arcs'
+    'rail rest arcs';
+}
+
+.sandbox-a.arcs-hidden {
+  grid-template-columns: 300px minmax(0, 1fr) auto;
+}
+
+.sandbox-a > .fact-sheet {
+  grid-area: rail;
+}
+
+.sandbox-a > .sandbox-stage {
+  grid-area: stage;
+}
+
+.sandbox-a > .arcs-panel {
+  grid-area: arcs;
+  margin: 0;
+}
+
+.sandbox-a > .sandbox-rest {
+  grid-area: rest;
+}
+
+.arcs-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.arcs-panel .arcs-head h2 {
+  margin: 0;
+}
+
+.arcs-panel .plan-svg {
+  margin-top: 8px;
+}
+
+.arcs-toggle {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px 10px;
+  font-size: 12.5px;
+  color: var(--dim);
+}
+
+@media (max-width: 1100px) {
+  .sandbox-a,
+  .sandbox-a.arcs-hidden {
+    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      'rail stage'
+      'rail arcs'
+      'rail rest';
   }
+
+  .arcs-panel .plan-svg {
+    max-width: 360px;
+  }
+}
+
+@media (max-width: 860px) {
+  .sandbox-grid,
+  .sandbox-a,
+  .sandbox-a.arcs-hidden {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    grid-template-areas: 'rail' 'stage' 'arcs' 'rest';
+  }
+}
+
+/* C: the scene first, capped and centred, arcs inset on it */
+.sandbox-c {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sandbox-c > .presets {
+  margin: 0;
+}
+
+.sandbox-c > .panel {
+  margin: 0;
+}
+
+.scene-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.arcs-inset {
+  position: absolute;
+  top: 54px;
+  right: 26px;
+  width: 190px;
+  z-index: 2;
+  padding: 4px 6px 6px;
+  font-size: 12.5px;
+  color: var(--dim);
+  background: color-mix(in srgb, var(--panel) 82%, transparent);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.arcs-inset.collapsed {
+  width: auto;
+}
+
+.arcs-inset .plan-svg {
+  margin-top: 4px;
+  max-width: 100%;
+}
+
+/* columns, not a grid: the long activity list would leave holes in a grid row */
+.fact-row > .panel {
+  columns: 240px;
+  column-gap: 22px;
+}
+
+.fact-row > .panel > * {
+  break-inside: avoid;
+}
+
+.fact-row > .panel > h2 {
+  column-span: all;
+}
+
+.rules-why > summary {
+  cursor: pointer;
+  padding: 4px 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.rules-why > .panel {
+  margin-top: 8px;
 }
 
 .panel {
@@ -388,6 +536,21 @@ select {
 
 .scene-3d-stack canvas:active {
   cursor: grabbing;
+}
+
+/* The hull is the profile svg's only bare <g>; each light is a <g opacity>. */
+.profile-stage svg > g:not([opacity]) {
+  opacity: var(--hull-opacity, 1);
+}
+
+.profile-stage[data-side='port'] > svg {
+  transform: scaleX(-1);
+}
+
+.profile-side {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--dim);
 }
 
 .plan-svg {
@@ -909,6 +1072,30 @@ details summary:hover {
   gap: 6px 18px;
 }
 
+.layout-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.layout-switch > span {
+  margin-right: 2px;
+}
+
+.layout-switch button {
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 0 6px;
+  line-height: 1.2;
+  color: var(--dim);
+}
+
+.layout-switch button[aria-pressed='true'] {
+  border-color: var(--line);
+  color: var(--text);
+}
+
 table.corpora {
   border-collapse: collapse;
   width: 100%;
@@ -1307,6 +1494,35 @@ table.corpora th {
 
   .fact-sheet-body > .panel > h2 {
     display: none;
+  }
+
+  /* C has no sheet: the scene scrolls with the page and the arcs sit under
+     it, never over a light */
+  .sandbox-c .scene-panel {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .sandbox-c .scene-panel .scene-svg,
+  .sandbox-c .scene-panel .scene-3d-stack {
+    max-height: none;
+  }
+
+  .arcs-inset {
+    position: static;
+    width: auto;
+    margin-top: 8px;
+  }
+
+  .arcs-inset .plan-svg {
+    max-width: 280px;
+  }
+
+  .arcs-toggle,
+  .layout-switch button {
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 
