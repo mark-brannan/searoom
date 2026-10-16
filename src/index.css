@@ -1188,11 +1188,20 @@ table.corpora th {
     padding-bottom: calc(45dvh + 16px);
   }
 
+  /* capped at the space above the open sheet, scrolling inside itself, so
+     the sliders and pickers under the scene are never trapped behind it */
   .scene-panel {
     position: sticky;
     top: 0;
     z-index: 5;
     padding: 8px 10px;
+    max-height: 55dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .sandbox-grid:has(.fact-sheet.collapsed) .scene-panel {
+    max-height: none;
   }
 
   .scene-panel .view-tabs {
