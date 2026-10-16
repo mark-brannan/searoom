@@ -5,11 +5,8 @@
 import { useIntl } from 'react-intl';
 import type { Patch } from '../App';
 import { PRESETS, presetFor } from '../data/presets';
-import { selectHull } from 'nav-wright';
-import { pickMesh } from '../render/hullModels';
+import { meshOnChange } from '../render/hullModels';
 import type { AppState } from '../state/urlState';
-
-const AXES = ['fact:propulsion', 'fact:activity', 'fact:position'] as const;
 
 export function Presets({
   state,
@@ -38,16 +35,8 @@ export function Presets({
               displayIndex: 0,
               additionsOn: [],
             };
-            // As the fact controls do (searoom#174): a new size class,
-            // propulsion, activity or position draws a fresh mesh; a tap that
-            // keeps all of them keeps the mesh on screen.
-            const nextHull = selectHull(p.facts);
-            if (
-              nextHull.spec.id !== selectHull(state.facts).spec.id ||
-              AXES.some((k) => p.facts[k] !== state.facts[k])
-            ) {
-              change.mesh = pickMesh(nextHull);
-            }
+            const mesh = meshOnChange(state.facts, p.facts);
+            if (mesh !== undefined) change.mesh = mesh;
             patch(change);
           }}
         >
