@@ -45,3 +45,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261016t070218z
 - C15a: tolerate two reported colregs violation classes in sweep allowlist; undo by deleting REPORTED entries (no PR, branch claude/searoom-nav-wright-colregs-scope-e02a5b)
+
+### 20261016t073132z
+- searoom#210: Intro on Sandbox only; undo: move FirstRunIntro in App.tsx (no PR, branch main)
