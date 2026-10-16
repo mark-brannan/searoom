@@ -21,3 +21,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261016t042139z
 - searoom C17 PR190: random pick also on same-axes size-class change; undo: drop hull-id compare in setFacts (no PR, branch main)
+
+### 20261016t042142z
+- searoom C17 PR190: default mesh is one random outcome, no ms param; undo: exclude index 0 in pickMesh (no PR, branch main)
