@@ -26,11 +26,12 @@ for (const [name, hash, probe] of [
   ['Sandbox', '#/sandbox', '.sandbox-grid'],
   ['Identify', '#/identify', '.color-btn'],
   ['Quiz', '#/quiz', '.quiz-option'],
-  ['Rules', '#/rules', '.panel'],
+  ['Rules', '#/rules', '[id^="rule-"]'],
   ['Sound', '#/sound', '.panel'],
 ]) {
   await tab(name).first().click();
   await page.waitForFunction((h) => location.hash.startsWith(h), hash);
+  await page.locator(probe).first().waitFor({ timeout: 5000 }).catch(() => {});
   check(
     `${name} mode renders`,
     (await page.locator(probe).count()) > 0 &&
@@ -44,10 +45,9 @@ await page.goto(`${base}#/sandbox?p=power&a=none&pos=underway&mw=1&len=49`, {
   waitUntil: 'networkidle',
 });
 const addition = page.locator('.chip.addition', { hasText: '23(a)(ii)' });
-const below = await addition.count();
+const below = await addition.first().waitFor({ timeout: 5000 }).then(() => addition.count(), () => 0);
 await page.locator('#length').fill('55');
-await page.waitForTimeout(200);
-const above = await addition.count();
+const above = await addition.first().waitFor({ state: 'detached', timeout: 5000 }).then(() => 0, () => addition.count());
 check(`length slider crosses 50 m (${below} -> ${above} optional additions)`, below === 1 && above === 0);
 
 check('no uncaught page errors', errors.length === 0);
