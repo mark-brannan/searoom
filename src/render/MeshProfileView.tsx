@@ -16,6 +16,7 @@ import type { FactRecord } from 'colregs-engine';
 // Not on nav-wright's export map; the same reach meshProfile.ts makes, for the
 // same reason: the view's own placement, not a copy of it.
 import { placeScene } from '../../node_modules/nav-wright/dist/sceneProfile.js';
+import { lightRadius } from '../../node_modules/nav-wright/dist/modelTransform.js';
 import {
   outlineOf,
   silhouettePath,
@@ -87,7 +88,12 @@ export function MeshProfileView({
     [loaded, modelUrl, length, hull],
   );
   const seats = useMemo(
-    () => (profile ? anchorLights(placed, length, hull.spec, profile) : null),
+    // The 3D view's clearance too (BenchyModel), so a light clears the
+    // structure it is seated on instead of centring on its edge.
+    () =>
+      profile
+        ? anchorLights(placed, length, hull.spec, profile, lightRadius(length))
+        : null,
     [profile, placed, length, hull],
   );
 
