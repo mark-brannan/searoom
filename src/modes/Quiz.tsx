@@ -1,5 +1,6 @@
-// Quiz v2: both directions, a seed in the URL, local progress, weighted drills, exams. Every question is generated from the data —
-// scenarios from fixture fact records, distractors from near-miss records.
+// Quiz: both directions, seed in the URL, local progress, weighted drills,
+// exams. Every question is generated from the data — scenarios from fixture
+// fact records, distractors from near-miss records.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
@@ -21,7 +22,7 @@ import {
 import type { Progress } from '../engine/quizProgress';
 import { RuleParagraphs } from '../components/RuleParagraphs';
 import { QUIZ_MODES } from '../state/urlState';
-import type { Patch } from '../App';
+import { useAppState, usePatch } from '../state/store';
 import { Glow, PX, PZ, bearingInArc, bearingLabel, selectHull } from 'nav-wright';
 import { placeLights } from '../render/navWright';
 import { lights } from '../data/colregs';
@@ -189,15 +190,13 @@ function ProgressPanel({
   );
 }
 
-export function Quiz({
-  state,
-  patch,
-}: {
-  state: AppState;
-  patch: (p: Patch) => void;
-}) {
+export function Quiz() {
+  const state = useAppState();
+  const patch = usePatch();
   const intl = useIntl();
-  const { quizMode: mode, quizReverse: reverse, quizSeed, quizIndex, quizRule } = state;
+  const { quizMode: mode, quizSeed, quizN, quizRule } = state;
+  const reverse = state.quizDirection === 'reverse';
+  const quizIndex = quizN - 1;
   const [picked, setPicked] = useState<number | null>(null);
   const [score, setScore] = useState({ right: 0, total: 0 });
   const [progress, setProgress] = useState<Progress>(loadProgress);
@@ -206,7 +205,7 @@ export function Quiz({
   const [exam, setExam] = useState<{ deadline: number; log: boolean[] } | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
-  const seed = mode === 'exam' ? quizSeed + quizIndex : quizSeed;
+  const seed = quizSeed + quizIndex;
   const examDone =
     mode === 'exam' &&
     exam !== null &&
@@ -234,35 +233,35 @@ export function Quiz({
     const ok = i === question.answerIndex;
     setPicked(i);
     setScore((s) => ({ right: s.right + (ok ? 1 : 0), total: s.total + 1 }));
-    setProgress((p) => {
-      const next = record(p, question.fixtureName, ok);
-      saveProgress(next);
-      return next;
-    });
+    const nextProgress = record(progress, question.fixtureName, ok);
+    saveProgress(nextProgress);
+    setProgress(nextProgress);
     if (mode === 'exam' && exam) setExam({ ...exam, log: [...exam.log, ok] });
   };
 
   const next = () => {
     setPicked(null);
-    if (mode === 'exam') patch({ quizIndex: quizIndex + 1 });
-    else if (mode === 'drill')
+    if (mode === 'drill')
       patch({
-        quizSeed: nextDrillSeed(quizSeed, reverse, state.jurisdiction, progress, quizRule),
+        quizSeed: nextDrillSeed(seed, reverse, state.jurisdiction, progress, quizRule),
+        quizN: 1,
       });
-    else patch({ quizSeed: quizSeed + 1 });
+    else patch({ quizN: quizN + 1 });
   };
 
   const startExam = () => {
     setPicked(null);
     setNow(Date.now());
+    setScore({ right: 0, total: 0 });
     setExam({ deadline: Date.now() + EXAM_SECONDS * 1000, log: [] });
-    patch({ quizSeed: Math.floor(Math.random() * 1_000_000) + 1, quizIndex: 0 });
+    patch({ quizSeed: Math.floor(Math.random() * 1_000_000) + 1, quizN: 1 });
   };
 
   const setMode = (m: AppState['quizMode']) => {
     setPicked(null);
     setExam(null);
-    patch({ quizMode: m, quizIndex: 0 });
+    setScore({ right: 0, total: 0 });
+    patch({ quizMode: m, quizSeed: seed, quizN: 1 });
   };
 
   const optionClass = (i: number) => {
@@ -319,18 +318,20 @@ export function Quiz({
               aria-checked={reverse === r}
               onClick={() => {
                 setPicked(null);
-                patch({ quizReverse: r });
+                patch({ quizDirection: r ? 'reverse' : 'forward' });
               }}
             >
               <FormattedMessage id={r ? 'quiz.reverse.name' : 'quiz.forward.name'} />
             </button>
           ))}
-          <span style={{ marginLeft: 'auto', color: 'var(--dim)' }}>
-            <FormattedMessage
-              id="quiz.score"
-              values={{ score: score.right, total: score.total }}
-            />
-          </span>
+          {mode !== 'exam' && (
+            <span style={{ marginLeft: 'auto', color: 'var(--dim)' }}>
+              <FormattedMessage
+                id="quiz.score"
+                values={{ score: score.right, total: score.total }}
+              />
+            </span>
+          )}
         </div>
         <div
           className="chips"
@@ -356,8 +357,9 @@ export function Quiz({
                 setPicked(null);
                 patch({
                   quizRule: e.target.value,
+                  quizN: 1,
                   quizSeed: nextDrillSeed(
-                    quizSeed,
+                    seed,
                     reverse,
                     state.jurisdiction,
                     progress,

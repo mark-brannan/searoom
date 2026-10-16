@@ -69,28 +69,40 @@ describe('quiz progress', () => {
   });
 });
 
+describe('parseProgress with a hostile key', () => {
+  it('drops __proto__ instead of setting the prototype', () => {
+    const json = JSON.parse(
+      '{"entries":{"__proto__":{"right":1,"wrong":1},"ok":{"right":2,"wrong":0}}}',
+    );
+    const p = parseProgress(json)!;
+    expect(Object.keys(p)).toEqual(['ok']);
+    expect(Object.getPrototypeOf(p)).toBe(Object.prototype);
+    expect(({} as Record<string, unknown>).right).toBeUndefined();
+  });
+});
+
 describe('quiz state in the URL', () => {
   it('round-trips seed, direction, mode, index and rule', () => {
     const s = {
       ...deserialize('#/quiz'),
       quizSeed: 4242,
-      quizReverse: true,
+      quizDirection: 'reverse' as const,
       quizMode: 'exam' as const,
-      quizIndex: 3,
+      quizN: 4,
       quizRule: '27',
     };
     const back = deserialize(serialize(s));
     expect(back).toMatchObject({
       quizSeed: 4242,
-      quizReverse: true,
+      quizDirection: 'reverse',
       quizMode: 'exam',
-      quizIndex: 3,
+      quizN: 4,
       quizRule: '27',
     });
   });
 
   it('ignores junk in a hand-edited link', () => {
-    const s = deserialize('#/quiz?qs=-3&qm=cheat&qi=x&qr=abc');
-    expect(s).toMatchObject({ quizSeed: 1, quizMode: 'practice', quizIndex: 0, quizRule: '' });
+    const s = deserialize('#/quiz/-3/x?qm=cheat&qr=abc');
+    expect(s).toMatchObject({ quizSeed: 1, quizMode: 'practice', quizN: 1, quizRule: '' });
   });
 });

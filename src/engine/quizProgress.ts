@@ -56,6 +56,7 @@ export function parseProgress(json: unknown): Progress | null {
   if (typeof entries !== 'object' || entries === null) return null;
   const out: Progress = {};
   for (const [name, t] of Object.entries(entries)) {
+    if (name === '__proto__') continue; // would set out's prototype, not a key
     const right = count((t as Tally)?.right);
     const wrong = count((t as Tally)?.wrong);
     if (right !== null && wrong !== null) out[name] = { right, wrong };
@@ -74,6 +75,7 @@ export function exportProgress(p: Progress): string {
 export function mergeProgress(a: Progress, b: Progress): Progress {
   const out: Progress = { ...a };
   for (const [name, t] of Object.entries(b)) {
+    if (name === '__proto__') continue;
     const o = out[name];
     out[name] = o
       ? { right: Math.max(o.right, t.right), wrong: Math.max(o.wrong, t.wrong) }

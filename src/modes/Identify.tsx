@@ -4,23 +4,18 @@
 
 import { useMemo, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
-import type { Patch } from '../App';
+import { useAppState, usePatch } from '../state/store';
 import { describeFacts } from '../components/factLabel';
 import { identifyCandidates } from '../engine/identify';
 import type { Arrangement, SeenLight } from '../engine/identify';
 import { Glow, bearingLabel, lightFill } from 'nav-wright';
 import { DEFAULT_STATE, serialize } from '../state/urlState';
-import type { AppState } from '../state/urlState';
 
 const COLORS: SeenLight['color'][] = ['white', 'red', 'green', 'yellow'];
 
-export function Identify({
-  state,
-  patch,
-}: {
-  state: AppState;
-  patch: (p: Patch) => void;
-}) {
+export function Identify() {
+  const state = useAppState();
+  const patch = usePatch();
   const intl = useIntl();
   const [seen, setSeen] = useState<SeenLight[]>([]);
   const [flashing, setFlashing] = useState(false);
