@@ -65,6 +65,26 @@ describe('URL state round-trip', () => {
     expect(deserialize(`#/?hh=${raw}&bg=${raw}`).sky).toBe(want);
   });
 
+  it('opens the bearing view at 0.5 nm and keeps a range in the URL', () => {
+    expect(DEFAULT_STATE.range).toBe(0.5);
+    expect(serialize(DEFAULT_STATE)).not.toContain('rg=');
+    const s = deserialize('#/sandbox?view=bearing&rg=3');
+    expect(s.range).toBe(3);
+    expect(serialize(s)).toContain('rg=3');
+    expect(deserialize(serialize(s))).toEqual(s);
+  });
+
+  it.each([
+    ['9', 3],
+    ['0', 0.5],
+    ['1.26', 1.3],
+    ['x', 0.5],
+    ['', 0.5],
+    ['Infinity', 0.5],
+  ])('clamps rg=%j to %d nm, junk keeps the default', (raw, want) => {
+    expect(deserialize(`#/?rg=${raw}`).range).toBe(want);
+  });
+
   it.each(['x', '', 'NaN'])('ignores a non-number hh/bg (%j)', (raw) => {
     const s = deserialize(`#/?hh=${raw}&bg=${raw}`);
     expect(s.hullHint).toBe(DEFAULT_STATE.hullHint);

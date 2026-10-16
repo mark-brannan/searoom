@@ -4,6 +4,7 @@
 import { create } from 'zustand';
 import type { AppState, Mode } from './urlState';
 import { defaultCorpusFor, deserialize, serialize } from './urlState';
+import { saveSettings, stateFromHash } from './settings';
 
 export type Patch = Partial<AppState>;
 
@@ -22,7 +23,9 @@ interface AppStore {
 }
 
 export const useApp = create<AppStore>((set, get) => ({
-  state: deserialize(typeof window === 'undefined' ? '' : window.location.hash),
+  state: stateFromHash(
+    typeof window === 'undefined' ? '' : window.location.hash,
+  ),
   undoStack: [],
   patch: (p) =>
     set(({ state: s, undoStack }) => {
@@ -103,6 +106,15 @@ export function startSync(): () => void {
   const unsub = useApp.subscribe((s, prev) => {
     if (s.state !== prev.state) write(s.state);
   });
+  // preferences that outlive the visit
+  const saveIfChanged = (s: AppState, prev?: AppState) => {
+    if (!prev || s.locale !== prev.locale || s.jurisdiction !== prev.jurisdiction)
+      saveSettings({ locale: s.locale, jurisdiction: s.jurisdiction });
+  };
+  const unsubSettings = useApp.subscribe((s, prev) =>
+    saveIfChanged(s.state, prev.state),
+  );
+  saveIfChanged(useApp.getState().state);
   // the initial state may need normalising into the hash
   write(useApp.getState().state);
 
@@ -120,5 +132,6 @@ export function startSync(): () => void {
     window.removeEventListener('hashchange', onHash);
     window.removeEventListener('keydown', onKey);
     unsub();
+    unsubSettings();
   };
 }

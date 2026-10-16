@@ -57,7 +57,8 @@ function MiniProfile({
   );
 }
 
-function MiniBearing({
+/** A reverse question's card: lights only on black, the strict exam view. */
+export function MiniBearing({
   facts,
   display,
   theta,
