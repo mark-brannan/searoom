@@ -1,20 +1,29 @@
 import { FormattedMessage, useIntl } from 'react-intl';
-import type { Patch } from '../App';
+import { useApp } from '../state/store';
+import type { Patch } from '../state/store';
 import { JURISDICTIONS } from '../data/jurisdictions';
-import type { AppState, Mode } from '../state/urlState';
+import type { Mode } from '../state/urlState';
+import { jurisdictions as signposted } from '../data/signposts';
 import { useCorpus } from '../state/corpusContext';
 
+const SIGNPOST_PREFIX = 'sp:';
+
+/**
+ * What picking a picker row does. A signposted row has no data to select,
+ * so it opens that jurisdiction's signpost panel instead; the controlled
+ * select keeps showing the jurisdiction in view.
+ */
+export function pickJurisdiction(value: string): Patch {
+  return value.startsWith(SIGNPOST_PREFIX)
+    ? { signpost: value.slice(SIGNPOST_PREFIX.length) }
+    : { jurisdiction: value };
+}
 const MODES: Mode[] = ['sandbox', 'identify', 'quiz', 'rules', 'sound'];
 
-export function Header({
-  state,
-  patch,
-  setMode,
-}: {
-  state: AppState;
-  patch: (p: Patch) => void;
-  setMode: (m: Mode) => void;
-}) {
+export function Header() {
+  const state = useApp((s) => s.state);
+  const patch = useApp((s) => s.patch);
+  const setMode = useApp((s) => s.setMode);
   const intl = useIntl();
   const corpus = useCorpus();
   return (
@@ -38,7 +47,7 @@ export function Header({
             </span>
             <select
               value={state.jurisdiction}
-              onChange={(e) => patch({ jurisdiction: e.target.value })}
+              onChange={(e) => patch(pickJurisdiction(e.target.value))}
               aria-label={intl.formatMessage({ id: 'jurisdiction.label' })}
             >
               {JURISDICTIONS.map((j) => (
@@ -49,6 +58,17 @@ export function Header({
                   })}
                 </option>
               ))}
+              <optgroup
+                label={intl.formatMessage({ id: 'jurisdiction.signposted' })}
+              >
+                {signposted
+                  .filter((s) => s.status !== 'live')
+                  .map((s) => (
+                    <option key={s.id} value={SIGNPOST_PREFIX + s.id}>
+                      {s.label ?? intl.formatMessage({ id: s.labelKey! })}
+                    </option>
+                  ))}
+              </optgroup>
             </select>
           </label>
           <button
@@ -56,11 +76,15 @@ export function Header({
             onClick={() => patch({ signpost: 'locale-picker' })}
             aria-haspopup="dialog"
           >
-            <FormattedMessage id="locale.title" />
-            {': '}
+            <span className="loc-long">
+              <FormattedMessage id="locale.title" />
+              {': '}
+            </span>
             {state.locale === 'fi' ? 'FI' : 'EN'}
-            {' · '}
-            <FormattedMessage id="header.text" values={{ language: corpus.language }} />
+            <span className="loc-long">
+              {' · '}
+              <FormattedMessage id="header.text" values={{ language: corpus.language }} />
+            </span>
           </button>
         </div>
       </div>

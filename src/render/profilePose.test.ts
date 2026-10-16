@@ -23,8 +23,7 @@ import { allHulls, PX, PZ } from 'nav-wright';
 import { placeLights } from './navWright';
 import type { Hull } from 'nav-wright';
 import { lights } from '../data/colregs';
-// Not on nav-wright's export map, per hullRegistration.test.ts.
-import { anchorLights } from '../../node_modules/nav-wright/dist/modelTransform.js';
+import { anchorLights } from 'nav-wright/profile';
 import { hasRegisteredModel, modelUrlForHull } from './hullModels';
 import { KNOWN_MISFITS, loadHullScene, worldProfile } from './meshProfile';
 

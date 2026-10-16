@@ -8,7 +8,10 @@ import { patternRuns, type SignalPattern } from '../audio/signalPattern';
 export function patternWords(intl: IntlShape, pattern: SignalPattern): string {
   return patternRuns(pattern)
     .map((run) =>
-      intl.formatMessage({ id: `sound.word.${run.sound}` }, { count: run.count }),
+      intl.formatMessage(
+        { id: `sound.word.${run.sound}` },
+        { count: run.count },
+      ),
     )
     .join(', ');
 }

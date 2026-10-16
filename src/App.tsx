@@ -1,15 +1,8 @@
-import {
-  Suspense,
-  lazy,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { Suspense, lazy, useEffect, useMemo } from 'react';
 import { FormattedMessage, IntlProvider } from 'react-intl';
 import fi from './i18n/fi.json';
 import { catalogs } from './i18n';
+<<<<<<< HEAD
 import type { AppState, Mode } from './state/urlState';
 import {
   DEFAULT_STATE,
@@ -18,11 +11,16 @@ import {
   serialize,
 } from './state/urlState';
 import { saveSettings, stateFromHash } from './state/settings';
+=======
+import { DEFAULT_STATE } from './state/urlState';
+import { startSync, useAppState, usePatch } from './state/store';
+>>>>>>> origin/main
 import { Header } from './components/Header';
 import { SignpostPanel } from './components/SignpostPanel';
 import { colregsVersion } from './data/colregs';
 import { corpusIn } from './data/corpusText';
 import { CorpusContext } from './state/corpusContext';
+import { EXPERIMENTS, setVariant, useVariant } from './state/experiments';
 
 // Each mode loads on first open, so the shell chunk carries none of them.
 const Sandbox = lazy(() =>
@@ -41,9 +39,8 @@ const Sound = lazy(() =>
   import('./modes/Sound').then((m) => ({ default: m.Sound })),
 );
 
-export type Patch = Partial<AppState>;
-
 export function App() {
+<<<<<<< HEAD
   const [state, setState] = useState<AppState>(() =>
     stateFromHash(window.location.hash),
   );
@@ -98,6 +95,12 @@ export function App() {
     },
     [],
   );
+=======
+  const state = useAppState();
+  const patch = usePatch();
+  const layout = useVariant('layout');
+  useEffect(() => startSync(), []);
+>>>>>>> origin/main
 
   const locale = state.locale === 'fi' ? 'fi' : 'en';
   const messages = catalogs[locale];
@@ -105,68 +108,89 @@ export function App() {
   const body = useMemo(() => {
     switch (state.mode) {
       case 'sandbox':
-        return <Sandbox state={state} patch={patch} />;
+        return <Sandbox />;
       case 'identify':
-        return <Identify state={state} patch={patch} />;
+        return <Identify />;
       case 'quiz':
-        return <Quiz state={state} />;
+        return <Quiz />;
       case 'rules':
-        return <Rules state={state} patch={patch} />;
+        return <Rules />;
       case 'sound':
-        return <Sound state={state} patch={patch} />;
+        return <Sound />;
     }
-  }, [state, patch]);
+  }, [state.mode]);
 
   return (
     <IntlProvider locale={locale} messages={messages} defaultLocale="en">
       <CorpusContext.Provider
         value={corpusIn(state.jurisdiction, state.corpus).id}
       >
-      <div className="app">
-        <Header state={state} patch={patch} setMode={setMode} />
-        {locale === 'fi' && (
-          <p className="draft-banner">
-            {(fi as Record<string, string>)['app.draftBanner']}
-          </p>
-        )}
-        <p className="disclaimer" role="note">
-          <FormattedMessage id="app.disclaimer" />
-        </p>
-        <Suspense
-          fallback={
-            <p className="mode-loading" role="status">
-              <FormattedMessage id="app.loading" />
+        <div className="app">
+          <Header />
+          {locale === 'fi' && (
+            <p className="draft-banner">
+              {(fi as Record<string, string>)['app.draftBanner']}
             </p>
-          }
-        >
-          {body}
-        </Suspense>
-        <footer className="footer">
-          <span>
-            <FormattedMessage
-              id="app.poweredBy"
-              values={{
-                version: colregsVersion,
-                jurisdiction: state.jurisdiction,
-              }}
+          )}
+          <p className="disclaimer" role="note">
+            <FormattedMessage id="app.disclaimer" />
+          </p>
+          <Suspense
+            fallback={
+              <p className="mode-loading" role="status">
+                <FormattedMessage id="app.loading" />
+              </p>
+            }
+          >
+            {body}
+          </Suspense>
+          <footer className="footer">
+            <span>
+              <FormattedMessage
+                id="app.poweredBy"
+                values={{
+                  version: colregsVersion,
+                  jurisdiction: state.jurisdiction,
+                }}
+              />
+            </span>
+            <a href="https://github.com/mark-brannan/colregs">colregs</a>
+            <a href="https://github.com/mark-brannan/searoom">searoom</a>
+            {state.mode === 'sandbox' && (
+              <span
+                className="layout-switch"
+                role="group"
+                aria-labelledby="layout-switch-label"
+              >
+                <span id="layout-switch-label">
+                  <FormattedMessage id="app.layout" />
+                </span>
+                {EXPERIMENTS.layout.variants.map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    aria-pressed={layout === v}
+                    onClick={() => setVariant('layout', v)}
+                  >
+                    {v.toUpperCase()}
+                  </button>
+                ))}
+              </span>
+            )}
+          </footer>
+          {state.signpost && (
+            <SignpostPanel
+              id={state.signpost}
+              onClose={() => patch({ signpost: null })}
+              locale={state.locale}
+              onLocale={(l) => patch({ locale: l })}
+              jurisdiction={state.jurisdiction}
+              corpus={state.corpus}
+              onCorpus={(c) => patch({ corpus: c })}
+              onOpen={(id) => patch({ signpost: id })}
             />
-          </span>
-          <a href="https://github.com/mark-brannan/colregs">colregs</a>
-          <a href="https://github.com/mark-brannan/searoom">searoom</a>
-        </footer>
-        {state.signpost && (
-          <SignpostPanel
-            id={state.signpost}
-            onClose={() => patch({ signpost: null })}
-            locale={state.locale}
-            onLocale={(l) => patch({ locale: l })}
-            jurisdiction={state.jurisdiction}
-            corpus={state.corpus}
-            onCorpus={(c) => patch({ corpus: c })}
-            onOpen={(id) => patch({ signpost: id })}
-          />
-        )}
-      </div>
+          )}
+        </div>
       </CorpusContext.Provider>
     </IntlProvider>
   );

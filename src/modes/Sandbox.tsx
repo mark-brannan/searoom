@@ -1,501 +1,69 @@
-// The v1 core: fact record on the left, scene + lawful displays + the
-// rules that fired on the right. Alternatives stay unresolved — the app
-// shows every lawful display and lets elimination teach the choice.
+// The v1 core: fact record, scene + lawful displays + the rules that fired.
+// Alternatives stay unresolved — the app shows every lawful display and lets
+// elimination teach the choice. Two layouts are under trial (experiments.ts):
+// A puts the facts in a rail and the arcs in a side panel, C puts the scene
+// first with the arcs inset on it.
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
-import type { Patch } from '../App';
+import { useAppState, usePatch } from '../state/store';
+import { useVariant } from '../state/experiments';
+import { Presets } from '../components/Presets';
 import { FactControls } from '../components/FactControls';
-import { RuleParagraphs } from '../components/RuleParagraphs';
-import { applicability, colregsVersion, lights } from '../data/colregs';
-import {
-  gatesOf,
-  lightParts,
-  reasonParts,
-  type Gate,
-  type LightPart,
-} from '../components/displayReason';
-import { paragraphsForCite } from '../data/cites';
-import { corpusHandle, resolveParagraphs } from '../data/corpusText';
-import { useCorpus, useCorpusId } from '../state/corpusContext';
+import { ALL_VIEWS, Arcs, Scene } from '../components/Scene';
+import { DisplayChips } from '../components/DisplayChips';
+import { RulesPanel } from '../components/RulesPanel';
+import { DataDrawer } from '../components/DataDrawer';
 import { evaluateDisplayIn } from '../engine/evaluate';
-import type {
-  Display,
-  DisplayLight,
-  Entry,
-  DisplayEvaluation,
-  Modality,
-} from '../engine/types';
-import { PlanView, ProfileView, selectHull } from 'nav-wright';
-import { placeLights } from '../render/navWright';
-import type { Aspect } from 'nav-wright';
-import { BearingModelView } from 'nav-wright/benchy';
-import type { BenchyLabels } from 'nav-wright/benchy';
-import { BENCHY_MODEL_URL, modelUrlForVariant, modelVariantsForHull, stepMesh } from '../render/hullModels';
-import type { AppState, View } from '../state/urlState';
+import type { View } from '../state/urlState';
 
-const ASPECTS: Aspect[] = [
-  'ahead',
-  'starboard-bow',
-  'starboard-beam',
-  'starboard-quarter',
-  'astern',
-  'port-quarter',
-  'port-beam',
-  'port-bow',
-];
+const ARCS_KEY = 'searoom.arcs';
 
-// a label lookup, not a rule set: an id -> cite map over every jurisdiction's
-// entries, so an overridden-by or in-lieu-of reference still renders its cite
-const entryById = new Map(applicability.entries.map((e) => [e.id, e]));
-
-const OP_SYMBOL: Record<Gate['op'], string> = {
-  lt: '<',
-  lte: '\u2264',
-  gt: '>',
-  gte: '\u2265',
-};
-
-// `fact:length_m` -> `m`, `fact:max_speed_kn` -> `kn`: the unit is the fact
-// id's own suffix, so a new scalar fact needs no table here.
-function unitFor(fact: string): string {
-  const suffix = fact.split('_').pop() ?? '';
-  return suffix;
-}
-
-function imageUrl(name: string): string {
-  return `${import.meta.env.BASE_URL}rule-images/${name}`;
-}
-
-function DisplayChips({
-  evaln,
-  state,
-  patch,
-}: {
-  evaln: DisplayEvaluation;
-  state: AppState;
-  patch: (p: Patch) => void;
-}) {
-  const intl = useIntl();
-  const current = Math.min(state.displayIndex, evaln.displays.length - 1);
-
-  // `< 50 m`, `<= 7 kn`: symbols and SI units, not prose, so the only
-  // translated part is the "no gate" case.
-  const gateText = (gates: Gate[]) =>
-    gates.length === 0
-      ? intl.formatMessage({ id: 'sandbox.display.gate.any' })
-      : gates.map((g) => `${OP_SYMBOL[g.op]} ${g.value} ${unitFor(g.fact)}`).join(', ');
-
-  // What the chip shows, in the package catalog's own words: "1 × white
-  // all-round light + sidelights". The light's label is the package's
-  // (`light.all_round`), lowercased into the phrase; colour, character and
-  // count are composed around it by the app's messages, since word order is
-  // the language's to decide (REQ-LANG-6).
-  const lightText = (lights: readonly DisplayLight[]) => {
-    const parts = lightParts(lights);
-    if (parts.length === 0)
-      return intl.formatMessage({ id: 'sandbox.display.light.none' });
-    const one = (p: LightPart) => {
-      let light = intl
-        .formatMessage({ id: `light.${p.light.replace(/^light:/, '')}` })
-        .toLocaleLowerCase(intl.locale);
-      if (p.color)
-        light = intl.formatMessage(
-          { id: 'sandbox.display.light.colored' },
-          { color: intl.formatMessage({ id: `color.${p.color}` }), light },
-        );
-      if (p.character === 'flashing')
-        light = intl.formatMessage(
-          { id: 'sandbox.display.light.flashing' },
-          { light },
-        );
-      if (p.count !== undefined)
-        light = intl.formatMessage(
-          { id: 'sandbox.display.light.counted' },
-          { count: p.count, light },
-        );
-      return light;
-    };
-    const joined = parts.map(one).join(' + ');
-    return parts.some((p) => p.combined)
-      ? intl.formatMessage(
-          { id: 'sandbox.display.light.combined' },
-          { lights: joined },
-        )
-      : joined;
-  };
-
-  const modalityText = (m: Modality) =>
-    intl.formatMessage({ id: `modality.${m.replace(/^modality:/, '')}` });
-
-  // Why: one line per chip, read from the entry that makes this display
-  // differ from its neighbours: cite, modality, gate. "30(b) · Permitted ·
-  // < 50 m". Entries that share a modality and gate share the line —
-  // "23(a)(i) + 23(a)(iii)-(iv) · Required · any length".
-  const whyText = (d: Display) => {
-    const lines = reasonParts(d, evaln.displays, entryById, evaln.modalities).map(
-      (part) => ({
-        cite: part.cite,
-        modality: modalityText(part.modality),
-        gate: gateText(part.gates),
-      }),
-    );
-    const first = lines[0];
-    if (
-      first &&
-      lines.every((l) => l.modality === first.modality && l.gate === first.gate)
-    )
-      return intl.formatMessage(
-        { id: 'sandbox.display.reason' },
-        { ...first, cite: lines.map((l) => l.cite).join(' + ') },
-      );
-    return lines
-      .map((l) => intl.formatMessage({ id: 'sandbox.display.reason' }, l))
-      .join(' + ');
-  };
-
-  // a lawful addition's why: its own cite, modality and gate
-  const additionWhyText = (id: string, cite: string) => {
-    const entry = entryById.get(id);
-    return intl.formatMessage(
-      { id: 'sandbox.display.reason' },
-      {
-        cite,
-        modality: modalityText(
-          evaln.modalities[id] ?? entry?.modality ?? 'modality:may',
-        ),
-        gate: gateText(entry ? gatesOf(entry) : []),
-      },
-    );
-  };
-
-  // elimination lines for the alternatives in play
-  const elimination: React.ReactNode[] = [];
-  const activeIds = new Set(evaln.displays.flatMap((d) => d.entries));
-  for (const id of activeIds) {
-    const e = entryById.get(id);
-    if (!e) continue;
-    const inLieu = (e['rel:in_lieu_of'] ?? []).filter((r) => activeIds.has(r));
-    if (inLieu.length > 0) {
-      elimination.push(
-        <p className="elim" key={`il-${id}`}>
-          <FormattedMessage
-            id="sandbox.elimination.inLieu"
-            values={{
-              winner: e.cite,
-              losers: inLieu
-                .map((r) => entryById.get(r)?.cite ?? r)
-                .join(', '),
-              cite: e.cite,
-            }}
-          />
-        </p>,
-      );
+function useArcsShown(): [boolean, (shown: boolean) => void] {
+  const [shown, setShown] = useState(() => {
+    try {
+      return window.localStorage.getItem(ARCS_KEY) !== 'hidden';
+    } catch {
+      return true;
     }
-    for (const r of e['rel:excludes'] ?? []) {
-      if (activeIds.has(r) && id < r) {
-        elimination.push(
-          <p className="elim" key={`ex-${id}-${r}`}>
-            <span className="x">✕ </span>
-            <FormattedMessage
-              id="sandbox.elimination.excludes"
-              values={{
-                a: e.cite,
-                b: entryById.get(r)?.cite ?? r,
-                cite: e.cite,
-              }}
-            />
-          </p>,
-        );
-      }
+  });
+  const set = (s: boolean) => {
+    setShown(s);
+    try {
+      window.localStorage.setItem(ARCS_KEY, s ? 'shown' : 'hidden');
+    } catch {
+      // storage blocked: the choice lasts this visit
     }
-  }
-
-  return (
-    <div className="panel">
-      <h2>
-        <FormattedMessage
-          id="sandbox.displays.title"
-          values={{ count: evaln.displays.length }}
-        />
-      </h2>
-      {evaln.displays.length > 1 && (
-        <p className="elim">
-          <FormattedMessage id="sandbox.displays.explain" />
-        </p>
-      )}
-      <div className="chips" role="radiogroup" aria-label={intl.formatMessage({ id: 'sandbox.displays.title' }, { count: evaln.displays.length })}>
-        {evaln.displays.map((d, i) => (
-          <button
-            key={i}
-            className={`chip stacked${i === current ? ' active' : ''}`}
-            role="radio"
-            aria-checked={i === current}
-            onClick={() => patch({ displayIndex: i })}
-          >
-            <span className="chip-what">
-              {lightText(d.lights)}
-              {i === 0 && evaln.displays.length > 1 && (
-                <span className="badge usual">
-                  <FormattedMessage id="sandbox.display.usual" />
-                </span>
-              )}
-            </span>
-            <span className="chip-why">{whyText(d)}</span>
-          </button>
-        ))}
-      </div>
-      {evaln.displays.length > 1 && (
-        <p className="elim usual-why">
-          <FormattedMessage id="sandbox.display.usual.why" />
-        </p>
-      )}
-      {evaln.displays[current]?.lights.length === 0 && (
-        <p className="elim">
-          <FormattedMessage id="sandbox.noDisplays" />
-        </p>
-      )}
-      {elimination.length > 0 && (
-        <>
-          <h3>
-            <FormattedMessage id="sandbox.elimination.title" />
-          </h3>
-          {elimination}
-        </>
-      )}
-      {evaln.optionalAdditions.length > 0 && (
-        <>
-          <h3>
-            <FormattedMessage id="sandbox.additions.title" />
-          </h3>
-          <p className="elim">
-            <FormattedMessage id="sandbox.additions.explain" />
-          </p>
-          <div className="chips">
-            {evaln.optionalAdditions.map((a) => {
-              const on = state.additionsOn.includes(a.id);
-              return (
-                <button
-                  key={a.id}
-                  className={`chip stacked addition${on ? ' active' : ''}`}
-                  aria-pressed={on}
-                  onClick={() =>
-                    patch({
-                      additionsOn: on
-                        ? state.additionsOn.filter((x) => x !== a.id)
-                        : [...state.additionsOn, a.id],
-                    })
-                  }
-                >
-                  <span className="chip-what">{lightText(a.lights)}</span>
-                  <span className="chip-why">
-                    {additionWhyText(a.id, a.cite)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </>
-      )}
-      {evaln.exempted.length > 0 && (
-        <>
-          <h3>
-            <FormattedMessage id="sandbox.exempted.title" />
-          </h3>
-          {evaln.exempted.map((x) => (
-            <p className="elim" key={x.id}>
-              <s>
-                <FormattedMessage
-                  id="sandbox.exempted.item"
-                  values={{
-                    id: x.id,
-                    cite: entryById.get(x.id)?.cite ?? '',
-                    by: entryById.get(x.by)?.cite ?? x.by,
-                  }}
-                />
-              </s>
-            </p>
-          ))}
-        </>
-      )}
-      {evaln.overridden.length > 0 && (
-        <>
-          <h3>
-            <FormattedMessage id="sandbox.overridden.title" />
-          </h3>
-          {evaln.overridden.map((x) => (
-            <p className="elim" key={x.id}>
-              <span className="x">✕ </span>
-              <FormattedMessage
-                id="sandbox.overridden.item"
-                values={{
-                  id: x.id,
-                  cite: entryById.get(x.id)?.cite ?? '',
-                  by: entryById.get(x.by)?.cite ?? x.by,
-                }}
-              />
-            </p>
-          ))}
-        </>
-      )}
-    </div>
-  );
+  };
+  return [shown, set];
 }
 
-function EntryRow({
-  entry,
-  evaln,
-  state,
+function ArcsToggle({
+  shown,
+  onShown,
 }: {
-  entry: Entry;
-  evaln: DisplayEvaluation;
-  state: AppState;
-}) {
-  const intl = useIntl();
-  // closed vocabularies are prefixed identifiers (colregs ADR 0017); the
-  // catalog and the badge class both key off the suffix, as every other
-  // vocabulary in the app does
-  const modality = (evaln.modalities[entry.id] ?? entry.modality).replace(
-    /^modality:/,
-    '',
-  );
-  // the badge names the corpus that actually supplies this entry's text —
-  // inherited or fallen back — not merely the one the reader picked, which
-  // may carry none of it yet (REQ-LANG-3, REQ-LANG-7)
-  const corpusId = useCorpusId();
-  const { items } = resolveParagraphs(
-    state.jurisdiction,
-    paragraphsForCite(entry.cite, state.jurisdiction),
-    corpusId,
-  );
-  const sources = new Map(
-    items.flatMap((r) => (r.shown ? [[r.shown.corpus.id, r.shown.corpus]] : [])),
-  );
-  return (
-    <div className="entry">
-      <div className="entry-head">
-        <span className="entry-id">{entry.id}</span>
-        <strong>{entry.cite}</strong>
-        <span className={`badge ${modality}`}>
-          {intl.formatMessage({ id: `modality.${modality}` })}
-        </span>
-        {[...sources.values()].map((corpus) => (
-          <span className="badge tier" key={corpus.id}>
-            {corpusHandle(corpus)} ·{' '}
-            {intl.formatMessage({ id: `corpus.tier.${corpus.tier}` })} ·{' '}
-            {corpus.language}
-          </span>
-        ))}
-      </div>
-      <details>
-        <summary>
-          <FormattedMessage id="sandbox.rules.showText" />
-        </summary>
-        <RuleParagraphs cite={entry.cite} jurisdiction={state.jurisdiction} />
-        {(entry.images ?? []).map((img) => (
-          <img
-            key={img}
-            className="rule-image"
-            src={imageUrl(img)}
-            alt={`USCG diagram for ${entry.cite}`}
-            loading="lazy"
-          />
-        ))}
-      </details>
-    </div>
-  );
-}
-
-function DataDrawer({
-  evaln,
-  state,
-  patch,
-}: {
-  evaln: DisplayEvaluation;
-  state: AppState;
-  patch: (p: Patch) => void;
-}) {
-  const applied = evaln.applied.map((id) => entryById.get(id));
-  const corpus = useCorpus();
-  return (
-    <div className="panel drawer">
-      <details
-        open={state.drawer}
-        onToggle={(e) =>
-          patch({ drawer: (e.target as HTMLDetailsElement).open })
-        }
-      >
-        <summary>
-          <FormattedMessage id="drawer.title" />
-        </summary>
-        <h3>
-          <FormattedMessage id="drawer.package" />
-        </h3>
-        <p className="corpus-line">
-          <FormattedMessage
-            id="drawer.packageLine"
-            values={{
-              version: colregsVersion,
-              jurisdiction: state.jurisdiction,
-              corpus: `${corpusHandle(corpus)} ${corpus.edition}`,
-              tier: corpus.tier,
-              language: corpus.language,
-            }}
-          />
-        </p>
-        <h3>
-          <FormattedMessage id="drawer.factRecord" />
-        </h3>
-        <pre>{JSON.stringify(state.facts, null, 1)}</pre>
-        <h3>
-          <FormattedMessage id="drawer.applied" />
-        </h3>
-        <pre>{JSON.stringify(applied, null, 1)}</pre>
-      </details>
-    </div>
-  );
-}
-
-// A 0-100 scene setting under the view, styled like the θ slider above it.
-function SceneSlider({
-  id,
-  label,
-  value,
-  readout,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  value: number;
-  readout: string;
-  onChange: (v: number) => void;
+  shown: boolean;
+  onShown: (shown: boolean) => void;
 }) {
   return (
-    <div className="theta-control">
-      <label htmlFor={id}>{label}</label>
-      <input
-        id={id}
-        type="range"
-        min={0}
-        max={100}
-        step={1}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        aria-valuetext={readout}
+    <button
+      type="button"
+      className="arcs-toggle"
+      aria-expanded={shown}
+      onClick={() => onShown(!shown)}
+    >
+      <FormattedMessage
+        id={shown ? 'sandbox.arcs.hide' : 'sandbox.arcs.show'}
       />
-      <span className="theta-readout">{readout}</span>
-    </div>
+    </button>
   );
 }
 
-export function Sandbox({
-  state,
-  patch,
-}: {
-  state: AppState;
-  patch: (p: Patch) => void;
-}) {
-  const intl = useIntl();
+export function Sandbox() {
+  const state = useAppState();
+  const patch = usePatch();
+  const layout = useVariant('layout');
   const evaln = useMemo(
     () => evaluateDisplayIn(state.jurisdiction, state.facts),
     [state.jurisdiction, state.facts],
@@ -508,178 +76,196 @@ export function Sandbox({
     if (state.displayIndex !== current) patch({ displayIndex: current });
   }, [state.displayIndex, current, patch]);
 
-  const sceneLabels: BenchyLabels = useMemo(
-    () => ({
-      bearingAlt: (theta) =>
-        intl.formatMessage({ id: 'scene.bearing.alt' }, { theta }),
-      bearingNoLights: intl.formatMessage({ id: 'scene.bearing.noLights' }),
-      bearingThetaLabel: intl.formatMessage({ id: 'scene.bearing.thetaLabel' }),
-      bearingThetaValue: (theta, aspect) =>
-        intl.formatMessage({ id: 'scene.bearing.thetaValue' }, { theta, aspect }),
-      aspect: Object.fromEntries(
-        ASPECTS.map((a) => [a, intl.formatMessage({ id: `aspect.${a}` })]),
-      ) as Record<Aspect, string>,
-      planAlt: intl.formatMessage({ id: 'scene.plan.alt' }),
-      profileAlt: intl.formatMessage({ id: 'scene.profile.alt' }),
-      benchyAlt: intl.formatMessage({ id: 'scene.benchy.alt' }),
-      benchyTiltLabel: intl.formatMessage({ id: 'scene.benchy.tiltLabel' }),
-      benchyTiltValue: (tilt) =>
-        intl.formatMessage({ id: 'scene.benchy.tiltValue' }, { tilt }),
-    }),
-    [intl],
-  );
-
   const display = evaln.displays[current];
-  const hull = useMemo(() => selectHull(state.facts), [state.facts]);
-  const placed = useMemo(() => {
+  const lights = useMemo(() => {
     if (!display) return [];
     const additionLights = evaln.optionalAdditions
       .filter((a) => state.additionsOn.includes(a.id))
       .flatMap((a) => a.lights);
-    return placeLights(
-      [...display.lights, ...additionLights],
-      hull.spec,
-      state.facts,
-      lights,
-    );
-  }, [display, evaln, hull, state.facts, state.additionsOn]);
+    return [...display.lights, ...additionLights];
+  }, [display, evaln, state.additionsOn]);
 
-  const views: View[] = ['profile', 'bearing', 'plan'];
-  const percentText = (v: number): string =>
-    intl.formatNumber(v / 100, { style: 'percent' });
+  const [arcsShown, setArcsShown] = useArcsShown();
+  // the arcs leave the tabs while they are on screen beside the scene
+  const views: View[] = arcsShown
+    ? ALL_VIEWS.filter((v) => v !== 'plan')
+    : ALL_VIEWS;
+  // ...so the store never names a tab that is not offered: the scene would
+  // draw Profile while the state and the URL still said plan
+  useEffect(() => {
+    if (arcsShown && state.view === 'plan') patch({ view: 'profile' });
+  }, [arcsShown, state.view, patch]);
+
+  const scene = (
+    <Scene
+      facts={state.facts}
+      lights={lights}
+      settings={state}
+      onChange={patch}
+      views={views}
+    />
+  );
+  const arcs = (
+    <Arcs
+      facts={state.facts}
+      lights={lights}
+      theta={state.theta}
+      onTheta={(theta) => patch({ theta })}
+    />
+  );
+  const chips = (
+    <DisplayChips
+      evaln={evaln}
+      displayIndex={state.displayIndex}
+      onDisplayIndex={(i) => patch({ displayIndex: i })}
+      additionsOn={state.additionsOn}
+      onAdditionsOn={(ids) => patch({ additionsOn: ids })}
+    />
+  );
+  const rules = <RulesPanel evaln={evaln} jurisdiction={state.jurisdiction} />;
+  const drawer = (
+    <DataDrawer
+      evaln={evaln}
+      facts={state.facts}
+      jurisdiction={state.jurisdiction}
+      open={state.drawer}
+      onOpen={(drawer) => patch({ drawer })}
+    />
+  );
+  const toggle = <ArcsToggle shown={arcsShown} onShown={setArcsShown} />;
+
+  return layout === 'c' ? (
+    <LayoutC
+      scene={scene}
+      arcs={arcs}
+      arcsShown={arcsShown}
+      toggle={toggle}
+      chips={chips}
+      rules={rules}
+      ruleCount={evaln.applied.length}
+      drawer={drawer}
+    />
+  ) : (
+    <LayoutA
+      scene={scene}
+      arcs={arcs}
+      arcsShown={arcsShown}
+      toggle={toggle}
+      chips={chips}
+      rules={rules}
+      drawer={drawer}
+    />
+  );
+}
+
+type Pieces = {
+  scene: ReactNode;
+  arcs: ReactNode;
+  arcsShown: boolean;
+  toggle: ReactNode;
+  chips: ReactNode;
+  rules: ReactNode;
+  drawer: ReactNode;
+};
+
+/** A · rail, stage, arcs. */
+function LayoutA({
+  scene,
+  arcs,
+  arcsShown,
+  toggle,
+  chips,
+  rules,
+  drawer,
+}: Pieces) {
+  // Under 520 px the fact controls are a bottom sheet (CSS); this is its
+  // open/closed state and is inert on wider screens.
+  const [sheetOpen, setSheetOpen] = useState(true);
 
   return (
-    <div className="sandbox-grid">
-      <FactControls state={state} patch={patch} />
-      <div>
-        <div className="panel">
-          <div className="view-tabs" role="tablist" aria-label={intl.formatMessage({ id: 'view.label' })}>
-            {views.map((v) => (
-              <button
-                key={v}
-                role="tab"
-                aria-selected={state.view === v}
-                className={`view-tab${state.view === v ? ' active' : ''}`}
-                onClick={() => patch({ view: v })}
-              >
-                <FormattedMessage id={`view.${v}`} />
-              </button>
-            ))}
+    <>
+      <Presets />
+      <div
+        className={`sandbox-grid sandbox-a${arcsShown ? '' : ' arcs-hidden'}`}
+      >
+        <div className={`fact-sheet${sheetOpen ? '' : ' collapsed'}`}>
+          <button
+            type="button"
+            className="sheet-handle"
+            aria-expanded={sheetOpen}
+            aria-controls="fact-sheet-body"
+            onClick={() => setSheetOpen((o) => !o)}
+          >
+            <span className="sheet-grip" aria-hidden="true" />
+            <FormattedMessage id="drawer.factRecord" />
+            <span aria-hidden="true">{sheetOpen ? '▾' : '▴'}</span>
+          </button>
+          <div id="fact-sheet-body" className="fact-sheet-body">
+            <FactControls />
           </div>
-          {state.view === 'profile' && (
-            <ProfileView
-              hull={hull}
-              placed={placed}
-              facts={state.facts}
-              labels={sceneLabels}
-            />
-          )}
-          {state.view === 'bearing' && (
-            <BearingModelView
-              modelUrl={state.benchy ? BENCHY_MODEL_URL : modelUrlForVariant(hull, state.mesh)}
-              hull={hull}
-              placed={placed}
-              facts={state.facts}
-              theta={state.theta}
-              onTheta={(t) => patch({ theta: t })}
-              tilt={state.tilt}
-              onTilt={(t) => patch({ tilt: t })}
-              hullHint={state.hullHint / 100}
-              sky={state.sky / 100}
-              labels={sceneLabels}
-            />
-          )}
-          {state.view === 'bearing' && (
-            <>
-              <SceneSlider
-                id="hull-hint"
-                label={intl.formatMessage({ id: 'scene.hullHint' })}
-                value={state.hullHint}
-                readout={
-                  state.hullHint === 0
-                    ? intl.formatMessage({ id: 'scene.hullHint.off' })
-                    : percentText(state.hullHint)
-                }
-                onChange={(v) => patch({ hullHint: v })}
-              />
-              <SceneSlider
-                id="sky"
-                label={intl.formatMessage({ id: 'scene.sky' })}
-                value={state.sky}
-                readout={percentText(state.sky)}
-                onChange={(v) => patch({ sky: v })}
-              />
-              <label className="check-row" htmlFor="mesh">
-                <FormattedMessage id="scene.mesh" />
-                <select
-                  id="mesh"
-                  value={modelVariantsForHull(hull).some((v) => v.name === state.mesh) ? state.mesh : ''}
-                  disabled={state.benchy}
-                  onChange={(e) => patch({ mesh: e.target.value })}
-                >
-                  {modelVariantsForHull(hull).map((v, i) => (
-                    <option key={v.name} value={i === 0 ? '' : v.name}>
-                      {v.name.slice(hull.spec.id.length + 1).replace(/\.glb$/, '')}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  disabled={state.benchy}
-                  aria-label={intl.formatMessage({ id: 'scene.mesh.prev' })}
-                  onClick={() => patch({ mesh: stepMesh(hull, state.mesh, -1) })}
-                >
-                  {'\u2039'}
-                </button>
-                <button
-                  type="button"
-                  disabled={state.benchy}
-                  aria-label={intl.formatMessage({ id: 'scene.mesh.next' })}
-                  onClick={() => patch({ mesh: stepMesh(hull, state.mesh, 1) })}
-                >
-                  {'\u203A'}
-                </button>
-              </label>
-              <label className="check-row" htmlFor="benchy">
-                <input
-                  id="benchy"
-                  type="checkbox"
-                  checked={state.benchy}
-                  onChange={(e) => patch({ benchy: e.target.checked })}
-                />
-                <FormattedMessage id="scene.benchy.toggle" />
-              </label>
-            </>
-          )}
-          {state.view === 'plan' && (
-            <PlanView
-              hull={hull}
-              placed={placed}
-              theta={state.theta}
-              onTheta={(t) => patch({ theta: t })}
-              labels={sceneLabels}
-            />
-          )}
         </div>
-
-        <DisplayChips evaln={evaln} state={state} patch={patch} />
-
-        <div className="panel">
-          <h2>
-            <FormattedMessage id="sandbox.rules.title" />
-          </h2>
-          <p className="elim">
-            <FormattedMessage id="sandbox.rules.explain" />
-          </p>
-          {evaln.applied
-            .map((id) => entryById.get(id)!)
-            .map((e) => (
-              <EntryRow key={e.id} entry={e} evaln={evaln} state={state} />
-            ))}
+        <div className="sandbox-stage">{scene}</div>
+        <section className="panel arcs-panel">
+          <div className="arcs-head">
+            <h2>
+              <FormattedMessage id="view.plan" />
+            </h2>
+            {toggle}
+          </div>
+          {arcsShown && arcs}
+        </section>
+        <div className="sandbox-rest">
+          {chips}
+          {rules}
+          {drawer}
         </div>
-
-        <DataDrawer evaln={evaln} state={state} patch={patch} />
       </div>
+    </>
+  );
+}
+
+/** C · scene first. */
+function LayoutC({
+  scene,
+  arcs,
+  arcsShown,
+  toggle,
+  chips,
+  rules,
+  ruleCount,
+  drawer,
+}: Pieces & { ruleCount: number }) {
+  const intl = useIntl();
+  return (
+    <div className="sandbox-c">
+      <Presets />
+      <div className="scene-wrap">
+        {scene}
+        <aside
+          className={`arcs-inset${arcsShown ? '' : ' collapsed'}`}
+          aria-label={intl.formatMessage({ id: 'view.plan' })}
+        >
+          <div className="arcs-head">
+            <FormattedMessage id="view.plan" />
+            {toggle}
+          </div>
+          {arcsShown && arcs}
+        </aside>
+      </div>
+      {chips}
+      <div className="fact-row">
+        <FactControls />
+      </div>
+      <details className="rules-why" open>
+        <summary>
+          <FormattedMessage
+            id="sandbox.rules.why"
+            values={{ count: ruleCount }}
+          />
+        </summary>
+        {rules}
+      </details>
+      {drawer}
     </div>
   );
 }

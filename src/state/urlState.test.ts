@@ -65,6 +65,26 @@ describe('URL state round-trip', () => {
     expect(deserialize(`#/?hh=${raw}&bg=${raw}`).sky).toBe(want);
   });
 
+  it('opens the bearing view at 0.5 nm and keeps a range in the URL', () => {
+    expect(DEFAULT_STATE.range).toBe(0.5);
+    expect(serialize(DEFAULT_STATE)).not.toContain('rg=');
+    const s = deserialize('#/sandbox?view=bearing&rg=3');
+    expect(s.range).toBe(3);
+    expect(serialize(s)).toContain('rg=3');
+    expect(deserialize(serialize(s))).toEqual(s);
+  });
+
+  it.each([
+    ['9', 3],
+    ['0', 0.5],
+    ['1.26', 1.3],
+    ['x', 0.5],
+    ['', 0.5],
+    ['Infinity', 0.5],
+  ])('clamps rg=%j to %d nm, junk keeps the default', (raw, want) => {
+    expect(deserialize(`#/?rg=${raw}`).range).toBe(want);
+  });
+
   it.each(['x', '', 'NaN'])('ignores a non-number hh/bg (%j)', (raw) => {
     const s = deserialize(`#/?hh=${raw}&bg=${raw}`);
     expect(s.hullHint).toBe(DEFAULT_STATE.hullHint);
@@ -171,5 +191,34 @@ describe('URL state round-trip', () => {
       const mesh = pickMesh(hull, () => 0.7);
       expect(deserialize(serialize({ ...DEFAULT_STATE, mesh })).mesh).toBe(mesh);
     }
+  });
+});
+
+describe('readable routes (#107)', () => {
+  it('quiz seed, question and direction round-trip', () => {
+    const s = deserialize('#/quiz/7/3?dir=reverse');
+    expect([s.mode, s.quizSeed, s.quizN, s.quizDirection]).toEqual(['quiz', 7, 3, 'reverse']);
+    expect(serialize(s)).toMatch(/^#\/quiz\/7\/3\?.*dir=reverse/);
+    expect(deserialize(serialize(s))).toEqual(s);
+  });
+  it('bare #/quiz keeps working', () => {
+    const s = deserialize('#/quiz');
+    expect([s.quizSeed, s.quizN]).toEqual([1, 1]);
+    expect(serialize(s)).toMatch(/^#\/quiz\?/);
+  });
+  it('a preset alias loads the preset and a custom record stays in query fields', () => {
+    const s = deserialize('#/sandbox/trawler?th=90');
+    expect(s.facts['fact:activity']).toBe('activity:trawling');
+    expect(serialize(s)).toBe('#/sandbox/trawler?th=90');
+    expect(deserialize(serialize(s)).facts).toEqual(s.facts);
+  });
+  it('query fields on a preset alias refine that preset', () => {
+    const s = deserialize('#/sandbox/trawler?len=40');
+    expect(s.facts['fact:activity']).toBe('activity:trawling');
+    expect(s.facts['fact:length_m']).toBe(40);
+  });
+  it('the sprint-1 query form of a preset still resolves', () => {
+    const s = deserialize('#/sandbox?p=power&a=trawling&pos=underway&mw=1&len=30');
+    expect(s.facts['fact:activity']).toBe('activity:trawling');
   });
 });

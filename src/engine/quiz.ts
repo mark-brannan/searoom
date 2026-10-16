@@ -216,7 +216,7 @@ export interface ReverseQuestion {
 
 export type QuizQuestion = ForwardQuestion | ReverseQuestion;
 
-function citeOf(jurisdiction: string, d: Display): string {
+export function citeOf(jurisdiction: string, d: Display): string {
   const byId = new Map(resolveEntries(jurisdiction).map((e) => [e.id, e]));
   return d.entries
     .map((id) => byId.get(id)?.cite)
