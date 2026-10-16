@@ -14,9 +14,9 @@ import type { AppState, Mode } from './state/urlState';
 import {
   DEFAULT_STATE,
   defaultCorpusFor,
-  deserialize,
   serialize,
 } from './state/urlState';
+import { saveSettings, stateFromHash } from './state/settings';
 import { Header } from './components/Header';
 import { SignpostPanel } from './components/SignpostPanel';
 import { colregsVersion } from './data/colregs';
@@ -44,7 +44,7 @@ export type Patch = Partial<AppState>;
 
 export function App() {
   const [state, setState] = useState<AppState>(() =>
-    deserialize(window.location.hash),
+    stateFromHash(window.location.hash),
   );
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -52,7 +52,7 @@ export function App() {
   // hash -> state (back button, hand-edited URL)
   useEffect(() => {
     const onHash = () => {
-      const s = deserialize(window.location.hash);
+      const s = stateFromHash(window.location.hash);
       if (serialize(s) !== serialize(stateRef.current)) setState(s);
     };
     window.addEventListener('hashchange', onHash);
@@ -66,6 +66,11 @@ export function App() {
       history.replaceState(null, '', target);
     }
   }, [state]);
+
+  // preferences that outlive the visit
+  useEffect(() => {
+    saveSettings({ locale: state.locale, jurisdiction: state.jurisdiction });
+  }, [state.locale, state.jurisdiction]);
 
   const patch = useCallback((p: Patch) => {
     setState((s) => {
