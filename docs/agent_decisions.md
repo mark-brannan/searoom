@@ -18,3 +18,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261016t040139z
 - C3 searoom#116: e2e job not in ci-gate needs; undo: add e2e to needs (no PR, branch claude/searoom-nav-wright-colregs-scope-e02a5b)
+
+### 20261016t042139z
+- searoom C17 PR190: random pick also on same-axes size-class change; undo: drop hull-id compare in setFacts (no PR, branch main)
