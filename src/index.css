@@ -582,11 +582,17 @@ select {
   cursor: grabbing;
 }
 
-/* A control that does not apply to the view stays in place, inert. */
-.theta-control.disabled,
+/* A control that does not apply to the view stays in place, inert. Its
+   readout is plain text, not a disabled control, so it dims to a colour
+   that still reads rather than fading below contrast. */
+.theta-control.disabled > :not(.theta-readout),
 .check-row.disabled,
 .check-row:has(select:disabled) {
   opacity: 0.45;
+}
+
+.theta-control.disabled > .theta-readout {
+  color: var(--dim);
 }
 
 .bearing-panel .scene-svg {
