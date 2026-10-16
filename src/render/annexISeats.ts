@@ -9,11 +9,11 @@
 // the forward masthead light abaft amidships (nav-wright#50). Until the seats
 // come from Annex I geometry, the 2D view must not draw a wrong display.
 //
-// The figures are the International Annex I. They are written here rather
-// than read from colregs' geometry.json because its AnxI.3(a) row carries
-// smaller figures (a quarter length apart, a half length from the stem).
-// The International figures are the stricter of the two sets, so a seat that
-// passes here passes both.
+// The figures are the International Annex I, written here rather than read
+// from colregs' geometry.json while its AnxI.3(a) row carries the Inland
+// figures under the International label (colregs#225). The International
+// figures are the stricter of the two sets, so a seat that passes here
+// passes both.
 
 import type { PlacedLight } from 'nav-wright';
 import type { FactRecord } from 'colregs-engine';
