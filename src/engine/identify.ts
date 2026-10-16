@@ -95,12 +95,27 @@ export function signatureOf(seen: SeenLight[]): string {
     .join(',');
 }
 
-const KIND_ID = { masthead: 'light:masthead', all_round: 'light:all_round' } as const;
+const KIND_ID = {
+  masthead: 'light:masthead',
+  all_round: 'light:all_round',
+} as const;
 
 const fits = (s: SeenLight, v: VisibleLight): boolean =>
   s.color === v.color &&
   s.flashing === v.flashing &&
   (s.kind === undefined || KIND_ID[s.kind] === v.lightId);
+
+/**
+ * How far apart (in the hull's fore-aft units, where the hull spans 2) two
+ * lights may look side to side and still read as one vertical line: about
+ * 2% of the hull's length.
+ */
+const IN_LINE = 0.04;
+
+const inOneLine = (run: VisibleLight[]): boolean => {
+  const xs = run.map((v) => v.across);
+  return Math.max(...xs) - Math.min(...xs) <= IN_LINE;
+};
 
 /** Do the seen lights explain exactly the visible ones, in this arrangement? */
 export function matchesSeen(
@@ -111,7 +126,8 @@ export function matchesSeen(
   if (arrangement === 'vertical') {
     const stack = visible.filter((v) => v.centreline).sort((a, b) => b.z - a.z);
     for (let i = 0; i + seen.length <= stack.length; i++) {
-      if (seen.every((s, j) => fits(s, stack[i + j]))) return true;
+      const run = stack.slice(i, i + seen.length);
+      if (inOneLine(run) && seen.every((s, j) => fits(s, run[j]))) return true;
     }
     return false;
   }
@@ -142,8 +158,7 @@ export function identifyCandidates(
       const thetas: number[] = [];
       const visibleAt = placedVisibility(facts, display);
       for (let t = 0; t < 360; t += THETA_STEP) {
-        if (matchesSeen(seen, visibleAt(t), arrangement))
-          thetas.push(t);
+        if (matchesSeen(seen, visibleAt(t), arrangement)) thetas.push(t);
       }
       if (thetas.length > 0) out.push({ facts, display, thetas });
     }

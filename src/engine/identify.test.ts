@@ -27,7 +27,9 @@ describe('identify: vertical order', () => {
 
   it('two whites in a vertical line cannot be told from the towing cases', () => {
     const cs = identifyCandidates([w, w], undefined, 'vertical');
-    const tows = cs.filter((c) => c.facts['fact:activity'] === 'activity:towing');
+    const tows = cs.filter(
+      (c) => c.facts['fact:activity'] === 'activity:towing',
+    );
     expect(tows.length).toBeGreaterThan(0);
     expect(cs.length).toBeGreaterThan(tows.length);
   });
@@ -74,4 +76,33 @@ describe('identify agrees with the reverse quiz', () => {
       ).toBe(true);
     });
   }
+});
+
+describe('identify: a vertical line is one line as seen from the bearing', () => {
+  it('two whites in a vertical line are not an anchored vessel seen on the beam', () => {
+    const anchoredAtBeam = identifyCandidates(
+      [w, w],
+      undefined,
+      'vertical',
+    ).some(
+      (c) =>
+        c.facts['fact:activity'] === 'activity:none' &&
+        c.facts['fact:position'] === 'position:anchored' &&
+        c.thetas.includes(90),
+    );
+    expect(anchoredAtBeam).toBe(false);
+  });
+
+  it('fore and aft lights still line up from dead ahead', () => {
+    const anchoredAhead = identifyCandidates(
+      [w, w],
+      undefined,
+      'vertical',
+    ).some(
+      (c) =>
+        c.facts['fact:position'] === 'position:anchored' &&
+        c.thetas.includes(0),
+    );
+    expect(anchoredAhead).toBe(true);
+  });
 });

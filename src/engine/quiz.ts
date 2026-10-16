@@ -80,6 +80,12 @@ export interface VisibleLight {
   centreline: boolean;
   /** height; higher is on top of the stack */
   z: number;
+  /**
+   * Horizontal offset as the viewer sees it, in the hull's fore-aft units
+   * (fx * sin theta): lights on one mast share it from every bearing, lights
+   * fore and aft line up only from ahead or astern.
+   */
+  across: number;
 }
 
 /** Place a display once; callers then ask what shows from each bearing. */
@@ -100,6 +106,7 @@ export function placedVisibility(
         lightId: l.lightId,
         centreline: l.py === 0,
         z: l.z,
+        across: l.fx * Math.sin((theta * Math.PI) / 180),
       }));
 }
 
