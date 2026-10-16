@@ -9,6 +9,8 @@ import { selectHull } from 'nav-wright';
 import { pickMesh } from '../render/hullModels';
 import type { AppState } from '../state/urlState';
 
+const AXES = ['fact:propulsion', 'fact:activity', 'fact:position'] as const;
+
 export function Presets({
   state,
   patch,
@@ -30,14 +32,24 @@ export function Presets({
           type="button"
           className={`chip${current === p.id ? ' active' : ''}`}
           aria-pressed={current === p.id}
-          onClick={() =>
-            patch({
+          onClick={() => {
+            const change: Patch = {
               facts: { ...p.facts },
               displayIndex: 0,
               additionsOn: [],
-              mesh: pickMesh(selectHull(p.facts)),
-            })
-          }
+            };
+            // As the fact controls do (searoom#174): a new size class,
+            // propulsion, activity or position draws a fresh mesh; a tap that
+            // keeps all of them keeps the mesh on screen.
+            const nextHull = selectHull(p.facts);
+            if (
+              nextHull.spec.id !== selectHull(state.facts).spec.id ||
+              AXES.some((k) => p.facts[k] !== state.facts[k])
+            ) {
+              change.mesh = pickMesh(nextHull);
+            }
+            patch(change);
+          }}
         >
           {intl.formatMessage({ id: `preset.${p.id}` })}
         </button>
