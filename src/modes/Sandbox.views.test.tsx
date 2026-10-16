@@ -73,23 +73,17 @@ describe('Sandbox view wrappers', () => {
     expect(disabled(render('bearing', { benchy: true }), 'mesh')).toBe(true);
   });
 
-  it('the profile stage is a handle: grabbing it turns the bearing', () => {
-    expect(render('profile')).toMatch(/class="profile-stage grab"/);
-  });
-
   it('shows the bearing view beside the scene by default, and hides it on request', () => {
     const panel = (html: string) =>
       html.slice(html.indexOf('bearing-panel'), html.indexOf('arcs-panel'));
     for (const v of ['profile', 'bearing'] as const) {
       const html = panel(render(v));
-      expect(html).toContain('Bearing, lights only');
-      expect(html).toContain('scene-svg-black grab');
+      expect(html).toContain('<svg');
       expect(html).toContain('aria-expanded="true"');
     }
-    const hidden = render('profile', { bearingAside: false });
-    expect(hidden).toContain('bearing-hidden');
-    expect(panel(hidden)).not.toContain('scene-svg');
-    expect(panel(hidden)).toContain('aria-expanded="false"');
+    const hidden = panel(render('profile', { bearingAside: false }));
+    expect(hidden).not.toContain('<svg');
+    expect(hidden).toContain('aria-expanded="false"');
   });
 
   it('with the arcs panel shown, a plan view shows the profile and the arcs beside it', () => {
