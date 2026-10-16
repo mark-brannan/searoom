@@ -3,18 +3,14 @@
 // controls would, so the URL carries it.
 
 import { useIntl } from 'react-intl';
-import type { Patch } from '../App';
+import type { Patch } from '../state/store';
+import { useAppState, usePatch } from '../state/store';
 import { PRESETS, presetFor } from '../data/presets';
 import { meshOnChange } from '../render/hullModels';
-import type { AppState } from '../state/urlState';
 
-export function Presets({
-  state,
-  patch,
-}: {
-  state: AppState;
-  patch: (p: Patch) => void;
-}) {
+export function Presets() {
+  const state = useAppState();
+  const patch = usePatch();
   const intl = useIntl();
   const current = presetFor(state.facts)?.id;
   return (

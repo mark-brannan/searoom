@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
-import type { Patch } from '../App';
+import { useAppState, usePatch } from '../state/store';
 import { findSignpost } from '../data/signposts';
 import {
   attentionParagraph,
@@ -27,7 +27,6 @@ import {
 import { audioAvailable, playPattern, type Playing } from '../audio/synth';
 import { patternWords } from '../components/signalWords';
 import { SoundQuiz } from './SoundQuiz';
-import type { AppState } from '../state/urlState';
 
 /** Hull lengths that sit one in each Annex III whistle band. */
 const LENGTHS = [12, 30, 120, 250];
@@ -153,7 +152,9 @@ function SignalDetail({ signal }: { signal: SoundSignal }) {
   );
 }
 
-export function Sound({ state, patch }: { state: AppState; patch: (p: Patch) => void }) {
+export function Sound() {
+  const state = useAppState();
+  const patch = usePatch();
   const intl = useIntl();
   const [tab, setTab] = useState<'table' | 'quiz'>('table');
   const [lengthM, setLengthM] = useState(30);
