@@ -33,6 +33,13 @@ describe('settings persistence', () => {
     expect(s.jurisdiction).toBe(other);
   });
 
+  it('does not overlay stored settings on a link that has a query', () => {
+    saveSettings({ locale: 'fi', jurisdiction: other });
+    const s = stateFromHash('#/sandbox?x=1');
+    expect(s.locale).toBe('en');
+    expect(s.jurisdiction).not.toBe(other);
+  });
+
   it('lets the URL win', () => {
     saveSettings({ locale: 'fi', jurisdiction: other });
     const s = stateFromHash('#/sandbox?loc=en&j=intl');

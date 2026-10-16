@@ -44,16 +44,20 @@ export function saveSettings(s: Pick<AppState, 'locale' | 'jurisdiction'>): void
   }
 }
 
-/** The state a hash describes, with stored settings filling what it leaves out. */
+/**
+ * The state a hash describes. Only a hash with no query at all (the bare
+ * first visit) takes stored settings: a link with any query came from a
+ * sender, and its omitted `loc`/`j` mean the defaults, not "use yours".
+ */
 export function stateFromHash(hash: string, stored: Settings = loadSettings()): AppState {
   const state = deserialize(hash);
   const q = hash.indexOf('?');
-  const params = new URLSearchParams(q === -1 ? '' : hash.slice(q + 1));
-  if (!params.has('loc') && stored.locale) state.locale = stored.locale;
-  if (!params.has('j') && stored.jurisdiction) {
+  if (q !== -1) return state;
+  if (stored.locale) state.locale = stored.locale;
+  if (stored.jurisdiction) {
     // a stored jurisdiction brings its own reference corpus, unless the URL names one
     const withJ = deserialize(
-      `${hash}${q === -1 ? '?' : '&'}j=${encodeURIComponent(stored.jurisdiction)}`,
+      `${hash}?j=${encodeURIComponent(stored.jurisdiction)}`,
     );
     state.jurisdiction = withJ.jurisdiction;
     state.corpus = withJ.corpus;

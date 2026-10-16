@@ -14,6 +14,7 @@ import type { AppState, Mode } from './state/urlState';
 import {
   DEFAULT_STATE,
   defaultCorpusFor,
+  deserialize,
   serialize,
 } from './state/urlState';
 import { saveSettings, stateFromHash } from './state/settings';
@@ -52,7 +53,7 @@ export function App() {
   // hash -> state (back button, hand-edited URL)
   useEffect(() => {
     const onHash = () => {
-      const s = stateFromHash(window.location.hash);
+      const s = deserialize(window.location.hash);
       if (serialize(s) !== serialize(stateRef.current)) setState(s);
     };
     window.addEventListener('hashchange', onHash);
