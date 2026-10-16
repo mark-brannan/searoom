@@ -2,7 +2,7 @@
 // rules that fired on the right. Alternatives stay unresolved — the app
 // shows every lawful display and lets elimination teach the choice.
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
 import { FactControls } from '../components/FactControls';
@@ -544,15 +544,33 @@ export function Sandbox({
     );
   }, [display, evaln, hull, state.facts, state.additionsOn]);
 
+  // Under 520 px the fact controls are a bottom sheet (CSS); this is its
+  // open/closed state and is inert on wider screens.
+  const [sheetOpen, setSheetOpen] = useState(true);
   const views: View[] = ['profile', 'bearing', 'plan'];
   const percentText = (v: number): string =>
     intl.formatNumber(v / 100, { style: 'percent' });
 
   return (
     <div className="sandbox-grid">
-      <FactControls state={state} patch={patch} />
+      <div className={`fact-sheet${sheetOpen ? '' : ' collapsed'}`}>
+        <button
+          type="button"
+          className="sheet-handle"
+          aria-expanded={sheetOpen}
+          aria-controls="fact-sheet-body"
+          onClick={() => setSheetOpen((o) => !o)}
+        >
+          <span className="sheet-grip" aria-hidden="true" />
+          <FormattedMessage id="drawer.factRecord" />
+          <span aria-hidden="true">{sheetOpen ? '\u25BE' : '\u25B4'}</span>
+        </button>
+        <div id="fact-sheet-body" className="fact-sheet-body">
+          <FactControls state={state} patch={patch} />
+        </div>
+      </div>
       <div>
-        <div className="panel">
+        <div className="panel scene-panel">
           <div className="view-tabs" role="tablist" aria-label={intl.formatMessage({ id: 'view.label' })}>
             {views.map((v) => (
               <button

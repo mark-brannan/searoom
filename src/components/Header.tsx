@@ -56,11 +56,15 @@ export function Header({
             onClick={() => patch({ signpost: 'locale-picker' })}
             aria-haspopup="dialog"
           >
-            <FormattedMessage id="locale.title" />
-            {': '}
+            <span className="loc-long">
+              <FormattedMessage id="locale.title" />
+              {': '}
+            </span>
             {state.locale === 'fi' ? 'FI' : 'EN'}
-            {' · '}
-            <FormattedMessage id="header.text" values={{ language: corpus.language }} />
+            <span className="loc-long">
+              {' · '}
+              <FormattedMessage id="header.text" values={{ language: corpus.language }} />
+            </span>
           </button>
         </div>
       </div>
