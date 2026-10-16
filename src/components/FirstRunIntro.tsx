@@ -46,6 +46,7 @@ export function FirstRunIntro() {
       <div
         className="intro-card"
         role="dialog"
+        aria-modal="true"
         aria-labelledby="intro-title"
         onClick={(e) => e.stopPropagation()}
       >
