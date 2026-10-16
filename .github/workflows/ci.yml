@@ -20,6 +20,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Bundle budget
+        run: node scripts/bundle-budget.mjs
 
   # Click-through of every mode and one threshold crossing on the built site
   # (scripts/e2e.mjs), chromium only. A measurement of the site, not a gate,

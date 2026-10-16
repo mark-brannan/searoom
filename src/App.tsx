@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { FormattedMessage, IntlProvider } from 'react-intl';
 import fi from './i18n/fi.json';
 import { catalogs } from './i18n';
@@ -11,14 +19,26 @@ import {
 } from './state/urlState';
 import { Header } from './components/Header';
 import { SignpostPanel } from './components/SignpostPanel';
-import { Sandbox } from './modes/Sandbox';
-import { Identify } from './modes/Identify';
-import { Quiz } from './modes/Quiz';
-import { Rules } from './modes/Rules';
-import { Sound } from './modes/Sound';
 import { colregsVersion } from './data/colregs';
 import { corpusIn } from './data/corpusText';
 import { CorpusContext } from './state/corpusContext';
+
+// Each mode loads on first open, so the shell chunk carries none of them.
+const Sandbox = lazy(() =>
+  import('./modes/Sandbox').then((m) => ({ default: m.Sandbox })),
+);
+const Identify = lazy(() =>
+  import('./modes/Identify').then((m) => ({ default: m.Identify })),
+);
+const Quiz = lazy(() =>
+  import('./modes/Quiz').then((m) => ({ default: m.Quiz })),
+);
+const Rules = lazy(() =>
+  import('./modes/Rules').then((m) => ({ default: m.Rules })),
+);
+const Sound = lazy(() =>
+  import('./modes/Sound').then((m) => ({ default: m.Sound })),
+);
 
 export type Patch = Partial<AppState>;
 
@@ -106,7 +126,15 @@ export function App() {
         <p className="disclaimer" role="note">
           <FormattedMessage id="app.disclaimer" />
         </p>
-        {body}
+        <Suspense
+          fallback={
+            <p className="mode-loading" role="status">
+              <FormattedMessage id="app.loading" />
+            </p>
+          }
+        >
+          {body}
+        </Suspense>
         <footer className="footer">
           <span>
             <FormattedMessage

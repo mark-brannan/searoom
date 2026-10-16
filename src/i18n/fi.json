@@ -2,6 +2,7 @@
   "app.title": "Searoom",
   "app.tagline": "Näe meriteiden säännöt.",
   "app.disclaimer": "Vain opiskelukäyttöön — ei navigointilaite. Ei sovellu navigointiin; navigoi julkaistujen sääntöjen mukaan.",
+  "app.loading": "Ladataan…",
   "app.poweredBy": "Sääntödata: colregs v{version} ({jurisdiction}, yö)",
   "mode.sandbox": "Harjoittelu",
   "mode.identify": "Tunnista",
