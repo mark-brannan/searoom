@@ -9,9 +9,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-// Not on nav-wright's export map: the pure profile API lives inside the
-// package, next to the component that uses it. This reaches past the map on
-// purpose; the alternative is re-deriving it and drifting from it.
+// The pure profile API, from nav-wright's public `./profile` entry point.
 import {
   PROFILE_STATIONS,
   bowShoulder,
@@ -20,9 +18,9 @@ import {
   placeHullModel,
   sampleEdges,
   stationProfile,
-} from '../../node_modules/nav-wright/dist/modelTransform.js';
+} from 'nav-wright/profile';
 import type { HullSpec } from 'nav-wright';
-import type { StationProfile } from '../../node_modules/nav-wright/dist/modelTransform.js';
+import type { StationProfile } from 'nav-wright/profile';
 
 /**
  * Hull ids whose registered mesh is known not to fit, with the measured
