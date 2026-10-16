@@ -175,13 +175,19 @@ interface Reported {
 }
 // A `may` option is optional, so the engine emits "show nothing" as one more
 // alternative: a display with no entries or no lights, beside the lit ones.
-// colregs#223 has the 23(d)(i) record; 25(b) and 30(d) are the same shape.
-// Covered only when a `may` entry fired; an empty alternative with no `may`
-// entry in play is not this class and fails.
+// colregs#223 has the 23(d)(i) record and the 25(b) and 30(d) ones of the
+// same shape; rule:23d is the us/inland twin of 23(d)(i). Covered only when
+// one of those entries applied: an empty alternative beside any other entry
+// is not this report and fails.
+const EMPTY_ALT_ENTRIES = new Set([
+  'rule:23d_i',
+  'rule:23d',
+  'rule:25b',
+  'rule:30d',
+]);
 const emptyAlternative: Reported = {
   issue: 'mark-brannan/colregs#223',
-  covers: (_f, ev) =>
-    ev.applied.some((id) => ev.modalities[id] === 'modality:may'),
+  covers: (_f, ev) => ev.applied.some((id) => EMPTY_ALT_ENTRIES.has(id)),
 };
 const REPORTED: Record<string, Reported> = {
   '[..]: no entries': emptyAlternative,
