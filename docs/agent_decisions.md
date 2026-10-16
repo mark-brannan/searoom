@@ -51,3 +51,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261016t073135z
 - searoom#210: Escape and click-outside dismiss; undo: drop handlers in FirstRunIntro.tsx (no PR, branch main)
+
+### 20261016t073137z
+- searoom#210: Finnish draft strings for parity; undo: edit intro.* in fi.json (no PR, branch main)
