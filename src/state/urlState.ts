@@ -54,6 +54,8 @@ export interface AppState {
   benchy: boolean;
   /** Bearing view mesh, by nav-wright file name; '' is the hull's default. */
   mesh: string;
+  /** The lights-only bearing view beside the Profile and 3D views. */
+  bearingAside: boolean;
   drawer: boolean;
   /** Quiz run seed; question n asks seed + n - 1, so a URL reopens it. */
   quizSeed: number;
@@ -103,6 +105,7 @@ export const DEFAULT_STATE: AppState = {
   sky: 0,
   benchy: false,
   mesh: '',
+  bearingAside: true,
   drawer: false,
   quizSeed: 1,
   quizN: 1,
@@ -221,6 +224,7 @@ export function serialize(state: AppState): string {
   if (state.sky !== DEFAULT_STATE.sky) params.set('bg', String(Math.round(state.sky)));
   if (state.benchy) params.set('bn', '1');
   if (state.mesh) params.set('ms', state.mesh);
+  if (!state.bearingAside) params.set('ba', '0');
   if (state.drawer) params.set('dd', '1');
   let path = `/${state.mode}`;
   if (state.mode === 'rules' && state.rulePath)
@@ -327,6 +331,7 @@ export function deserialize(hash: string): AppState {
   state.sky = percent(params.get('bg')) ?? state.sky;
   if (params.get('bn') === '1') state.benchy = true;
   state.mesh = params.get('ms') ?? '';
+  if (params.get('ba') === '0') state.bearingAside = false;
   if (params.get('dd') === '1') state.drawer = true;
   const qm = params.get('qm');
   if (qm === 'drill' || qm === 'exam') state.quizMode = qm;

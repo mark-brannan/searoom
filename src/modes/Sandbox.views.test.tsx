@@ -9,12 +9,12 @@ import { Sandbox } from './Sandbox';
 import { catalogs } from '../i18n';
 import { DEFAULT_STATE } from '../state/urlState';
 import { useApp } from '../state/store';
-import type { View } from '../state/urlState';
+import type { AppState, View } from '../state/urlState';
 
-function render(view: View): string {
+function render(view: View, extra: Partial<AppState> = {}): string {
   // server rendering reads the store's initial snapshot, not its live one
   Object.assign(useApp.getInitialState(), {
-    state: { ...DEFAULT_STATE, view },
+    state: { ...DEFAULT_STATE, view, ...extra },
   });
   return renderToStaticMarkup(
     <IntlProvider locale="en" messages={catalogs.en} defaultLocale="en">
@@ -24,12 +24,72 @@ function render(view: View): string {
 }
 
 describe('Sandbox view wrappers', () => {
-  it('profile view draws the scene SVG with its hull hint and sky, no mesh', () => {
+  it('profile view draws the scene SVG with its hull hint and sky', () => {
     const html = render('profile');
     expect(html).toContain('scene-svg');
     expect(html).toContain('id="hull-hint"');
     expect(html).toContain('id="sky"');
-    expect(html).not.toContain('id="benchy"');
+  });
+
+  // one vessel, three views: every tab draws the same controls, and one that
+  // does not apply there stays in place, disabled
+  const CONTROLS = [
+    'theta',
+    'tilt',
+    'hull-hint',
+    'range',
+    'sky',
+    'mesh',
+    'benchy',
+  ];
+  const disabled = (html: string, id: string) =>
+    new RegExp(`id="${id}"[^>]*disabled=""`).test(html) ||
+    new RegExp(`disabled=""[^>]*id="${id}"`).test(html);
+
+  it('profile, bearing and arcs show the same control set', () => {
+    vi.stubGlobal('window', {
+      localStorage: { getItem: () => 'hidden', setItem: () => {} },
+    });
+    try {
+      for (const v of ['profile', 'bearing', 'plan'] as const) {
+        const html = render(v);
+        for (const id of CONTROLS)
+          expect(html, `${v} ${id}`).toContain(`id="${id}"`);
+      }
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('a control that does not apply to the view is disabled, not hidden', () => {
+    const profile = render('profile');
+    expect(disabled(profile, 'benchy')).toBe(true);
+    expect(disabled(profile, 'tilt')).toBe(true);
+    expect(disabled(profile, 'mesh')).toBe(false);
+    expect(disabled(profile, 'range')).toBe(false);
+    const bearing = render('bearing');
+    for (const id of ['benchy', 'mesh', 'range', 'sky', 'hull-hint'])
+      expect(disabled(bearing, id), id).toBe(false);
+    expect(disabled(render('bearing', { benchy: true }), 'mesh')).toBe(true);
+  });
+
+  it('the profile stage is a handle: grabbing it turns the bearing', () => {
+    expect(render('profile')).toMatch(/class="profile-stage grab"/);
+  });
+
+  it('shows the bearing view beside the scene by default, and hides it on request', () => {
+    const panel = (html: string) =>
+      html.slice(html.indexOf('bearing-panel'), html.indexOf('arcs-panel'));
+    for (const v of ['profile', 'bearing'] as const) {
+      const html = panel(render(v));
+      expect(html).toContain('Bearing, lights only');
+      expect(html).toContain('scene-svg-black grab');
+      expect(html).toContain('aria-expanded="true"');
+    }
+    const hidden = render('profile', { bearingAside: false });
+    expect(hidden).toContain('bearing-hidden');
+    expect(panel(hidden)).not.toContain('scene-svg');
+    expect(panel(hidden)).toContain('aria-expanded="false"');
   });
 
   it('with the arcs panel shown, a plan view shows the profile and the arcs beside it', () => {
@@ -51,7 +111,6 @@ describe('Sandbox view wrappers', () => {
       /id="range"[^>]*min="0.5"[^>]*max="3"[^>]*step="0.1"[^>]*value="0.5"/,
     );
     expect(html).toContain('0.5 nm');
-    expect(render('profile')).not.toContain('id="range"');
   });
 
   it('the arcs leave the tabs while the arcs panel is shown', () => {
