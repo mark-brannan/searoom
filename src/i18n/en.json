@@ -60,6 +60,8 @@
   "scene.plan.alt": "Plan view: each light's arc of visibility around the hull",
   "scene.hullHint": "Hull hint",
   "scene.hullHint.off": "Off",
+  "scene.range": "Range",
+  "scene.range.value": "{range} nm",
   "scene.sky": "Sky",
   "sandbox.displays.title": "{count, plural, one {# lawful display} other {# lawful displays}}",
   "sandbox.displays.explain": "Where the Rules permit a choice, every lawful option is shown. Pick one to see it and why the others were set aside.",

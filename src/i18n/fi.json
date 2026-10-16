@@ -60,6 +60,8 @@
   "scene.plan.alt": "Sektorinäkymä: kunkin valon näkyvyyssektori rungon ympärillä",
   "scene.hullHint": "Runkovihje",
   "scene.hullHint.off": "Pois",
+  "scene.range": "Etäisyys",
+  "scene.range.value": "{range} mpk",
   "scene.sky": "Taivas",
   "sandbox.displays.title": "{count, plural, one {# laillinen valoyhdistelmä} other {# laillista valoyhdistelmää}}",
   "sandbox.displays.explain": "Missä säännöt sallivat valinnan, kaikki lailliset vaihtoehdot näytetään. Valitse yksi nähdäksesi sen — ja miksi muut jäivät pois.",

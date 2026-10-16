@@ -45,6 +45,9 @@ export interface AppState {
   rulePath: string | null;
   /** Bearing view hull hint, percent: 0 is off, 100 is plain to see. */
   hullHint: number;
+  /** Bearing view range to her, nautical miles: the hull hint is full at
+   *  RANGE_MIN_NM and gone by RANGE_MAX_NM (nav-wright's hullHintOpacity). */
+  range: number;
   /** Bearing view sky, percent: 0 is black, 100 is a lighter night blue. */
   sky: number;
   /** Bearing view draws Benchy in place of her own model, at her size. */
@@ -96,6 +99,7 @@ export const DEFAULT_STATE: AppState = {
   corpus: DEFAULT_CORPUS_ID,
   rulePath: null,
   hullHint: 30,
+  range: 0.5,
   sky: 0,
   benchy: false,
   mesh: '',
@@ -111,6 +115,21 @@ const percent = (v: string | null): number | null => {
   if (v === null || v.trim() === '') return null;
   const n = Number(v);
   return Number.isFinite(n) ? Math.round(Math.min(100, Math.max(0, n))) : null;
+};
+
+/** The bearing view's range control: moonlight's reach to where she is gone. */
+export const RANGE_MIN_NM = 0.5;
+export const RANGE_MAX_NM = 3;
+export const RANGE_STEP_NM = 0.1;
+
+/** A range param in nm, clamped to the control and rounded to its step;
+ *  junk is null so the default stands. */
+const rangeNm = (v: string | null): number | null => {
+  if (v === null || v.trim() === '') return null;
+  const n = Number(v);
+  if (!Number.isFinite(n)) return null;
+  const clamped = Math.min(RANGE_MAX_NM, Math.max(RANGE_MIN_NM, n));
+  return Math.round(clamped * 10) / 10; // RANGE_STEP_NM
 };
 
 // short param <-> fact key. The 4th element, for 'enum' params, is the
@@ -198,6 +217,7 @@ export function serialize(state: AppState): string {
   if (cp !== defaultCorpusFor(state.jurisdiction)) params.set('cp', cp);
   if (state.hullHint !== DEFAULT_STATE.hullHint)
     params.set('hh', String(Math.round(state.hullHint)));
+  if (state.range !== DEFAULT_STATE.range) params.set('rg', String(state.range));
   if (state.sky !== DEFAULT_STATE.sky) params.set('bg', String(Math.round(state.sky)));
   if (state.benchy) params.set('bn', '1');
   if (state.mesh) params.set('ms', state.mesh);
@@ -303,6 +323,7 @@ export function deserialize(hash: string): AppState {
   const chosen = cp ? corpusById(cp) : undefined;
   if (chosen && jurisdictionOf(chosen) === state.jurisdiction) state.corpus = chosen.id;
   state.hullHint = percent(params.get('hh')) ?? state.hullHint;
+  state.range = rangeNm(params.get('rg')) ?? state.range;
   state.sky = percent(params.get('bg')) ?? state.sky;
   if (params.get('bn') === '1') state.benchy = true;
   state.mesh = params.get('ms') ?? '';
