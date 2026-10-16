@@ -219,7 +219,7 @@ function FullScene({
     intl.formatNumber(v / 100, { style: 'percent' });
 
   return (
-    <div className="panel">
+    <div className="panel scene-panel">
       <div
         className="view-tabs"
         role="tablist"

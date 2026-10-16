@@ -15,6 +15,8 @@
     "test": "vitest run",
     "i18n:check": "node scripts/i18n-check.mjs",
     "screenshots": "node scripts/screenshots.mjs",
+    "goldens": "node scripts/goldens.mjs check",
+    "goldens:update": "node scripts/goldens.mjs update",
     "review-pack": "node scripts/fi-review-pack.mjs"
   },
   "dependencies": {

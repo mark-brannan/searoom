@@ -633,6 +633,13 @@ select {
   white-space: nowrap;
 }
 
+@media (max-width: 520px) {
+  .corpus-id {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
 /* a paragraph shown from the fallback corpus, not the one the reader chose */
 .rule-text.fallback {
   border-left-style: dashed;
@@ -1015,6 +1022,292 @@ table.corpora th {
   font-size: 13.5px;
   opacity: 0.8;
   margin-top: 4px;
+}
+
+/* quiz v2: the two rule panels shown on a wrong answer, side by side */
+.quiz-why {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 12px 0;
+}
+.quiz-why h3,
+.quiz-progress h3 {
+  font-size: 14.5px;
+  margin: 0 0 6px;
+}
+.quiz-progress ul {
+  margin: 0 0 8px;
+  padding-left: 18px;
+}
+
+/* Phones. The fact controls become a bottom sheet at about half height and
+   the scene stays pinned above it; every control gets a 44 px target and
+   nothing is wider than the viewport. */
+.sheet-handle {
+  display: none;
+}
+
+@media (max-width: 520px) {
+  .app {
+    padding: 0 12px 32px;
+  }
+
+  .header {
+    gap: 4px 12px;
+    padding-top: 10px;
+  }
+
+  .tagline {
+    display: none;
+  }
+
+  /* mark on the left, language button beside it, jurisdiction below */
+  .header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  .header-actions {
+    display: contents;
+  }
+
+  .loc-long {
+    display: none;
+  }
+
+  .header-actions .jurisdiction-picker {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  .header-actions > .mode-tab {
+    grid-row: 1;
+    grid-column: 2;
+    min-width: 44px;
+    padding: 6px 12px;
+  }
+
+  .disclaimer {
+    font-size: 12px;
+    margin: 0 0 8px;
+  }
+
+  .mode-nav {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+  }
+
+  .header-actions .jurisdiction-picker select {
+    width: 100%;
+  }
+
+  /* one row of tabs, scrolled inside itself rather than wrapped */
+  .mode-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .mode-tab,
+  .chip,
+  .view-tab,
+  .jurisdiction-picker select,
+  select,
+  input[type='number'] {
+    min-height: 44px;
+  }
+
+  .mode-tab {
+    flex: none;
+    padding: 6px 12px;
+  }
+
+  .chip,
+  .view-tab {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .chip.stacked {
+    display: flex;
+    min-height: 44px;
+  }
+
+  .segmented label,
+  .check-row {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  .check-row input[type='checkbox'] {
+    width: 22px;
+    height: 22px;
+    flex: none;
+  }
+
+  .check-row button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .color-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .threshold-ticks {
+    font-size: 11px;
+  }
+
+  summary {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  .chip.play {
+    min-width: 44px;
+    justify-content: center;
+  }
+
+  .signal-row {
+    flex-wrap: wrap;
+  }
+
+  .signal-name {
+    flex: 1 1 8em;
+    min-width: 0;
+  }
+
+  .signal-glyphs {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    letter-spacing: 0.08em;
+  }
+
+  .picker-row {
+    min-height: 44px;
+  }
+
+  /* scene pinned above the sheet */
+  .sandbox-grid {
+    display: block;
+    padding-bottom: calc(45dvh + 16px);
+  }
+
+  /* capped at the space above the open sheet, scrolling inside itself, so
+     the sliders and pickers under the scene are never trapped behind it */
+  .scene-panel {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    padding: 8px 10px;
+    max-height: 55dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .sandbox-grid:has(.fact-sheet.collapsed) {
+    padding-bottom: 60px;
+  }
+
+  .sandbox-grid:has(.fact-sheet.collapsed) .scene-panel {
+    max-height: none;
+  }
+
+  .scene-panel .view-tabs {
+    margin-bottom: 6px;
+  }
+
+  /* at scroll 0 the header sits above the scene: what is left between it
+     and the sheet is about 55dvh minus the header and the tabs */
+  .scene-panel .scene-svg,
+  .scene-panel .plan-svg,
+  .scene-panel .scene-3d-stack {
+    max-height: max(120px, calc(55dvh - 290px));
+    margin-inline: auto;
+  }
+
+  /* collapsed, the sheet is only its handle: the scene gets that room */
+  .sandbox-grid:has(.fact-sheet.collapsed) .scene-panel .scene-svg,
+  .sandbox-grid:has(.fact-sheet.collapsed) .scene-panel .plan-svg,
+  .sandbox-grid:has(.fact-sheet.collapsed) .scene-panel .scene-3d-stack {
+    max-height: max(120px, calc(100dvh - 350px));
+  }
+
+  .scene-panel .scene-3d-stack {
+    width: auto;
+    max-width: 100%;
+  }
+
+  .fact-sheet {
+    position: fixed;
+    inset: auto 0 0 0;
+    height: 45dvh;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    border-top: 1px solid var(--line);
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45);
+  }
+
+  .fact-sheet.collapsed {
+    height: auto;
+  }
+
+  .fact-sheet.collapsed .fact-sheet-body {
+    display: none;
+  }
+
+  .sheet-handle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 44px;
+    padding: 0 16px;
+    position: relative;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dim);
+  }
+
+  .sheet-grip {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 36px;
+    height: 4px;
+    margin-left: -18px;
+    border-radius: 2px;
+    background: var(--line);
+  }
+
+  .fact-sheet-body {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0 0 16px;
+  }
+
+  .fact-sheet-body > .panel {
+    border: 0;
+    border-radius: 0;
+    background: none;
+    padding-top: 0;
+  }
+
+  .fact-sheet-body > .panel > h2 {
+    display: none;
+  }
 }
 
 /* rules search and browse tree */
