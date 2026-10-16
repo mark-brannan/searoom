@@ -66,3 +66,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261016t112706z
 - searoom#174: bearing view hidden under 520 px rather than stacked in the pinned scene Undo: delete the .bearing-panel display:none rule in the 520px block (no PR, branch claude/feat174view-1016n)
+
+### 20261016t112709z
+- searoom#174: range fades the Profile hull hint too, so the range control is live on Profile Undo: pass no range to ProfileStage (no PR, branch claude/feat174view-1016n)
