@@ -2,7 +2,6 @@
 // state, preferences); the URL codec in urlState.ts serializes it. Modes read
 // what they use from here, so App passes nothing down.
 import { create } from 'zustand';
-import type { FactRecord } from 'colregs-engine';
 import type { AppState, Mode } from './urlState';
 import { defaultCorpusFor, deserialize, serialize } from './urlState';
 
@@ -12,8 +11,8 @@ const UNDO_DEPTH = 200;
 
 interface AppStore {
   state: AppState;
-  /** Previous fact records, newest last. */
-  undoStack: FactRecord[];
+  /** Previous fact records, newest last, each with the mesh it was shown on. */
+  undoStack: Pick<AppState, 'facts' | 'mesh'>[];
   patch: (p: Patch) => void;
   setMode: (mode: Mode) => void;
   /** Step the fact record back one change. */
@@ -43,7 +42,7 @@ export const useApp = create<AppStore>((set, get) => ({
       return {
         state: next,
         undoStack: factsChanged
-          ? [...undoStack, s.facts].slice(-UNDO_DEPTH)
+          ? [...undoStack, { facts: s.facts, mesh: s.mesh }].slice(-UNDO_DEPTH)
           : undoStack,
       };
     }),
@@ -55,10 +54,11 @@ export const useApp = create<AppStore>((set, get) => ({
   },
   undo: () =>
     set(({ state, undoStack }) => {
-      const facts = undoStack[undoStack.length - 1];
-      if (!facts) return {};
+      const prev = undoStack[undoStack.length - 1];
+      if (!prev) return {};
+      // the mesh goes back with the hull it was picked for
       return {
-        state: { ...state, facts },
+        state: { ...state, ...prev },
         undoStack: undoStack.slice(0, -1),
       };
     }),
@@ -67,6 +67,15 @@ export const useApp = create<AppStore>((set, get) => ({
 
 export const useAppState = (): AppState => useApp((s) => s.state);
 export const usePatch = (): AppStore['patch'] => useApp((s) => s.patch);
+
+/** Inputs with their own text undo keep ctrl/cmd+Z; a slider, box or select has none. */
+const OWN_UNDO = /^(text|search|number|email|url|tel|password)$/;
+export function editsText(t: EventTarget | null): boolean {
+  const el = t as HTMLElement | null;
+  if (!el || !el.tagName) return false;
+  if (el.isContentEditable || el.tagName === 'TEXTAREA') return true;
+  return el.tagName === 'INPUT' && OWN_UNDO.test((el as HTMLInputElement).type);
+}
 
 /**
  * Wire the store to the URL and keyboard: hash -> state (back button, hand
@@ -100,8 +109,7 @@ export function startSync(): () => void {
   const onKey = (e: KeyboardEvent) => {
     if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.key.toLowerCase() !== 'z')
       return;
-    const t = e.target as HTMLElement | null;
-    if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+    if (editsText(e.target)) return;
     if (useApp.getState().undoStack.length === 0) return;
     e.preventDefault();
     useApp.getState().undo();
