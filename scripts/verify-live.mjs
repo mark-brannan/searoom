@@ -13,6 +13,10 @@ const check = (name, ok, detail = '') => {
 
 const browser = await chromium.launch();
 const context = await browser.newContext({ colorScheme: 'dark' });
+// The first-run intro (#108) would cover the page; mark it seen.
+await context.addInitScript(() => {
+  localStorage.setItem('searoom.introSeen', '1');
+});
 const page = await context.newPage();
 
 // 1. the 12 m sloop: exactly three lawful displays

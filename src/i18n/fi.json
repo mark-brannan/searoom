@@ -4,15 +4,12 @@
   "app.disclaimer": "Vain opiskelukäyttöön — ei navigointilaite. Ei sovellu navigointiin; navigoi julkaistujen sääntöjen mukaan.",
   "app.loading": "Ladataan…",
   "app.poweredBy": "Sääntödata: colregs v{version} ({jurisdiction}, yö)",
-<<<<<<< HEAD
+  "app.layout": "Asettelu",
   "intro.title": "Tervetuloa laivaan.",
   "intro.what": "Searoom näyttää, miltä aluksen valot näyttävät yöllä ja mikä sääntö kunkin valon määrää.",
   "intro.views": "Yksi alus, kolme näkymää: Sivulta, Suuntima ja Sektorit. Vaihda alusta, niin valotkin vaihtuvat.",
   "intro.slider": "Vedä suuntimaliukua ja katso, miten valot ilmestyvät, vaihtavat väriä ja katoavat, kun ylität säännön rajan.",
   "intro.dismiss": "Hyvää matkaa",
-=======
-  "app.layout": "Asettelu",
->>>>>>> origin/main
   "mode.sandbox": "Harjoittelu",
   "mode.identify": "Tunnista",
   "mode.quiz": "Visa",

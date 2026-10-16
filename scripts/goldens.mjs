@@ -38,6 +38,10 @@ const context = await browser.newContext({
   reducedMotion: 'reduce',
   deviceScaleFactor: 1,
 });
+// The first-run intro (#108) would cover the page; mark it seen.
+await context.addInitScript(() => {
+  localStorage.setItem('searoom.introSeen', '1');
+});
 const page = await context.newPage();
 const cmp = await context.newPage();
 

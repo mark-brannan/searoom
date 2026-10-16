@@ -27,6 +27,9 @@ for (const w of [360, 412]) {
     isMobile: true,
     deviceScaleFactor: 2,
   });
+  await ctx.addInitScript(() => {
+    localStorage.setItem('searoom.introSeen', '1');
+  });
   const page = await ctx.newPage();
   for (const [name, hash] of pages) {
     await page.goto(base + hash, { waitUntil: 'networkidle' });
