@@ -12,3 +12,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261016t035215z
 - C2a searoom: lock hand-edited to nav-wright 0.1.5 only, avoiding libc churn; undo: npm update nav-wright (no PR, branch claude/searoom-nav-wright-colregs-scope-e02a5b)
+
+### 20261016t040136z
+- C3 searoom#116: component tests via react-dom/server, no new dev deps; undo: add testing-library+jsdom (no PR, branch claude/searoom-nav-wright-colregs-scope-e02a5b)
