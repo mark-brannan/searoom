@@ -1,7 +1,7 @@
 {
   "name": "searoom",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "See the rules of the road — interactive COLREGS navigation-lights study tool",
   "license": "AGPL-3.0",
