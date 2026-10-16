@@ -68,6 +68,7 @@
   "scene.range": "Range",
   "scene.range.value": "{range} nm",
   "scene.sky": "Sky",
+  "scene.aside.title": "Bearing, lights only",
   "sandbox.displays.title": "{count, plural, one {# lawful display} other {# lawful displays}}",
   "sandbox.displays.explain": "Where the Rules permit a choice, every lawful option is shown. Pick one to see it and why the others were set aside.",
   "sandbox.display.chip": "Display {n}",

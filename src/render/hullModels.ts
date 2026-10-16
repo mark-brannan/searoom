@@ -140,6 +140,21 @@ export function pickMesh(hull: Hull, rand: () => number = Math.random): string {
   return i <= 0 ? '' : variants[i].name;
 }
 
+/**
+ * The mesh a fresh visit opens on: a random variant of the hull's class, always
+ * by name (even the first), so the URL that carries it reloads onto the same
+ * model. '' only when the hull has no variants at all.
+ */
+export function pickInitialMesh(
+  hull: Hull,
+  rand: () => number = Math.random,
+): string {
+  const variants = modelVariantsForHull(hull);
+  if (variants.length === 0) return '';
+  const i = Math.min(variants.length - 1, Math.floor(rand() * variants.length));
+  return variants[i].name;
+}
+
 const MESH_AXES = [
   'fact:propulsion',
   'fact:activity',

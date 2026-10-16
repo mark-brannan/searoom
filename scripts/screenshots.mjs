@@ -51,6 +51,8 @@ const context = await browser.newContext({
 await context.addInitScript(() => {
   localStorage.setItem('searoom.introSeen', '1');
 });
+// the opening mesh is random (searoom#174); pin it to the hull's first variant
+await context.addInitScript(() => { Math.random = () => 0; });
 const page = await context.newPage();
 
 for (const [name, hash] of shots) {
