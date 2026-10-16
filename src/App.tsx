@@ -33,6 +33,9 @@ const Identify = lazy(() =>
 const Quiz = lazy(() =>
   import('./modes/Quiz').then((m) => ({ default: m.Quiz })),
 );
+const Flashcards = lazy(() =>
+  import('./modes/Flashcards').then((m) => ({ default: m.Flashcards })),
+);
 const Rules = lazy(() =>
   import('./modes/Rules').then((m) => ({ default: m.Rules })),
 );
@@ -104,6 +107,8 @@ export function App() {
         return <Identify state={state} patch={patch} />;
       case 'quiz':
         return <Quiz state={state} />;
+      case 'flashcards':
+        return <Flashcards state={state} />;
       case 'rules':
         return <Rules state={state} patch={patch} />;
       case 'sound':
