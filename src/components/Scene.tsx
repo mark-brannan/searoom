@@ -1,6 +1,6 @@
 // The scene: the view tabs over one display, with its θ, range and
-// presentation settings. Every mode draws lights through this component; the
-// 'mini' presentation is the tab-less card the Quiz uses.
+// presentation settings. Every placed display is drawn through this component;
+// the 'mini' presentation is the tab-less card the Quiz uses.
 
 import { useMemo } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';

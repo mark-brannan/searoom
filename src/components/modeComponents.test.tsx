@@ -68,6 +68,8 @@ describe('mode components', () => {
         onOpen={() => {}}
       />,
     );
-    expect(out).toContain('drawer');
+    expect(out).toContain(
+      JSON.stringify(facts, null, 1).replace(/"/g, '&quot;'),
+    );
   });
 });
