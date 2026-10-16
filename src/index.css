@@ -1176,12 +1176,6 @@ table.corpora th {
     min-height: 44px;
   }
 
-  .rule-body a,
-  .entry a {
-    display: inline-block;
-    min-height: 24px;
-  }
-
   /* scene pinned above the sheet */
   .sandbox-grid {
     display: block;
