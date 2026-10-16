@@ -14,12 +14,13 @@ import { DEFAULT_STATE, serialize } from '../state/urlState';
 
 const COLORS: SeenLight['color'][] = ['white', 'red', 'green', 'yellow'];
 
-/** The lights picked so far, on the bearing view's night sea, so the learner
- *  builds what they saw against the sea the Sandbox shows. */
+// Field size, in viewBox units.
 const FIELD_W = 440;
 const FIELD_H = 120;
 const FIELD_HORIZON = 100;
 
+/** The lights picked so far, on the bearing view's night sea, so the learner
+ *  builds what they saw against the sea the Sandbox shows. */
 export function SeenField({
   seen,
   arrangement,
