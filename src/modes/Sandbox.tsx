@@ -5,6 +5,7 @@
 import { useEffect, useMemo } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
+import { rovingKeyDown } from '../components/roving';
 import { Presets } from '../components/Presets';
 import { FactControls } from '../components/FactControls';
 import { RuleParagraphs } from '../components/RuleParagraphs';
@@ -236,6 +237,7 @@ function DisplayChips({
       <div
         className="chips"
         role="radiogroup"
+        onKeyDown={rovingKeyDown}
         aria-label={intl.formatMessage(
           { id: 'sandbox.displays.title' },
           { count: evaln.displays.length },
@@ -247,6 +249,7 @@ function DisplayChips({
             className={`chip stacked${i === current ? ' active' : ''}`}
             role="radio"
             aria-checked={i === current}
+            tabIndex={i === current ? 0 : -1}
             onClick={() => patch({ displayIndex: i })}
           >
             <span className="chip-what">
@@ -579,6 +582,7 @@ export function Sandbox({
             <div
               className="view-tabs"
               role="tablist"
+              onKeyDown={rovingKeyDown}
               aria-label={intl.formatMessage({ id: 'view.label' })}
             >
               {views.map((v) => (
@@ -586,6 +590,7 @@ export function Sandbox({
                   key={v}
                   role="tab"
                   aria-selected={state.view === v}
+                  tabIndex={state.view === v ? 0 : -1}
                   className={`view-tab${state.view === v ? ' active' : ''}`}
                   onClick={() => patch({ view: v })}
                 >
