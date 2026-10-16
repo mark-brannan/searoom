@@ -9,16 +9,18 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-// Not on nav-wright's export map: the pure profile API lives inside the
-// package, next to the component that uses it. This reaches past the map on
-// purpose; the alternative is re-deriving it and drifting from it.
+// The pure profile API, from nav-wright's public `./profile` entry point.
 import {
   PROFILE_STATIONS,
+  bowShoulder,
+  lightPosition,
+  stationAt,
   placeHullModel,
   sampleEdges,
   stationProfile,
-} from '../../node_modules/nav-wright/dist/modelTransform.js';
-import type { StationProfile } from '../../node_modules/nav-wright/dist/modelTransform.js';
+} from 'nav-wright/profile';
+import type { HullSpec } from 'nav-wright';
+import type { StationProfile } from 'nav-wright/profile';
 
 /**
  * Hull ids whose registered mesh is known not to fit, with the measured
@@ -82,7 +84,9 @@ function modelPath(url: string): string {
   const root = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
   if (url.startsWith('/@fs/')) return url.slice('/@fs'.length);
   const base = '/searoom/';
-  const rel = url.startsWith(base) ? url.slice(base.length) : url.replace(/^\//, '');
+  const rel = url.startsWith(base)
+    ? url.slice(base.length)
+    : url.replace(/^\//, '');
   return path.join(root, rel);
 }
 
@@ -106,7 +110,10 @@ export async function loadHullScene(url: string): Promise<THREE.Group> {
 /** The same profile the view builds in nav-wright's Hull component: place
  * the model as a vessel of `lengthMeters`, flatten it to world-space
  * triangles, sample the edges at half a station, bin fore-aft. */
-export function worldProfile(scene: THREE.Group, lengthMeters: number): StationProfile {
+export function worldProfile(
+  scene: THREE.Group,
+  lengthMeters: number,
+): StationProfile {
   const raw = new THREE.Box3().setFromObject(scene);
   const { scale, rotationX, position } = placeHullModel(
     { min: { ...raw.min }, max: { ...raw.max } },
@@ -136,7 +143,8 @@ export function worldProfile(scene: THREE.Group, lengthMeters: number): StationP
     }
     const base = total / 3;
     if (geom.index) {
-      for (let i = 0; i < geom.index.count; i++) index.push(base + geom.index.getX(i));
+      for (let i = 0; i < geom.index.count; i++)
+        index.push(base + geom.index.getX(i));
     } else {
       for (let i = 0; i < pos.count; i++) index.push(base + i);
     }
@@ -149,7 +157,79 @@ export function worldProfile(scene: THREE.Group, lengthMeters: number): StationP
     xyz.set(c, at);
     at += c.length;
   }
-  const profile = stationProfile(sampleEdges(xyz, index, lengthMeters / PROFILE_STATIONS / 2));
+  const profile = stationProfile(
+    sampleEdges(xyz, index, lengthMeters / PROFILE_STATIONS / 2),
+  );
   if (!profile) throw new Error('mesh has nothing to profile');
   return profile;
+}
+
+/**
+ * How far, as a fraction of LOA, a seat on the mesh may sit from the spec's
+ * station and still count as the same place. A twentieth of the length: on a
+ * 12 m boat, 60 cm. Coarser than that and a sidelight is visibly on the
+ * wrong part of the hull; finer and the 2D profile's own hand-drawn
+ * stations, set to two decimals of half-length, are inside the noise.
+ */
+export const REGISTRATION_TOLERANCE = 0.05;
+
+export interface Miss {
+  station: string;
+  mesh: number;
+  spec: number;
+  /** (mesh - spec) / LOA */
+  delta: number;
+}
+
+/**
+ * Each seat `anchorLights` takes from the mesh, against the spec station
+ * whose light it receives, in world metres. Fore-aft x, height y, and for
+ * the sidelight the half-beam it is pushed out to.
+ */
+export function compareToSpec(
+  spec: HullSpec,
+  profile: StationProfile,
+  lengthMeters: number,
+): Miss[] {
+  const world = (fx: number, z: number, py = 0) =>
+    lightPosition({ fx, py, z }, lengthMeters);
+  const shoulderX = bowShoulder(profile);
+  const shoulder = stationAt(profile, shoulderX);
+  const transom = stationAt(profile, profile.minX);
+  const rows: [string, number, number][] = [
+    ['sidelight x (bow shoulder)', shoulderX, world(spec.sideLightX, 0)[0]],
+    [
+      'sidelight y (deck at shoulder)',
+      shoulder.deck,
+      world(0, spec.sideLightZ)[1],
+    ],
+    [
+      'sidelight z (half-beam at shoulder)',
+      shoulder.halfBeam,
+      world(0, 0, spec.beam)[2],
+    ],
+    [
+      'masthead x (mast band fore edge)',
+      profile.mast.foreX,
+      world(spec.mastX, 0)[0],
+    ],
+    [
+      'masthead y (mast band top)',
+      profile.mast.top,
+      world(0, spec.mastTopZ)[1],
+    ],
+    [
+      'aft masthead x (mast band aft edge)',
+      profile.mast.aftX,
+      world(spec.aftMastX, 0)[0],
+    ],
+    ['sternlight x (aftmost point)', profile.minX, world(spec.sternX, 0)[0]],
+    ['sternlight y (transom top)', transom.top, world(0, spec.sternZ)[1]],
+  ];
+  return rows.map(([station, mesh, s]) => ({
+    station,
+    mesh,
+    spec: s,
+    delta: (mesh - s) / lengthMeters,
+  }));
 }

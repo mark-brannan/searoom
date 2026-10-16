@@ -27,6 +27,10 @@ const shots = [
     'sandbox-ship-55m',
     '#/sandbox?p=power&a=none&pos=underway&mw=1&len=55',
   ],
+  [
+    'sandbox-preset-tug',
+    '#/sandbox?p=power&a=towing&pos=underway&mw=1&len=30&tow=150',
+  ],
   ['identify', '#/identify'],
   ['quiz', '#/quiz'],
   ['rules', '#/rules/27(a)(i)'],

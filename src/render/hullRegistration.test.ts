@@ -22,68 +22,22 @@
 
 import { describe, expect, it } from 'vitest';
 import { allHulls } from 'nav-wright';
-import type { Hull, HullSpec } from 'nav-wright';
-// Not on nav-wright's export map: the pure profile API lives inside the
-// package, next to the component that uses it. This reaches past the map on
-// purpose; the alternative is re-deriving the seats and drifting from them.
-import {
-  bowShoulder,
-  lightPosition,
-  stationAt,
-} from '../../node_modules/nav-wright/dist/modelTransform.js';
-import type { StationProfile } from '../../node_modules/nav-wright/dist/modelTransform.js';
+import type { Hull } from 'nav-wright';
 import { hasRegisteredModel, modelUrlForHull } from './hullModels';
-import { KNOWN_MISFITS, loadHullScene, worldProfile } from './meshProfile';
+import {
+  KNOWN_MISFITS,
+  REGISTRATION_TOLERANCE,
+  compareToSpec as compare,
+  loadHullScene,
+  worldProfile,
+} from './meshProfile';
 
-/**
- * How far, as a fraction of LOA, a seat on the mesh may sit from the spec's
- * station and still count as the same place. A twentieth of the length: on a
- * 12 m boat, 60 cm. Coarser than that and a sidelight is visibly on the
- * wrong part of the hull; finer and the 2D profile's own hand-drawn
- * stations, set to two decimals of half-length, are inside the noise.
- */
-export const REGISTRATION_TOLERANCE = 0.05;
-
-/** Any length works — every figure below is divided back out by it. */
+/** Any length works — every figure is divided back out by it. */
 const LENGTH_M = 2;
 
-interface Miss {
-  station: string;
-  mesh: number;
-  spec: number;
-  /** (mesh - spec) / LOA */
-  delta: number;
-}
-
-/**
- * Each seat `anchorLights` takes from the mesh, against the spec station
- * whose light it receives, in world metres. Fore-aft x, height y, and for
- * the sidelight the half-beam it is pushed out to.
- */
-function compare(spec: HullSpec, profile: StationProfile, lengthMeters: number): Miss[] {
-  const world = (fx: number, z: number, py = 0) => lightPosition({ fx, py, z }, lengthMeters);
-  const shoulderX = bowShoulder(profile);
-  const shoulder = stationAt(profile, shoulderX);
-  const transom = stationAt(profile, profile.minX);
-  const rows: [string, number, number][] = [
-    ['sidelight x (bow shoulder)', shoulderX, world(spec.sideLightX, 0)[0]],
-    ['sidelight y (deck at shoulder)', shoulder.deck, world(0, spec.sideLightZ)[1]],
-    ['sidelight z (half-beam at shoulder)', shoulder.halfBeam, world(0, 0, spec.beam)[2]],
-    ['masthead x (mast band fore edge)', profile.mast.foreX, world(spec.mastX, 0)[0]],
-    ['masthead y (mast band top)', profile.mast.top, world(0, spec.mastTopZ)[1]],
-    ['aft masthead x (mast band aft edge)', profile.mast.aftX, world(spec.aftMastX, 0)[0]],
-    ['sternlight x (aftmost point)', profile.minX, world(spec.sternX, 0)[0]],
-    ['sternlight y (transom top)', transom.top, world(0, spec.sternZ)[1]],
-  ];
-  return rows.map(([station, mesh, s]) => ({
-    station,
-    mesh,
-    spec: s,
-    delta: (mesh - s) / lengthMeters,
-  }));
-}
-
-const registered = (Object.values(allHulls) as Hull[]).filter(hasRegisteredModel);
+const registered = (Object.values(allHulls) as Hull[]).filter(
+  hasRegisteredModel,
+);
 
 describe('hull mesh registration', () => {
   it('has at least one registered mesh to check', () => {
@@ -99,14 +53,23 @@ describe('hull mesh registration', () => {
       : `${id}: mesh stations agree with the spec within ${REGISTRATION_TOLERANCE} of LOA`;
 
     run(title, async () => {
-      const profile = worldProfile(await loadHullScene(modelUrlForHull(hull)), LENGTH_M);
+      const profile = worldProfile(
+        await loadHullScene(modelUrlForHull(hull)),
+        LENGTH_M,
+      );
       const misses = compare(hull.spec, profile, LENGTH_M).filter(
         (m) => Math.abs(m.delta) > REGISTRATION_TOLERANCE,
       );
       const report = misses
-        .map((m) => `${m.station}: mesh ${m.mesh.toFixed(3)} spec ${m.spec.toFixed(3)} Δ/LOA ${m.delta.toFixed(3)}`)
+        .map(
+          (m) =>
+            `${m.station}: mesh ${m.mesh.toFixed(3)} spec ${m.spec.toFixed(3)} Δ/LOA ${m.delta.toFixed(3)}`,
+        )
         .join('\n');
-      expect(misses.map((m) => m.station), report).toEqual([]);
+      expect(
+        misses.map((m) => m.station),
+        report,
+      ).toEqual([]);
     });
   }
 });

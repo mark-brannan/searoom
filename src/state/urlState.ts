@@ -4,6 +4,7 @@
 
 import type { FactRecord, FactValue } from '../engine/types';
 import { BASE_JURISDICTION, isJurisdiction } from '../data/jurisdictions';
+import { PRESETS } from '../data/presets';
 import { DEFAULT_TILT, MAX_TILT } from 'nav-wright/benchy';
 import {
   DEFAULT_CORPUS_ID,
@@ -51,7 +52,18 @@ export interface AppState {
   /** Bearing view mesh, by nav-wright file name; '' is the hull's default. */
   mesh: string;
   drawer: boolean;
+  /** Quiz run seed; question n asks seed + n - 1, so a URL reopens it. */
+  quizSeed: number;
+  /** Quiz question number within the run, from 1. */
+  quizN: number;
+  quizDirection: 'forward' | 'reverse';
+  quizMode: QuizMode;
+  /** Quiz drill: only scenarios exercising this rule number; '' is all. */
+  quizRule: string;
 }
+
+export type QuizMode = 'practice' | 'drill' | 'exam';
+export const QUIZ_MODES: QuizMode[] = ['practice', 'drill', 'exam'];
 
 export const DEFAULT_FACTS: FactRecord = {
   'fact:propulsion': 'propulsion:sail',
@@ -88,6 +100,11 @@ export const DEFAULT_STATE: AppState = {
   benchy: false,
   mesh: '',
   drawer: false,
+  quizSeed: 1,
+  quizN: 1,
+  quizDirection: 'forward',
+  quizMode: 'practice',
+  quizRule: '',
 };
 
 const percent = (v: string | null): number | null => {
@@ -145,6 +162,17 @@ function paramToEnum(key: string, v: string): string {
   return `${prefix}:${v}`;
 }
 
+/** The preset whose fact record this is exactly, unless it is the default. */
+function presetAlias(facts: FactRecord): string | null {
+  if (JSON.stringify(sortedFacts(facts)) === JSON.stringify(sortedFacts(DEFAULT_FACTS)))
+    return null;
+  const want = JSON.stringify(sortedFacts(facts));
+  return PRESETS.find((p) => JSON.stringify(sortedFacts(p.facts)) === want)?.id ?? null;
+}
+function sortedFacts(f: FactRecord): [string, unknown][] {
+  return Object.entries(f).sort(([a], [b]) => a.localeCompare(b));
+}
+
 export function serialize(state: AppState): string {
   const params = new URLSearchParams();
   for (const [short, key, kind] of FACT_PARAMS) {
@@ -174,10 +202,23 @@ export function serialize(state: AppState): string {
   if (state.benchy) params.set('bn', '1');
   if (state.mesh) params.set('ms', state.mesh);
   if (state.drawer) params.set('dd', '1');
-  const path =
-    state.mode === 'rules' && state.rulePath
-      ? `/rules/${encodeURIComponent(state.rulePath)}`
-      : `/${state.mode}`;
+  let path = `/${state.mode}`;
+  if (state.mode === 'rules' && state.rulePath)
+    path = `/rules/${encodeURIComponent(state.rulePath)}`;
+  else if (state.mode === 'quiz') {
+    if (state.quizDirection !== 'forward') params.set('dir', state.quizDirection);
+    if (state.quizMode !== 'practice') params.set('qm', state.quizMode);
+    if (state.quizRule) params.set('qr', state.quizRule);
+    if (state.quizSeed !== 1 || state.quizN !== 1)
+      path = `/quiz/${state.quizSeed}/${state.quizN}`;
+  } else if (state.mode === 'sandbox') {
+    // a preset's name stands in for its fact record
+    const alias = presetAlias(state.facts);
+    if (alias) {
+      for (const [short] of FACT_PARAMS) params.delete(short);
+      path = `/sandbox/${alias}`;
+    }
+  }
   const q = params.toString();
   return `#${path}${q ? `?${q}` : ''}`;
 }
@@ -201,7 +242,18 @@ export function deserialize(hash: string): AppState {
   if (state.mode === 'rules' && segments[1]) {
     state.rulePath = decodeURIComponent(segments[1]);
   }
+  if (state.mode === 'quiz') {
+    const seed = Number(segments[1]);
+    const n = Number(segments[2]);
+    if (Number.isInteger(seed) && seed >= 0) state.quizSeed = seed;
+    if (Number.isInteger(n) && n >= 1) state.quizN = n;
+  }
   const params = new URLSearchParams(query);
+  if (params.get('dir') === 'reverse') state.quizDirection = 'reverse';
+  const preset =
+    state.mode === 'sandbox' && segments[1]
+      ? PRESETS.find((p) => p.id === segments[1])
+      : undefined;
   const facts: FactBag = {};
   for (const [short, key, kind, enumValues] of FACT_PARAMS) {
     const v = params.get(short);
@@ -214,8 +266,10 @@ export function deserialize(hash: string): AppState {
       if (Number.isFinite(n)) facts[key] = n;
     }
   }
-  if (Object.keys(facts).length > 0)
-    state.facts = { ...DEFAULT_FACTS, ...facts } as FactRecord;
+  // query fields refine the aliased preset, or the default record without one
+  const base = preset ? preset.facts : DEFAULT_FACTS;
+  if (preset || Object.keys(facts).length > 0)
+    state.facts = { ...base, ...facts } as FactRecord;
   const view = params.get('view');
   if (view === 'profile' || view === 'bearing' || view === 'plan') state.view = view;
   // the Model and Benchy tabs merged into the bearing view; an old link
@@ -253,5 +307,9 @@ export function deserialize(hash: string): AppState {
   if (params.get('bn') === '1') state.benchy = true;
   state.mesh = params.get('ms') ?? '';
   if (params.get('dd') === '1') state.drawer = true;
+  const qm = params.get('qm');
+  if (qm === 'drill' || qm === 'exam') state.quizMode = qm;
+  const qr = params.get('qr');
+  if (qr && /^\d{1,2}$/.test(qr)) state.quizRule = qr;
   return state;
 }

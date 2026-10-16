@@ -19,7 +19,11 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - name: i18n catalogs
+        run: npm run i18n:check
       - run: npm run build
+      - name: Bundle budget
+        run: node scripts/bundle-budget.mjs
 
   # Click-through of every mode and one threshold crossing on the built site
   # (scripts/e2e.mjs), chromium only. A measurement of the site, not a gate,
@@ -43,6 +47,39 @@ jobs:
             sleep 1
           done
           node scripts/e2e.mjs
+
+  # Screenshot goldens (scripts/goldens.mjs): every mode's default state plus
+  # three sandbox states, dark, at 1280 and 360 px. Fails when a shot differs
+  # from screenshots/goldens by more than 0.1% of pixels. goldens-out/ (the
+  # actual renders, plus red-mask diff-*.png for failures) is uploaded either
+  # way; on a deliberate change, copy the renders over screenshots/goldens in
+  # the update commit. A measurement, not a gate, so it stays out of ci-gate's
+  # needs until it has a track record.
+  goldens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Serve dist and compare against the goldens
+        run: |
+          npx vite preview --port 4173 > preview.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:4173/searoom/ > /dev/null && break
+            sleep 1
+          done
+          node scripts/goldens.mjs check
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: goldens-out
+          path: goldens-out/
+          if-no-files-found: ignore
 
   # Refuses to call an empty PR green: a branch whose tree equals its base at
   # the merge base (a stray commit reverted it) merges cleanly and lands

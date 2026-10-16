@@ -4,30 +4,27 @@
 
 import { useMemo, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
-import type { Patch } from '../App';
+import { useAppState, usePatch } from '../state/store';
 import { describeFacts } from '../components/factLabel';
 import { identifyCandidates } from '../engine/identify';
-import type { SeenLight } from '../engine/identify';
+import type { Arrangement, SeenLight } from '../engine/identify';
 import { Glow, bearingLabel, lightFill } from 'nav-wright';
 import { DEFAULT_STATE, serialize } from '../state/urlState';
-import type { AppState } from '../state/urlState';
 
 const COLORS: SeenLight['color'][] = ['white', 'red', 'green', 'yellow'];
 
-export function Identify({
-  state,
-  patch,
-}: {
-  state: AppState;
-  patch: (p: Patch) => void;
-}) {
+export function Identify() {
+  const state = useAppState();
+  const patch = usePatch();
   const intl = useIntl();
   const [seen, setSeen] = useState<SeenLight[]>([]);
   const [flashing, setFlashing] = useState(false);
+  const [kind, setKind] = useState<SeenLight['kind']>(undefined);
+  const [arrangement, setArrangement] = useState<Arrangement>('free');
 
   const candidates = useMemo(
-    () => identifyCandidates(seen, state.jurisdiction),
-    [seen, state.jurisdiction],
+    () => identifyCandidates(seen, state.jurisdiction, arrangement),
+    [seen, state.jurisdiction, arrangement],
   );
 
   const aspectsOf = (thetas: number[]): string => {
@@ -56,7 +53,7 @@ export function Identify({
               className="color-btn"
               style={{ background: lightFill(c) }}
               aria-label={`${intl.formatMessage({ id: 'identify.pick.add' })}: ${intl.formatMessage({ id: `color.${c}` })}`}
-              onClick={() => setSeen((s) => [...s, { color: c, flashing }])}
+              onClick={() => setSeen((s) => [...s, { color: c, flashing, kind }])}
             />
           ))}
           <label className="check-row" style={{ margin: 0 }}>
@@ -66,6 +63,41 @@ export function Identify({
               onChange={(e) => setFlashing(e.target.checked)}
             />
             <FormattedMessage id="light.flashing" />
+          </label>
+        </div>
+        <div className="seen-controls">
+          <label className="check-row" style={{ margin: 0 }}>
+            <FormattedMessage id="identify.kind.label" />{' '}
+            <select
+              value={kind ?? ''}
+              onChange={(e) =>
+                setKind((e.target.value || undefined) as SeenLight['kind'])
+              }
+            >
+              <option value="">
+                {intl.formatMessage({ id: 'identify.kind.any' })}
+              </option>
+              <option value="masthead">
+                {intl.formatMessage({ id: 'identify.kind.masthead' })}
+              </option>
+              <option value="all_round">
+                {intl.formatMessage({ id: 'identify.kind.all_round' })}
+              </option>
+            </select>
+          </label>
+          <label className="check-row" style={{ margin: 0 }}>
+            <FormattedMessage id="identify.arrangement.label" />{' '}
+            <select
+              value={arrangement}
+              onChange={(e) => setArrangement(e.target.value as Arrangement)}
+            >
+              <option value="free">
+                {intl.formatMessage({ id: 'identify.arrangement.free' })}
+              </option>
+              <option value="vertical">
+                {intl.formatMessage({ id: 'identify.arrangement.vertical' })}
+              </option>
+            </select>
           </label>
         </div>
 
@@ -87,8 +119,8 @@ export function Identify({
               {seen.map((l, i) => (
                 <Glow
                   key={i}
-                  x={60 + i * 50}
-                  y={60}
+                  x={arrangement === 'vertical' ? 220 : 60 + i * 50}
+                  y={arrangement === 'vertical' ? 20 + i * 22 : 60}
                   color={l.color}
                   flashing={l.flashing}
                   r={6}
@@ -115,6 +147,12 @@ export function Identify({
                     style={{ background: lightFill(l.color) }}
                   />
                   <FormattedMessage id={`color.${l.color}`} />
+                  {l.kind && (
+                    <>
+                      {' '}
+                      <FormattedMessage id={`identify.kind.${l.kind}`} />
+                    </>
+                  )}
                   {l.flashing && (
                     <>
                       {' '}
@@ -150,6 +188,12 @@ export function Identify({
           {candidates.length > 1 && (
             <p className="elim">
               <FormattedMessage id="identify.candidates.explainMany" />
+              {arrangement === 'free' && seen.length > 1 && (
+                <>
+                  {' '}
+                  <FormattedMessage id="identify.candidates.tryOrder" />
+                </>
+              )}
             </p>
           )}
           {candidates.map((c, i) => (
