@@ -8,7 +8,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactElement } from 'react';
 import type { Group } from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+// drei's loader, which the 3D view already ships: one GLTFLoader in the bundle.
+import { GLTFLoader } from 'three-stdlib';
 import { Glow, ProfileView, PX, PZ } from 'nav-wright';
 import type { Hull, PlacedLight, SceneLabels } from 'nav-wright';
 import { anchorLights, profileHullModel } from 'nav-wright/profile';
