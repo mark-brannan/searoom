@@ -33,3 +33,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261016t044108z
 - Misfits listed in output, not failing the seating test Undo: assert misfit list against a committed set ([#192](https://github.com/mark-brannan/searoom/pull/192))
+
+### 20261016t053545z
+- C11: Leitner intervals 1,2,4,8,16 days; undo: edit INTERVAL_DAYS in src/state/leitner.ts (no PR, branch claude/C11-1016)
