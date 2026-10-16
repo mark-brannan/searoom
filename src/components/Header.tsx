@@ -2,8 +2,10 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
 import { JURISDICTIONS } from '../data/jurisdictions';
 import type { AppState, Mode } from '../state/urlState';
+import { jurisdictions as signposted } from '../data/signposts';
 import { useCorpus } from '../state/corpusContext';
 
+const SIGNPOST_PREFIX = 'sp:';
 const MODES: Mode[] = ['sandbox', 'identify', 'quiz', 'rules', 'sound'];
 
 export function Header({
@@ -38,7 +40,14 @@ export function Header({
             </span>
             <select
               value={state.jurisdiction}
-              onChange={(e) => patch({ jurisdiction: e.target.value })}
+              onChange={(e) => {
+                // a signposted row has no data to select: open its panel,
+                // and the controlled value keeps the jurisdiction in view
+                const v = e.target.value;
+                if (v.startsWith(SIGNPOST_PREFIX))
+                  patch({ signpost: v.slice(SIGNPOST_PREFIX.length) });
+                else patch({ jurisdiction: v });
+              }}
               aria-label={intl.formatMessage({ id: 'jurisdiction.label' })}
             >
               {JURISDICTIONS.map((j) => (
@@ -49,6 +58,17 @@ export function Header({
                   })}
                 </option>
               ))}
+              <optgroup
+                label={intl.formatMessage({ id: 'jurisdiction.signposted' })}
+              >
+                {signposted
+                  .filter((s) => s.status !== 'live')
+                  .map((s) => (
+                    <option key={s.id} value={SIGNPOST_PREFIX + s.id}>
+                      {s.label ?? intl.formatMessage({ id: s.labelKey! })}
+                    </option>
+                  ))}
+              </optgroup>
             </select>
           </label>
           <button

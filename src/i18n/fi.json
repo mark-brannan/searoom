@@ -288,6 +288,8 @@
   "signpost.status.ranked.corpus": "Viitoitettu — lisenssi tarkistamatta",
   "signpost.status.not-scoped.corpus": "Ei vielä rajattu",
   "signpost.status.live.corpus": "Käytössä",
+  "jurisdiction.signposted": "Viitoitettu — ei dataa vielä",
+  "signpost.jurisdiction.notSelectable": "Colregs ei ole vielä julkaissut tämän lainkäyttöalueen dataa, joten sitä ei voi vielä valita. Luet edelleen aiemmin valittua lainkäyttöaluetta; mikään ei muuttunut.",
   "jurisdiction.label": "Sääntöalue",
   "jurisdiction.intl": "Kansainvälinen (COLREGS 72)",
   "jurisdiction.us/inland": "Yhdysvaltain sisävedet (33 CFR 83)",
