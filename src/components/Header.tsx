@@ -6,6 +6,17 @@ import { jurisdictions as signposted } from '../data/signposts';
 import { useCorpus } from '../state/corpusContext';
 
 const SIGNPOST_PREFIX = 'sp:';
+
+/**
+ * What picking a picker row does. A signposted row has no data to select,
+ * so it opens that jurisdiction's signpost panel instead; the controlled
+ * select keeps showing the jurisdiction in view.
+ */
+export function pickJurisdiction(value: string): Patch {
+  return value.startsWith(SIGNPOST_PREFIX)
+    ? { signpost: value.slice(SIGNPOST_PREFIX.length) }
+    : { jurisdiction: value };
+}
 const MODES: Mode[] = ['sandbox', 'identify', 'quiz', 'rules', 'sound'];
 
 export function Header({
@@ -40,14 +51,7 @@ export function Header({
             </span>
             <select
               value={state.jurisdiction}
-              onChange={(e) => {
-                // a signposted row has no data to select: open its panel,
-                // and the controlled value keeps the jurisdiction in view
-                const v = e.target.value;
-                if (v.startsWith(SIGNPOST_PREFIX))
-                  patch({ signpost: v.slice(SIGNPOST_PREFIX.length) });
-                else patch({ jurisdiction: v });
-              }}
+              onChange={(e) => patch(pickJurisdiction(e.target.value))}
               aria-label={intl.formatMessage({ id: 'jurisdiction.label' })}
             >
               {JURISDICTIONS.map((j) => (
