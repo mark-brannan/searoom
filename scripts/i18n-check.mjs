@@ -7,6 +7,7 @@
 
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const load = (p) => JSON.parse(readFileSync(new URL(p, import.meta.url), 'utf8'));
 const en = load('../src/i18n/en.json');
@@ -29,7 +30,12 @@ const walk = (d) => {
     else if (/\.tsx?$/.test(e.name) && !/\.test\.tsx?$/.test(e.name)) files.push(p);
   }
 };
-walk(new URL('../src', import.meta.url).pathname);
+walk(fileURLToPath(new URL('../src', import.meta.url)));
+
+const enKeys = new Set(Object.keys(en));
+// Namespaces the catalogs already use; quoted strings outside them are not keys.
+const spaces = new Set([...enKeys, ...pkgKeys].map((k) => k.split('.')[0]));
+const keyLit = /['"`]([a-z][\w-]*(?:\.[\w-]+)+)['"`]/gi;
 
 const literal = new Set();
 const prefixes = new Set();
@@ -41,9 +47,11 @@ for (const f of files) {
     if (id.includes('${')) prefixes.add(id.slice(0, id.indexOf('${')));
     else literal.add(id);
   }
+  // Keys written anywhere else (ternaries, data tables) count as uses too.
+  for (const m of src.matchAll(keyLit))
+    if (spaces.has(m[1].split('.')[0])) literal.add(m[1]);
 }
 
-const enKeys = new Set(Object.keys(en));
 const fiKeys = new Set(Object.keys(fi));
 const onlyEn = [...enKeys].filter((k) => !fiKeys.has(k));
 // Finnish may carry package-owned vocabulary keys until colregs ships them in
