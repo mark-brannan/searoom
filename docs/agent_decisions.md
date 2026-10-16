@@ -63,3 +63,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261016t112702z
 - searoom#174: bearing view sits in the right column over the arcs, so it is beside the scene at 1280 px Undo: move {bearing} back into the scene panel in Sandbox LayoutA (no PR, branch claude/feat174view-1016n)
+
+### 20261016t112706z
+- searoom#174: bearing view hidden under 520 px rather than stacked in the pinned scene Undo: delete the .bearing-panel display:none rule in the 520px block (no PR, branch claude/feat174view-1016n)
