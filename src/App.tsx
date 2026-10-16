@@ -88,25 +88,27 @@ export function App() {
             </span>
             <a href="https://github.com/mark-brannan/colregs">colregs</a>
             <a href="https://github.com/mark-brannan/searoom">searoom</a>
-            <span
-              className="layout-switch"
-              role="group"
-              aria-labelledby="layout-switch-label"
-            >
-              <span id="layout-switch-label">
-                <FormattedMessage id="app.layout" />
+            {state.mode === 'sandbox' && (
+              <span
+                className="layout-switch"
+                role="group"
+                aria-labelledby="layout-switch-label"
+              >
+                <span id="layout-switch-label">
+                  <FormattedMessage id="app.layout" />
+                </span>
+                {EXPERIMENTS.layout.variants.map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    aria-pressed={layout === v}
+                    onClick={() => setVariant('layout', v)}
+                  >
+                    {v.toUpperCase()}
+                  </button>
+                ))}
               </span>
-              {EXPERIMENTS.layout.variants.map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  aria-pressed={layout === v}
-                  onClick={() => setVariant('layout', v)}
-                >
-                  {v.toUpperCase()}
-                </button>
-              ))}
-            </span>
+            )}
           </footer>
           {state.signpost && (
             <SignpostPanel

@@ -90,6 +90,11 @@ export function Sandbox() {
   const views: View[] = arcsShown
     ? ALL_VIEWS.filter((v) => v !== 'plan')
     : ALL_VIEWS;
+  // ...so the store never names a tab that is not offered: the scene would
+  // draw Profile while the state and the URL still said plan
+  useEffect(() => {
+    if (arcsShown && state.view === 'plan') patch({ view: 'profile' });
+  }, [arcsShown, state.view, patch]);
 
   const scene = (
     <Scene
