@@ -8,6 +8,8 @@ import { isJurisdiction } from '../data/jurisdictions';
 import { catalogs } from '../i18n';
 import type { AppState } from './urlState';
 import { deserialize } from './urlState';
+import { selectHull } from 'nav-wright';
+import { pickInitialMesh } from '../render/hullModels';
 
 export const SETTINGS_KEY = 'searoom.settings.v1';
 
@@ -49,8 +51,17 @@ export function saveSettings(s: Pick<AppState, 'locale' | 'jurisdiction'>): void
  * takes stored settings: any other link came from a sender, and its omitted
  * `loc`/`j` mean the defaults, not "use yours".
  */
-export function stateFromHash(hash: string, stored: Settings = loadSettings()): AppState {
+export function stateFromHash(
+  hash: string,
+  stored: Settings = loadSettings(),
+  rand: () => number = Math.random,
+): AppState {
   const state = deserialize(hash);
+  // no `ms` in the link: draw a variant once here; the store writes it back to
+  // the hash, so reload and share keep it. An explicit `ms` always wins.
+  const query = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : '';
+  if (!new URLSearchParams(query).has('ms'))
+    state.mesh = pickInitialMesh(selectHull(state.facts), rand);
   if (hash.replace(/^#/, '') !== '') return state;
   if (stored.locale) state.locale = stored.locale;
   if (stored.jurisdiction) {

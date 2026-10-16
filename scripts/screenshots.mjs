@@ -47,6 +47,8 @@ const context = await browser.newContext({
   colorScheme: 'dark',
   viewport: { width: 1280, height: 900 },
 });
+// the opening mesh is random (searoom#174); pin it to the hull's first variant
+await context.addInitScript(() => { Math.random = () => 0; });
 const page = await context.newPage();
 
 for (const [name, hash] of shots) {
