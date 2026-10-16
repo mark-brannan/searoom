@@ -5,6 +5,7 @@
 import { useEffect, useMemo } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
+import { Presets } from '../components/Presets';
 import { FactControls } from '../components/FactControls';
 import { RuleParagraphs } from '../components/RuleParagraphs';
 import { applicability, colregsVersion, lights } from '../data/colregs';
@@ -31,7 +32,12 @@ import { placeLights } from '../render/navWright';
 import type { Aspect } from 'nav-wright';
 import { BearingModelView } from 'nav-wright/benchy';
 import type { BenchyLabels } from 'nav-wright/benchy';
-import { BENCHY_MODEL_URL, modelUrlForVariant, modelVariantsForHull, stepMesh } from '../render/hullModels';
+import {
+  BENCHY_MODEL_URL,
+  modelUrlForVariant,
+  modelVariantsForHull,
+  stepMesh,
+} from '../render/hullModels';
 import type { AppState, View } from '../state/urlState';
 
 const ASPECTS: Aspect[] = [
@@ -84,7 +90,9 @@ function DisplayChips({
   const gateText = (gates: Gate[]) =>
     gates.length === 0
       ? intl.formatMessage({ id: 'sandbox.display.gate.any' })
-      : gates.map((g) => `${OP_SYMBOL[g.op]} ${g.value} ${unitFor(g.fact)}`).join(', ');
+      : gates
+          .map((g) => `${OP_SYMBOL[g.op]} ${g.value} ${unitFor(g.fact)}`)
+          .join(', ');
 
   // What the chip shows, in the package catalog's own words: "1 × white
   // all-round light + sidelights". The light's label is the package's
@@ -133,13 +141,16 @@ function DisplayChips({
   // < 50 m". Entries that share a modality and gate share the line —
   // "23(a)(i) + 23(a)(iii)-(iv) · Required · any length".
   const whyText = (d: Display) => {
-    const lines = reasonParts(d, evaln.displays, entryById, evaln.modalities).map(
-      (part) => ({
-        cite: part.cite,
-        modality: modalityText(part.modality),
-        gate: gateText(part.gates),
-      }),
-    );
+    const lines = reasonParts(
+      d,
+      evaln.displays,
+      entryById,
+      evaln.modalities,
+    ).map((part) => ({
+      cite: part.cite,
+      modality: modalityText(part.modality),
+      gate: gateText(part.gates),
+    }));
     const first = lines[0];
     if (
       first &&
@@ -183,9 +194,7 @@ function DisplayChips({
             id="sandbox.elimination.inLieu"
             values={{
               winner: e.cite,
-              losers: inLieu
-                .map((r) => entryById.get(r)?.cite ?? r)
-                .join(', '),
+              losers: inLieu.map((r) => entryById.get(r)?.cite ?? r).join(', '),
               cite: e.cite,
             }}
           />
@@ -224,7 +233,14 @@ function DisplayChips({
           <FormattedMessage id="sandbox.displays.explain" />
         </p>
       )}
-      <div className="chips" role="radiogroup" aria-label={intl.formatMessage({ id: 'sandbox.displays.title' }, { count: evaln.displays.length })}>
+      <div
+        className="chips"
+        role="radiogroup"
+        aria-label={intl.formatMessage(
+          { id: 'sandbox.displays.title' },
+          { count: evaln.displays.length },
+        )}
+      >
         {evaln.displays.map((d, i) => (
           <button
             key={i}
@@ -369,7 +385,9 @@ function EntryRow({
     corpusId,
   );
   const sources = new Map(
-    items.flatMap((r) => (r.shown ? [[r.shown.corpus.id, r.shown.corpus]] : [])),
+    items.flatMap((r) =>
+      r.shown ? [[r.shown.corpus.id, r.shown.corpus]] : [],
+    ),
   );
   return (
     <div className="entry">
@@ -515,7 +533,10 @@ export function Sandbox({
       bearingNoLights: intl.formatMessage({ id: 'scene.bearing.noLights' }),
       bearingThetaLabel: intl.formatMessage({ id: 'scene.bearing.thetaLabel' }),
       bearingThetaValue: (theta, aspect) =>
-        intl.formatMessage({ id: 'scene.bearing.thetaValue' }, { theta, aspect }),
+        intl.formatMessage(
+          { id: 'scene.bearing.thetaValue' },
+          { theta, aspect },
+        ),
       aspect: Object.fromEntries(
         ASPECTS.map((a) => [a, intl.formatMessage({ id: `aspect.${a}` })]),
       ) as Record<Aspect, string>,
@@ -549,137 +570,160 @@ export function Sandbox({
     intl.formatNumber(v / 100, { style: 'percent' });
 
   return (
-    <div className="sandbox-grid">
-      <FactControls state={state} patch={patch} />
-      <div>
-        <div className="panel">
-          <div className="view-tabs" role="tablist" aria-label={intl.formatMessage({ id: 'view.label' })}>
-            {views.map((v) => (
-              <button
-                key={v}
-                role="tab"
-                aria-selected={state.view === v}
-                className={`view-tab${state.view === v ? ' active' : ''}`}
-                onClick={() => patch({ view: v })}
-              >
-                <FormattedMessage id={`view.${v}`} />
-              </button>
-            ))}
-          </div>
-          {state.view === 'profile' && (
-            <ProfileView
-              hull={hull}
-              placed={placed}
-              facts={state.facts}
-              labels={sceneLabels}
-            />
-          )}
-          {state.view === 'bearing' && (
-            <BearingModelView
-              modelUrl={state.benchy ? BENCHY_MODEL_URL : modelUrlForVariant(hull, state.mesh)}
-              hull={hull}
-              placed={placed}
-              facts={state.facts}
-              theta={state.theta}
-              onTheta={(t) => patch({ theta: t })}
-              tilt={state.tilt}
-              onTilt={(t) => patch({ tilt: t })}
-              hullHint={state.hullHint / 100}
-              sky={state.sky / 100}
-              labels={sceneLabels}
-            />
-          )}
-          {state.view === 'bearing' && (
-            <>
-              <SceneSlider
-                id="hull-hint"
-                label={intl.formatMessage({ id: 'scene.hullHint' })}
-                value={state.hullHint}
-                readout={
-                  state.hullHint === 0
-                    ? intl.formatMessage({ id: 'scene.hullHint.off' })
-                    : percentText(state.hullHint)
+    <>
+      <Presets state={state} patch={patch} />
+      <div className="sandbox-grid">
+        <FactControls state={state} patch={patch} />
+        <div>
+          <div className="panel">
+            <div
+              className="view-tabs"
+              role="tablist"
+              aria-label={intl.formatMessage({ id: 'view.label' })}
+            >
+              {views.map((v) => (
+                <button
+                  key={v}
+                  role="tab"
+                  aria-selected={state.view === v}
+                  className={`view-tab${state.view === v ? ' active' : ''}`}
+                  onClick={() => patch({ view: v })}
+                >
+                  <FormattedMessage id={`view.${v}`} />
+                </button>
+              ))}
+            </div>
+            {state.view === 'profile' && (
+              <ProfileView
+                hull={hull}
+                placed={placed}
+                facts={state.facts}
+                labels={sceneLabels}
+              />
+            )}
+            {state.view === 'bearing' && (
+              <BearingModelView
+                modelUrl={
+                  state.benchy
+                    ? BENCHY_MODEL_URL
+                    : modelUrlForVariant(hull, state.mesh)
                 }
-                onChange={(v) => patch({ hullHint: v })}
+                hull={hull}
+                placed={placed}
+                facts={state.facts}
+                theta={state.theta}
+                onTheta={(t) => patch({ theta: t })}
+                tilt={state.tilt}
+                onTilt={(t) => patch({ tilt: t })}
+                hullHint={state.hullHint / 100}
+                sky={state.sky / 100}
+                labels={sceneLabels}
               />
-              <SceneSlider
-                id="sky"
-                label={intl.formatMessage({ id: 'scene.sky' })}
-                value={state.sky}
-                readout={percentText(state.sky)}
-                onChange={(v) => patch({ sky: v })}
-              />
-              <label className="check-row" htmlFor="mesh">
-                <FormattedMessage id="scene.mesh" />
-                <select
-                  id="mesh"
-                  value={modelVariantsForHull(hull).some((v) => v.name === state.mesh) ? state.mesh : ''}
-                  disabled={state.benchy}
-                  onChange={(e) => patch({ mesh: e.target.value })}
-                >
-                  {modelVariantsForHull(hull).map((v, i) => (
-                    <option key={v.name} value={i === 0 ? '' : v.name}>
-                      {v.name.slice(hull.spec.id.length + 1).replace(/\.glb$/, '')}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  disabled={state.benchy}
-                  aria-label={intl.formatMessage({ id: 'scene.mesh.prev' })}
-                  onClick={() => patch({ mesh: stepMesh(hull, state.mesh, -1) })}
-                >
-                  {'\u2039'}
-                </button>
-                <button
-                  type="button"
-                  disabled={state.benchy}
-                  aria-label={intl.formatMessage({ id: 'scene.mesh.next' })}
-                  onClick={() => patch({ mesh: stepMesh(hull, state.mesh, 1) })}
-                >
-                  {'\u203A'}
-                </button>
-              </label>
-              <label className="check-row" htmlFor="benchy">
-                <input
-                  id="benchy"
-                  type="checkbox"
-                  checked={state.benchy}
-                  onChange={(e) => patch({ benchy: e.target.checked })}
+            )}
+            {state.view === 'bearing' && (
+              <>
+                <SceneSlider
+                  id="hull-hint"
+                  label={intl.formatMessage({ id: 'scene.hullHint' })}
+                  value={state.hullHint}
+                  readout={
+                    state.hullHint === 0
+                      ? intl.formatMessage({ id: 'scene.hullHint.off' })
+                      : percentText(state.hullHint)
+                  }
+                  onChange={(v) => patch({ hullHint: v })}
                 />
-                <FormattedMessage id="scene.benchy.toggle" />
-              </label>
-            </>
-          )}
-          {state.view === 'plan' && (
-            <PlanView
-              hull={hull}
-              placed={placed}
-              theta={state.theta}
-              onTheta={(t) => patch({ theta: t })}
-              labels={sceneLabels}
-            />
-          )}
+                <SceneSlider
+                  id="sky"
+                  label={intl.formatMessage({ id: 'scene.sky' })}
+                  value={state.sky}
+                  readout={percentText(state.sky)}
+                  onChange={(v) => patch({ sky: v })}
+                />
+                <label className="check-row" htmlFor="mesh">
+                  <FormattedMessage id="scene.mesh" />
+                  <select
+                    id="mesh"
+                    value={
+                      modelVariantsForHull(hull).some(
+                        (v) => v.name === state.mesh,
+                      )
+                        ? state.mesh
+                        : ''
+                    }
+                    disabled={state.benchy}
+                    onChange={(e) => patch({ mesh: e.target.value })}
+                  >
+                    {modelVariantsForHull(hull).map((v, i) => (
+                      <option key={v.name} value={i === 0 ? '' : v.name}>
+                        {v.name
+                          .slice(hull.spec.id.length + 1)
+                          .replace(/\.glb$/, '')}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    disabled={state.benchy}
+                    aria-label={intl.formatMessage({ id: 'scene.mesh.prev' })}
+                    onClick={() =>
+                      patch({ mesh: stepMesh(hull, state.mesh, -1) })
+                    }
+                  >
+                    {'\u2039'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={state.benchy}
+                    aria-label={intl.formatMessage({ id: 'scene.mesh.next' })}
+                    onClick={() =>
+                      patch({ mesh: stepMesh(hull, state.mesh, 1) })
+                    }
+                  >
+                    {'\u203A'}
+                  </button>
+                </label>
+                <label className="check-row" htmlFor="benchy">
+                  <input
+                    id="benchy"
+                    type="checkbox"
+                    checked={state.benchy}
+                    onChange={(e) => patch({ benchy: e.target.checked })}
+                  />
+                  <FormattedMessage id="scene.benchy.toggle" />
+                </label>
+              </>
+            )}
+            {state.view === 'plan' && (
+              <PlanView
+                hull={hull}
+                placed={placed}
+                theta={state.theta}
+                onTheta={(t) => patch({ theta: t })}
+                labels={sceneLabels}
+              />
+            )}
+          </div>
+
+          <DisplayChips evaln={evaln} state={state} patch={patch} />
+
+          <div className="panel">
+            <h2>
+              <FormattedMessage id="sandbox.rules.title" />
+            </h2>
+            <p className="elim">
+              <FormattedMessage id="sandbox.rules.explain" />
+            </p>
+            {evaln.applied
+              .map((id) => entryById.get(id)!)
+              .map((e) => (
+                <EntryRow key={e.id} entry={e} evaln={evaln} state={state} />
+              ))}
+          </div>
+
+          <DataDrawer evaln={evaln} state={state} patch={patch} />
         </div>
-
-        <DisplayChips evaln={evaln} state={state} patch={patch} />
-
-        <div className="panel">
-          <h2>
-            <FormattedMessage id="sandbox.rules.title" />
-          </h2>
-          <p className="elim">
-            <FormattedMessage id="sandbox.rules.explain" />
-          </p>
-          {evaln.applied
-            .map((id) => entryById.get(id)!)
-            .map((e) => (
-              <EntryRow key={e.id} entry={e} evaln={evaln} state={state} />
-            ))}
-        </div>
-
-        <DataDrawer evaln={evaln} state={state} patch={patch} />
       </div>
-    </div>
+    </>
   );
 }
