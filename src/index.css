@@ -1016,3 +1016,20 @@ table.corpora th {
   opacity: 0.8;
   margin-top: 4px;
 }
+
+/* quiz v2: the two rule panels shown on a wrong answer, side by side */
+.quiz-why {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 12px 0;
+}
+.quiz-why h3,
+.quiz-progress h3 {
+  font-size: 14.5px;
+  margin: 0 0 6px;
+}
+.quiz-progress ul {
+  margin: 0 0 8px;
+  padding-left: 18px;
+}

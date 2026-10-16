@@ -103,7 +103,7 @@ export function App() {
       case 'identify':
         return <Identify state={state} patch={patch} />;
       case 'quiz':
-        return <Quiz state={state} />;
+        return <Quiz state={state} patch={patch} />;
       case 'rules':
         return <Rules state={state} patch={patch} />;
       case 'sound':

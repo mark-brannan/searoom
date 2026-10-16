@@ -51,7 +51,19 @@ export interface AppState {
   /** Bearing view mesh, by nav-wright file name; '' is the hull's default. */
   mesh: string;
   drawer: boolean;
+  /** Quiz: the question's seed. In an exam, the exam's seed (question = seed + index). */
+  quizSeed: number;
+  /** Quiz: the reverse direction (what is she?) rather than forward. */
+  quizReverse: boolean;
+  quizMode: QuizMode;
+  /** Quiz exam: which question of the set is showing, from 0. */
+  quizIndex: number;
+  /** Quiz drill: only scenarios exercising this rule number; '' is all. */
+  quizRule: string;
 }
+
+export type QuizMode = 'practice' | 'drill' | 'exam';
+export const QUIZ_MODES: QuizMode[] = ['practice', 'drill', 'exam'];
 
 export const DEFAULT_FACTS: FactRecord = {
   'fact:propulsion': 'propulsion:sail',
@@ -88,6 +100,11 @@ export const DEFAULT_STATE: AppState = {
   benchy: false,
   mesh: '',
   drawer: false,
+  quizSeed: 1,
+  quizReverse: false,
+  quizMode: 'practice',
+  quizIndex: 0,
+  quizRule: '',
 };
 
 const percent = (v: string | null): number | null => {
@@ -174,6 +191,11 @@ export function serialize(state: AppState): string {
   if (state.benchy) params.set('bn', '1');
   if (state.mesh) params.set('ms', state.mesh);
   if (state.drawer) params.set('dd', '1');
+  if (state.quizSeed !== DEFAULT_STATE.quizSeed) params.set('qs', String(state.quizSeed));
+  if (state.quizReverse) params.set('qd', 'r');
+  if (state.quizMode !== 'practice') params.set('qm', state.quizMode);
+  if (state.quizIndex !== 0) params.set('qi', String(state.quizIndex));
+  if (state.quizRule) params.set('qr', state.quizRule);
   const path =
     state.mode === 'rules' && state.rulePath
       ? `/rules/${encodeURIComponent(state.rulePath)}`
@@ -253,5 +275,16 @@ export function deserialize(hash: string): AppState {
   if (params.get('bn') === '1') state.benchy = true;
   state.mesh = params.get('ms') ?? '';
   if (params.get('dd') === '1') state.drawer = true;
+  const qs = Number(params.get('qs'));
+  if (params.has('qs') && Number.isInteger(qs) && qs >= 0 && qs < 2 ** 31)
+    state.quizSeed = qs;
+  if (params.get('qd') === 'r') state.quizReverse = true;
+  const qm = params.get('qm');
+  if (qm === 'drill' || qm === 'exam') state.quizMode = qm;
+  const qi = Number(params.get('qi'));
+  if (params.has('qi') && Number.isInteger(qi) && qi >= 0 && qi < 1000)
+    state.quizIndex = qi;
+  const qr = params.get('qr');
+  if (qr && /^\d{1,2}$/.test(qr)) state.quizRule = qr;
   return state;
 }
