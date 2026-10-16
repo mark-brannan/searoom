@@ -22,7 +22,6 @@ const states = [
   ['quiz', '#/quiz'],
   ['rules', '#/rules'],
   ['sound', '#/sound'],
-  ['sandbox-sloop-12m', '#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12'],
   ['sandbox-power-60m', '#/sandbox?p=power&a=none&pos=underway&mw=1&len=60'],
   ['sandbox-trawler', '#/sandbox?p=power&a=trawling&pos=underway&mw=0&len=30'],
 ];
