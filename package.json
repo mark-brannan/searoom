@@ -14,6 +14,8 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "screenshots": "node scripts/screenshots.mjs",
+    "goldens": "node scripts/goldens.mjs check",
+    "goldens:update": "node scripts/goldens.mjs update",
     "review-pack": "node scripts/fi-review-pack.mjs"
   },
   "dependencies": {
