@@ -42,3 +42,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261016t053551z
 - C11: cards are scene/cite pairs from quiz fixtures; undo: extend buildDeck (no PR, branch claude/C11-1016)
+
+### 20261016t070218z
+- C15a: tolerate two reported colregs violation classes in sweep allowlist; undo by deleting REPORTED entries (no PR, branch claude/searoom-nav-wright-colregs-scope-e02a5b)
