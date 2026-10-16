@@ -1,7 +1,7 @@
 // Quiz v1, both directions. Every question is generated from the data —
 // scenarios from fixture fact records, distractors from near-miss records.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { describeFacts } from '../components/factLabel';
 import { makeForward, makeReverse } from '../engine/quiz';
@@ -85,6 +85,8 @@ export function Quiz({
   const direction = state.quizDirection;
   const seed = state.quizSeed + state.quizN - 1;
   const [picked, setPicked] = useState<number | null>(null);
+  // back/forward or a pasted URL changes the question: drop the old pick
+  useEffect(() => setPicked(null), [seed, direction]);
   const [score, setScore] = useState({ right: 0, total: 0 });
 
   const question: QuizQuestion = useMemo(

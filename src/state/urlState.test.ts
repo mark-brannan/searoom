@@ -192,6 +192,11 @@ describe('readable routes (#107)', () => {
     expect(serialize(s)).toBe('#/sandbox/trawler?th=90');
     expect(deserialize(serialize(s)).facts).toEqual(s.facts);
   });
+  it('query fields on a preset alias refine that preset', () => {
+    const s = deserialize('#/sandbox/trawler?len=40');
+    expect(s.facts['fact:activity']).toBe('activity:trawling');
+    expect(s.facts['fact:length_m']).toBe(40);
+  });
   it('the sprint-1 query form of a preset still resolves', () => {
     const s = deserialize('#/sandbox?p=power&a=trawling&pos=underway&mw=1&len=30');
     expect(s.facts['fact:activity']).toBe('activity:trawling');

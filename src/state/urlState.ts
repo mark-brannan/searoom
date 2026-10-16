@@ -256,9 +256,10 @@ export function deserialize(hash: string): AppState {
       if (Number.isFinite(n)) facts[key] = n;
     }
   }
-  if (preset) state.facts = { ...preset.facts };
-  if (Object.keys(facts).length > 0)
-    state.facts = { ...DEFAULT_FACTS, ...facts } as FactRecord;
+  // query fields refine the aliased preset, or the default record without one
+  const base = preset ? preset.facts : DEFAULT_FACTS;
+  if (preset || Object.keys(facts).length > 0)
+    state.facts = { ...base, ...facts } as FactRecord;
   const view = params.get('view');
   if (view === 'profile' || view === 'bearing' || view === 'plan') state.view = view;
   // the Model and Benchy tabs merged into the bearing view; an old link
