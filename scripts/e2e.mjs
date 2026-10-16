@@ -15,6 +15,8 @@ const check = (name, ok) => {
 
 const browser = await chromium.launch();
 const context = await browser.newContext({ colorScheme: 'dark' });
+// the opening mesh is random (searoom#174); pin it to the hull's first variant
+await context.addInitScript(() => { Math.random = () => 0; });
 const page = await context.newPage();
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));
