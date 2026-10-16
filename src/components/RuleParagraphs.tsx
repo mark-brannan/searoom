@@ -19,13 +19,7 @@ import { highlightRuns } from '../data/rulesSearch';
 import { useCorpusId } from '../state/corpusContext';
 
 /** "USCG · national · en-US · intl@2016 (verified)" */
-export function CorpusLine({
-  corpus,
-  link,
-}: {
-  corpus: Corpus;
-  link?: boolean;
-}) {
+export function CorpusLine({ corpus, link }: { corpus: Corpus; link?: boolean }) {
   const intl = useIntl();
   const handle = link ? (
     <a href={corpus.source.url} target="_blank" rel="noreferrer">
@@ -38,10 +32,7 @@ export function CorpusLine({
     <span className="corpus-id">
       {handle} · {intl.formatMessage({ id: `corpus.tier.${corpus.tier}` })} ·{' '}
       {corpus.language} · {corpus.edition} (
-      {intl.formatMessage({
-        id: `corpus.editionStatus.${corpus.edition_status}`,
-      })}
-      )
+      {intl.formatMessage({ id: `corpus.editionStatus.${corpus.edition_status}` })})
     </span>
   );
 }
@@ -88,9 +79,7 @@ export function FallbackNote({ r }: { r: ResolvedParagraph }) {
           id="fallback.showing"
           values={{
             shown: corpusHandle(r.shown.corpus),
-            tier: intl.formatMessage({
-              id: `corpus.tier.${r.shown.corpus.tier}`,
-            }),
+            tier: intl.formatMessage({ id: `corpus.tier.${r.shown.corpus.tier}` }),
             language: r.shown.corpus.language,
           }}
         />

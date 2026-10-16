@@ -56,10 +56,7 @@ function imageUrl(name: string): string {
   return `${import.meta.env.BASE_URL}rule-images/${name}`;
 }
 
-function sandboxLink(
-  entryId: string,
-  jurisdiction: string,
-): string | undefined {
+function sandboxLink(entryId: string, jurisdiction: string): string | undefined {
   const facts = factsForEntry(entryId);
   if (!facts) return undefined;
   const j = jurisdictionForEntry(entryId) ?? jurisdiction;
@@ -426,20 +423,22 @@ export function Rules({
             </p>
           ))}
           <div className="chips">
-            {[...restated].sort().map((p) => (
-              <a
-                key={p}
-                className="chip"
-                href={serialize({ ...state, mode: 'rules', rulePath: p })}
-                onClick={(ev) => {
-                  ev.preventDefault();
-                  patch({ rulePath: p });
-                }}
-              >
-                {p}
-                {isJurisdictionOnly(jurisdiction, p) ? ' +' : ''}
-              </a>
-            ))}
+            {[...restated]
+              .sort()
+              .map((p) => (
+                <a
+                  key={p}
+                  className="chip"
+                  href={serialize({ ...state, mode: 'rules', rulePath: p })}
+                  onClick={(ev) => {
+                    ev.preventDefault();
+                    patch({ rulePath: p });
+                  }}
+                >
+                  {p}
+                  {isJurisdictionOnly(jurisdiction, p) ? ' +' : ''}
+                </a>
+              ))}
           </div>
           <p className="elim">
             <a

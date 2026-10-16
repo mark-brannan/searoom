@@ -2,7 +2,7 @@
 // Pure functions over already-resolved paragraphs, so the same words the
 // reader sees are the words searched (no second copy of the corpus).
 
-import { paragraphsForCite, ruleOf } from './cites';
+import { paragraphsForCite } from './cites';
 import { resolveEntries } from './jurisdictions';
 
 export type Part = 'A' | 'B' | 'C' | 'D';
@@ -106,5 +106,3 @@ export function entriesByParagraph(jurisdiction: string): Map<string, Entry[]> {
 export function entriesForParagraph(path: string, jurisdiction: string) {
   return entriesByParagraph(jurisdiction).get(path) ?? [];
 }
-
-export { ruleOf };
