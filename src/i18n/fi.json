@@ -131,7 +131,7 @@
   "quiz.rule.option": "Sääntö {rule}",
   "quiz.share": "Kopioi kysymyksen linkki",
   "quiz.share.copied": "Linkki kopioitu.",
-  "quiz.exam.intro": "{count} kysymystä {minutes} minuutissa. Vastaukset näytetään lopuksi.",
+  "quiz.exam.intro": "{count} kysymystä {minutes} minuutissa. Tulos näytetään lopuksi.",
   "quiz.exam.start": "Aloita koe",
   "quiz.exam.again": "Uusi koe",
   "quiz.exam.progress": "Kysymys {n} / {count} · {time} jäljellä",

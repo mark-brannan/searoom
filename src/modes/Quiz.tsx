@@ -218,6 +218,10 @@ export function Quiz({
     return () => clearInterval(t);
   }, [exam, examDone]);
 
+  // a new question by any route (back/forward, an edited link, the
+  // jurisdiction switcher) starts unanswered
+  useEffect(() => setPicked(null), [seed, reverse, state.jurisdiction]);
+
   const rules = useMemo(() => rulesInPool(state.jurisdiction), [state.jurisdiction]);
 
   const question: QuizQuestion = useMemo(
@@ -284,12 +288,14 @@ export function Quiz({
   const examRight = exam ? exam.log.filter(Boolean).length : 0;
 
   const share = () => {
-    try {
-      void navigator.clipboard.writeText(window.location.href);
-      setNote(intl.formatMessage({ id: 'quiz.share.copied' }));
-    } catch {
-      setNote(window.location.href);
-    }
+    const href = window.location.href;
+    // no clipboard (insecure origin) or a refused write: show the link instead
+    Promise.resolve()
+      .then(() => navigator.clipboard.writeText(href))
+      .then(
+        () => setNote(intl.formatMessage({ id: 'quiz.share.copied' })),
+        () => setNote(href),
+      );
   };
 
   const showQuestion = mode !== 'exam' || (exam !== null && !examDone);
