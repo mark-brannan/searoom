@@ -122,3 +122,25 @@ export function hasRegisteredModel(hull: Hull): boolean {
 export function modelUrlForHull(hull: Hull): string {
   return HULL_MODEL_URLS[hull.spec.id] ?? FALLBACK_MODEL_URL;
 }
+
+/**
+ * A random mesh among those fitting this hull's class, as the `AppState.mesh`
+ * value: '' for the hull's default (first variant), else the file name.
+ * `rand` returns [0, 1); injectable so a test can walk every index.
+ */
+export function pickMesh(hull: Hull, rand: () => number = Math.random): string {
+  const variants = modelVariantsForHull(hull);
+  const i = Math.min(variants.length - 1, Math.floor(rand() * variants.length));
+  return i <= 0 ? '' : variants[i].name;
+}
+
+/**
+ * The mesh `step` places along from the current one, wrapping, as the
+ * `AppState.mesh` value. A name this hull lacks counts as the default.
+ */
+export function stepMesh(hull: Hull, current: string, step: 1 | -1): string {
+  const variants = modelVariantsForHull(hull);
+  const at = Math.max(0, variants.findIndex((v) => v.name === current));
+  const i = (at + step + variants.length) % variants.length;
+  return i === 0 ? '' : variants[i].name;
+}

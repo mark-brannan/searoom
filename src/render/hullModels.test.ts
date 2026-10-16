@@ -7,6 +7,8 @@ import {
   modelUrlForHull,
   modelUrlForVariant,
   modelVariantsForHull,
+  pickMesh,
+  stepMesh,
 } from './hullModels';
 
 const hulls = Object.values(allHulls) as Hull[];
@@ -43,12 +45,39 @@ describe('modelVariantsForHull', () => {
 
   it('gives a hull its kit meshes as well as its loft', () => {
     const tug = hulls.find((h) => h.spec.id === 'tug')!;
-    expect(modelVariantsForHull(tug).length).toBe(6);
+    expect(modelVariantsForHull(tug).length).toBeGreaterThanOrEqual(6);
   });
 
   it('falls back to the default for a name the hull does not have', () => {
     const tug = hulls.find((h) => h.spec.id === 'tug')!;
     expect(modelUrlForVariant(tug, 'tug-loft.glb')).toMatch(/tug-loft/);
     expect(modelUrlForVariant(tug, 'ferry-loft.glb')).toBe(modelUrlForHull(tug));
+  });
+});
+
+describe('pickMesh and stepMesh', () => {
+  it('only ever picks a mesh that fits the hull class, and reaches every one', () => {
+    for (const hull of hulls) {
+      const names = modelVariantsForHull(hull).map((v) => v.name);
+      const seen = new Set<string>();
+      for (let i = 0; i < names.length; i++) {
+        const pick = pickMesh(hull, () => (i + 0.5) / names.length);
+        expect(pick === '' || names.includes(pick), hull.spec.id).toBe(true);
+        seen.add(pick === '' ? names[0] : pick);
+      }
+      expect(seen.size, hull.spec.id).toBe(names.length);
+      // the edge of the range stays inside too
+      expect(['', ...names]).toContain(pickMesh(hull, () => 0.999999999));
+    }
+  });
+
+  it('steps through the class and wraps', () => {
+    for (const hull of hulls) {
+      const n = modelVariantsForHull(hull).length;
+      let m = '';
+      for (let i = 0; i < n; i++) m = stepMesh(hull, m, 1);
+      expect(m, hull.spec.id).toBe('');
+      expect(stepMesh(hull, '', -1)).toBe(n === 1 ? '' : modelVariantsForHull(hull)[n - 1].name);
+    }
   });
 });

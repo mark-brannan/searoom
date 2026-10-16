@@ -158,4 +158,18 @@ describe('URL state round-trip', () => {
       DEFAULT_STATE.jurisdiction,
     );
   });
+
+  it('round-trips the picked mesh for every hull, and omits the default', async () => {
+    const { allHulls } = await import('nav-wright');
+    const { modelVariantsForHull, pickMesh } = await import('../render/hullModels');
+    expect(serialize(DEFAULT_STATE)).not.toContain('ms=');
+    for (const hull of Object.values(allHulls)) {
+      for (const v of modelVariantsForHull(hull)) {
+        const url = serialize({ ...DEFAULT_STATE, mesh: v.name });
+        expect(deserialize(url).mesh).toBe(v.name);
+      }
+      const mesh = pickMesh(hull, () => 0.7);
+      expect(deserialize(serialize({ ...DEFAULT_STATE, mesh })).mesh).toBe(mesh);
+    }
+  });
 });

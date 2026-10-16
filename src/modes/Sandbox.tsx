@@ -31,7 +31,7 @@ import { placeLights } from '../render/navWright';
 import type { Aspect } from 'nav-wright';
 import { BearingModelView } from 'nav-wright/benchy';
 import type { BenchyLabels } from 'nav-wright/benchy';
-import { BENCHY_MODEL_URL, modelUrlForVariant, modelVariantsForHull } from '../render/hullModels';
+import { BENCHY_MODEL_URL, modelUrlForVariant, modelVariantsForHull, stepMesh } from '../render/hullModels';
 import type { AppState, View } from '../state/urlState';
 
 const ASPECTS: Aspect[] = [
@@ -623,6 +623,22 @@ export function Sandbox({
                     </option>
                   ))}
                 </select>
+                <button
+                  type="button"
+                  disabled={state.benchy}
+                  aria-label={intl.formatMessage({ id: 'scene.mesh.prev' })}
+                  onClick={() => patch({ mesh: stepMesh(hull, state.mesh, -1) })}
+                >
+                  {'\u2039'}
+                </button>
+                <button
+                  type="button"
+                  disabled={state.benchy}
+                  aria-label={intl.formatMessage({ id: 'scene.mesh.next' })}
+                  onClick={() => patch({ mesh: stepMesh(hull, state.mesh, 1) })}
+                >
+                  {'\u203A'}
+                </button>
               </label>
               <label className="check-row" htmlFor="benchy">
                 <input
