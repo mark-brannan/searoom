@@ -70,6 +70,55 @@ export function visibleSignature(
     .join(',');
 }
 
+/** A light as seen from one bearing, with the arrangement facts Identify asks about. */
+export interface VisibleLight {
+  color: string;
+  flashing: boolean;
+  /** 'light:masthead' vs 'light:all_round' vs sidelights and so on */
+  lightId: string;
+  /** on the centreline, so it can sit in a vertical line with others */
+  centreline: boolean;
+  /** height; higher is on top of the stack */
+  z: number;
+  /**
+   * Horizontal offset as the viewer sees it, in the hull's fore-aft units
+   * (fx * sin theta): lights on one mast share it from every bearing, lights
+   * fore and aft line up only from ahead or astern.
+   */
+  across: number;
+}
+
+/** Place a display once; callers then ask what shows from each bearing. */
+export function placedVisibility(
+  facts: FactRecord,
+  display: Display,
+): (theta: number) => VisibleLight[] {
+  const hull = selectHull(facts);
+  const placed = placeLights(display.lights, hull.spec, facts, lights).filter(
+    (l) => l.lightId !== 'light:deck_lights',
+  );
+  return (theta) =>
+    placed
+      .filter((l) => bearingInArc(theta, l.arc))
+      .map((l) => ({
+        color: l.color,
+        flashing: l.character === 'flashing',
+        lightId: l.lightId,
+        centreline: l.py === 0,
+        z: l.z,
+        across: l.fx * Math.sin((theta * Math.PI) / 180),
+      }));
+}
+
+/** Lights visible from bearing theta, with arrangement. Same filter as visibleSignature. */
+export function visibleLights(
+  facts: FactRecord,
+  display: Display,
+  theta: number,
+): VisibleLight[] {
+  return placedVisibility(facts, display)(theta);
+}
+
 /** Near-miss perturbations of a fact record. */
 export function nearMisses(facts: FactRecord): FactRecord[] {
   const out: FactRecord[] = [];

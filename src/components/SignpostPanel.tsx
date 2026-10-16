@@ -74,6 +74,11 @@ function SignpostBody({ sp }: { sp: Signpost }) {
           {live.note && <p className="corpus-line">{live.note}</p>}
         </>
       )}
+      {sp.kind === 'jurisdiction' && sp.status !== 'live' && (
+        <p className="corpus-line">
+          <FormattedMessage id="signpost.jurisdiction.notSelectable" />
+        </p>
+      )}
       {sp.bodyKeys.map((k) => (
         <p key={k}>
           <FormattedMessage id={k} />
@@ -101,11 +106,7 @@ function SignpostBody({ sp }: { sp: Signpost }) {
   );
 }
 
-function JurisdictionPickerBody({
-  onOpen,
-}: {
-  onOpen: (id: string) => void;
-}) {
+function JurisdictionPickerBody({ onOpen }: { onOpen: (id: string) => void }) {
   return (
     <div>
       <p className="signpost-body">
@@ -311,7 +312,11 @@ export function SignpostPanel({
         aria-label={title}
         ref={panelRef}
       >
-        <button className="mode-tab" onClick={onClose} style={{ float: 'right' }}>
+        <button
+          className="mode-tab"
+          onClick={onClose}
+          style={{ float: 'right' }}
+        >
           <FormattedMessage id="signpost.close" />
         </button>
         <h2>{title}</h2>

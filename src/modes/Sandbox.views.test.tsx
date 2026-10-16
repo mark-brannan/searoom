@@ -8,12 +8,17 @@ import { IntlProvider } from 'react-intl';
 import { Sandbox } from './Sandbox';
 import { catalogs } from '../i18n';
 import { DEFAULT_STATE } from '../state/urlState';
+import { useApp } from '../state/store';
 import type { View } from '../state/urlState';
 
 function render(view: View): string {
+  // server rendering reads the store's initial snapshot, not its live one
+  Object.assign(useApp.getInitialState(), {
+    state: { ...DEFAULT_STATE, view },
+  });
   return renderToStaticMarkup(
     <IntlProvider locale="en" messages={catalogs.en} defaultLocale="en">
-      <Sandbox state={{ ...DEFAULT_STATE, view }} patch={() => {}} />
+      <Sandbox />
     </IntlProvider>,
   );
 }

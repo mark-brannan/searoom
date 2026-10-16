@@ -26,10 +26,15 @@ export function describeFacts(intl: IntlShape, facts: FactRecord): string {
     );
   if (pos) parts.push(pos.toLowerCase());
   if (facts['fact:making_way'] === false)
-    parts.push(`(${intl.formatMessage({ id: 'fact.makingWay' }).toLowerCase()}: ✗)`);
+    parts.push(
+      `(${intl.formatMessage({ id: 'fact.makingWay' }).toLowerCase()}: ✗)`,
+    );
   if (typeof facts['fact:tow_length_m'] === 'number')
     parts.push(`tow ${facts['fact:tow_length_m']} m`);
-  if (typeof facts['fact:gear_extent_m'] === 'number' && Number(facts['fact:gear_extent_m']) > 0)
+  if (
+    typeof facts['fact:gear_extent_m'] === 'number' &&
+    Number(facts['fact:gear_extent_m']) > 0
+  )
     parts.push(`gear ${facts['fact:gear_extent_m']} m`);
   return parts.join(', ');
 }
