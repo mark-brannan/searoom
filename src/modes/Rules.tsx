@@ -43,7 +43,7 @@ import {
   restatedPathsFor,
 } from '../data/jurisdictions';
 import {
-  entriesForParagraph,
+  entriesByParagraph,
   partOf,
   searchParagraphs,
 } from '../data/rulesSearch';
@@ -211,8 +211,12 @@ export function Rules({
   };
 
   // entries citing a paragraph, each one click from the Sandbox
+  const citing = useMemo(
+    () => entriesByParagraph(jurisdiction),
+    [jurisdiction],
+  );
   const entriesFooter = (p: string) => {
-    const es = entriesForParagraph(p, jurisdiction);
+    const es = citing.get(p) ?? [];
     if (es.length === 0) return null;
     return (
       <div className="chips" data-testid={`cited-by-${p}`}>
@@ -323,7 +327,16 @@ export function Rules({
                     open={rule === ruleOf(state.rulePath ?? '')}
                   >
                     <summary>
-                      <a href={`#rule-${rule}`}>Rule {rule}</a>
+                      <a
+                        href={serialize({
+                          ...state,
+                          mode: 'rules',
+                          rulePath: paths[0],
+                        })}
+                        onClick={goTo(paths[0])}
+                      >
+                        Rule {rule}
+                      </a>
                       {' — '}
                       {ruleTitleFor(
                         jurisdiction,

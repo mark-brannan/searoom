@@ -84,11 +84,27 @@ export function searchParagraphs(
     .map((i) => i.path);
 }
 
+type Entry = ReturnType<typeof resolveEntries>[number];
+
+/**
+ * Paragraph path -> the entries in force under a jurisdiction whose cite
+ * denotes it. Built in one pass over the entries, so a page can look up every
+ * paragraph without re-resolving every cite per paragraph.
+ */
+export function entriesByParagraph(jurisdiction: string): Map<string, Entry[]> {
+  const m = new Map<string, Entry[]>();
+  for (const e of resolveEntries(jurisdiction)) {
+    for (const p of paragraphsForCite(e.cite, jurisdiction)) {
+      if (!m.has(p)) m.set(p, []);
+      m.get(p)!.push(e);
+    }
+  }
+  return m;
+}
+
 /** Entries in force under a jurisdiction whose cite denotes this paragraph. */
 export function entriesForParagraph(path: string, jurisdiction: string) {
-  return resolveEntries(jurisdiction).filter((e) =>
-    paragraphsForCite(e.cite, jurisdiction).includes(path),
-  );
+  return entriesByParagraph(jurisdiction).get(path) ?? [];
 }
 
 export { ruleOf };
