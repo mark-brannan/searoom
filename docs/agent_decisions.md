@@ -57,3 +57,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261016t102449z
 - searoom#187: lockfile edit limited to resolved lines; undo npm update colregs colregs-engine (no PR, branch pr187-work)
+
+### 20261016t112658z
+- searoom#174: the bearing view alongside is the 2D lights-only bearing view, not a second 3D canvas Undo: swap BearingAside's body for nav-wright's BearingView (no PR, branch claude/feat174view-1016n)
