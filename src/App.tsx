@@ -9,6 +9,7 @@ import { SignpostPanel } from './components/SignpostPanel';
 import { colregsVersion } from './data/colregs';
 import { corpusIn } from './data/corpusText';
 import { CorpusContext } from './state/corpusContext';
+import { EXPERIMENTS, setVariant, useVariant } from './state/experiments';
 
 // Each mode loads on first open, so the shell chunk carries none of them.
 const Sandbox = lazy(() =>
@@ -30,6 +31,7 @@ const Sound = lazy(() =>
 export function App() {
   const state = useAppState();
   const patch = usePatch();
+  const layout = useVariant('layout');
   useEffect(() => startSync(), []);
 
   const locale = state.locale === 'fi' ? 'fi' : 'en';
@@ -86,6 +88,25 @@ export function App() {
             </span>
             <a href="https://github.com/mark-brannan/colregs">colregs</a>
             <a href="https://github.com/mark-brannan/searoom">searoom</a>
+            <span
+              className="layout-switch"
+              role="group"
+              aria-labelledby="layout-switch-label"
+            >
+              <span id="layout-switch-label">
+                <FormattedMessage id="app.layout" />
+              </span>
+              {EXPERIMENTS.layout.variants.map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  aria-pressed={layout === v}
+                  onClick={() => setVariant('layout', v)}
+                >
+                  {v.toUpperCase()}
+                </button>
+              ))}
+            </span>
           </footer>
           {state.signpost && (
             <SignpostPanel
