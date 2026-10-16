@@ -23,7 +23,10 @@ const shots = [
     'sandbox-trawler-drifting',
     '#/sandbox?p=power&a=trawling&pos=underway&mw=0&len=30',
   ],
-  ['sandbox-ship-55m', '#/sandbox?p=power&a=none&pos=underway&mw=1&len=55'],
+  [
+    'sandbox-ship-55m',
+    '#/sandbox?p=power&a=none&pos=underway&mw=1&len=55',
+  ],
   [
     'sandbox-preset-tug',
     '#/sandbox?p=power&a=towing&pos=underway&mw=1&len=30&tow=150',
@@ -36,10 +39,7 @@ const shots = [
   ['signpost-eu-cevni', '#/sandbox?sp=eu-cevni'],
   ['signpost-part-b', '#/sandbox?sp=part-b'],
   ['locale-picker', '#/sandbox?sp=locale-picker'],
-  [
-    'sandbox-fi-draft',
-    '#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12&loc=fi',
-  ],
+  ['sandbox-fi-draft', '#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12&loc=fi'],
 ];
 
 const browser = await chromium.launch();
