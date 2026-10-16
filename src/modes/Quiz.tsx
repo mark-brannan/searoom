@@ -174,6 +174,7 @@ export function Quiz({
                   className={optionClass(i)}
                   onClick={() => answer(i)}
                   aria-pressed={picked === i}
+                  aria-label={describeFacts(intl, o.facts)}
                 >
                   <MiniProfile facts={o.facts} display={o.display} />
                 </button>
