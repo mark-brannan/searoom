@@ -57,10 +57,15 @@ describe('chip reason', () => {
   });
 
   it('names only the entries that differ, not the ones every display shares', () => {
-    const aground: FactRecord = { ...anchoredSloop, 'fact:position': 'position:aground' };
+    const aground: FactRecord = {
+      ...anchoredSloop,
+      'fact:position': 'position:aground',
+    };
     const evaln = evaluateDisplayIn('intl', aground);
     // 30(d)'s red-over-red fires in both displays; 30(a)/30(b) is the choice
-    expect(evaln.displays.every((d) => d.entries.includes('rule:30d'))).toBe(true);
+    expect(evaln.displays.every((d) => d.entries.includes('rule:30d'))).toBe(
+      true,
+    );
     expect(distinguishingEntries(evaln.displays[0]!, evaln.displays)).toEqual([
       'rule:30b',
     ]);
@@ -94,7 +99,10 @@ describe('what a display shows', () => {
   });
 
   it('leaves uncounted lights uncounted and keeps the combined-lantern flag', () => {
-    const sloop: FactRecord = { ...anchoredSloop, 'fact:position': 'position:underway' };
+    const sloop: FactRecord = {
+      ...anchoredSloop,
+      'fact:position': 'position:underway',
+    };
     const evaln = evaluateDisplayIn('intl', sloop);
     // 25(b): sidelights and sternlight combined in one lantern
     expect(lightParts(evaln.displays[0]!.lights)).toEqual([
