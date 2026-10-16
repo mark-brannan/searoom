@@ -2,7 +2,8 @@
 // rules that fired on the right. Alternatives stay unresolved — the app
 // shows every lawful display and lets elimination teach the choice.
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { FormattedMessage } from 'react-intl';
 import { useAppState, usePatch } from '../state/store';
 import { Presets } from '../components/Presets';
 import { FactControls } from '../components/FactControls';
@@ -36,11 +37,30 @@ export function Sandbox() {
     return [...display.lights, ...additionLights];
   }, [display, evaln, state.additionsOn]);
 
+  // Under 520 px the fact controls are a bottom sheet (CSS); this is its
+  // open/closed state and is inert on wider screens.
+  const [sheetOpen, setSheetOpen] = useState(true);
+
   return (
     <>
       <Presets />
       <div className="sandbox-grid">
-        <FactControls />
+        <div className={`fact-sheet${sheetOpen ? '' : ' collapsed'}`}>
+          <button
+            type="button"
+            className="sheet-handle"
+            aria-expanded={sheetOpen}
+            aria-controls="fact-sheet-body"
+            onClick={() => setSheetOpen((o) => !o)}
+          >
+            <span className="sheet-grip" aria-hidden="true" />
+            <FormattedMessage id="drawer.factRecord" />
+            <span aria-hidden="true">{sheetOpen ? '\u25BE' : '\u25B4'}</span>
+          </button>
+          <div id="fact-sheet-body" className="fact-sheet-body">
+            <FactControls />
+          </div>
+        </div>
         <div>
           <Scene
             facts={state.facts}
