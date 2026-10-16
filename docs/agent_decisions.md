@@ -39,3 +39,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261016t053548z
 - C11: filters are rule and vessel family only; undo: add filter in Flashcards.tsx (no PR, branch claude/C11-1016)
+
+### 20261016t053551z
+- C11: cards are scene/cite pairs from quiz fixtures; undo: extend buildDeck (no PR, branch claude/C11-1016)
