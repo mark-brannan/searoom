@@ -5,6 +5,7 @@ import { catalogs } from './i18n';
 import { DEFAULT_STATE } from './state/urlState';
 import { startSync, useAppState, usePatch } from './state/store';
 import { Header } from './components/Header';
+import { FirstRunIntro } from './components/FirstRunIntro';
 import { SignpostPanel } from './components/SignpostPanel';
 import { colregsVersion } from './data/colregs';
 import { corpusIn } from './data/corpusText';
@@ -87,6 +88,7 @@ export function App() {
             <a href="https://github.com/mark-brannan/colregs">colregs</a>
             <a href="https://github.com/mark-brannan/searoom">searoom</a>
           </footer>
+          {state.mode === 'sandbox' && !state.signpost && <FirstRunIntro />}
           {state.signpost && (
             <SignpostPanel
               id={state.signpost}
