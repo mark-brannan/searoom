@@ -24,6 +24,22 @@ describe('seascape', () => {
     expect(html).toContain('bearing-horizon');
   });
 
+  it('a vertical line of lights stays above the horizon however many are picked', () => {
+    const seen = Array.from({ length: 8 }, () => ({
+      color: 'white' as const,
+      flashing: false,
+    }));
+    const html = renderToStaticMarkup(
+      <SeenField seen={seen} arrangement="vertical" />,
+    );
+    const horizon = Number(
+      /class="bearing-horizon"[^>]*y1="([\d.]+)"/.exec(html)![1],
+    );
+    const ys = [...html.matchAll(/cy="([\d.]+)"/g)].map((m) => Number(m[1]));
+    expect(ys).toHaveLength(8 * 4);
+    for (const y of ys) expect(y).toBeLessThan(horizon);
+  });
+
   it('a quiz reverse card stays lights only: no sea, no horizon', () => {
     const { facts, jurisdiction } = DEFAULT_STATE;
     const display = evaluateDisplayIn(jurisdiction, facts).displays[0]!;
