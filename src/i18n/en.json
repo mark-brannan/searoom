@@ -288,6 +288,8 @@
   "signpost.status.ranked.corpus": "Signposted — licence unchecked",
   "signpost.status.not-scoped.corpus": "Not yet scoped",
   "signpost.status.live.corpus": "Live",
+  "jurisdiction.signposted": "Signposted — no data yet",
+  "signpost.jurisdiction.notSelectable": "Colregs has not shipped data for this jurisdiction, so it cannot be selected yet.",
   "jurisdiction.label": "Jurisdiction",
   "jurisdiction.intl": "International (COLREGS 72)",
   "jurisdiction.us/inland": "US Inland (33 CFR 83)",

@@ -74,6 +74,11 @@ function SignpostBody({ sp }: { sp: Signpost }) {
           {live.note && <p className="corpus-line">{live.note}</p>}
         </>
       )}
+      {sp.kind === 'jurisdiction' && sp.status !== 'live' && (
+        <p className="corpus-line">
+          <FormattedMessage id="signpost.jurisdiction.notSelectable" />
+        </p>
+      )}
       {sp.bodyKeys.map((k) => (
         <p key={k}>
           <FormattedMessage id={k} />
