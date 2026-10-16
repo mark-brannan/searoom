@@ -45,6 +45,15 @@ describe('Sandbox view wrappers', () => {
     expect(html).toContain('id="benchy"');
   });
 
+  it('bearing view has a range control, 0.5 to 3 nm, opening at 0.5 nm', () => {
+    const html = render('bearing');
+    expect(html).toMatch(
+      /id="range"[^>]*min="0.5"[^>]*max="3"[^>]*step="0.1"[^>]*value="0.5"/,
+    );
+    expect(html).toContain('0.5 nm');
+    expect(render('profile')).not.toContain('id="range"');
+  });
+
   it('the arcs leave the tabs while the arcs panel is shown', () => {
     for (const v of ['profile', 'bearing'] as const) {
       const html = render(v);

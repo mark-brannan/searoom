@@ -30,12 +30,17 @@ import {
   modelVariantsForHull,
   stepMesh,
 } from '../render/hullModels';
-import { DEFAULT_STATE } from '../state/urlState';
+import {
+  DEFAULT_STATE,
+  RANGE_MAX_NM,
+  RANGE_MIN_NM,
+  RANGE_STEP_NM,
+} from '../state/urlState';
 import type { AppState, View } from '../state/urlState';
 
 export type SceneSettings = Pick<
   AppState,
-  'view' | 'theta' | 'tilt' | 'hullHint' | 'sky' | 'mesh' | 'benchy'
+  'view' | 'theta' | 'tilt' | 'hullHint' | 'range' | 'sky' | 'mesh' | 'benchy'
 >;
 
 const ASPECTS: Aspect[] = [
@@ -55,12 +60,18 @@ function SceneSlider({
   value,
   readout,
   onChange,
+  min = 0,
+  max = 100,
+  step = 1,
 }: {
   id: string;
   label: string;
   value: number;
   readout: string;
   onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
 }) {
   return (
     <div className="theta-control">
@@ -68,9 +79,9 @@ function SceneSlider({
       <input
         id={id}
         type="range"
-        min={0}
-        max={100}
-        step={1}
+        min={min}
+        max={max}
+        step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         aria-valuetext={readout}
@@ -366,6 +377,7 @@ function FullScene({
           tilt={settings.tilt}
           onTilt={(t) => onChange({ tilt: t })}
           hullHint={settings.hullHint / 100}
+          range={settings.range}
           sky={settings.sky / 100}
           labels={sceneLabels}
         />
@@ -383,6 +395,26 @@ function FullScene({
             }
             onChange={(v) => onChange({ hullHint: v })}
           />
+          {view === 'bearing' && (
+            <SceneSlider
+              id="range"
+              label={intl.formatMessage({ id: 'scene.range' })}
+              value={settings.range}
+              min={RANGE_MIN_NM}
+              max={RANGE_MAX_NM}
+              step={RANGE_STEP_NM}
+              readout={intl.formatMessage(
+                { id: 'scene.range.value' },
+                {
+                  range: intl.formatNumber(settings.range, {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  }),
+                },
+              )}
+              onChange={(v) => onChange({ range: v })}
+            />
+          )}
           <SceneSlider
             id="sky"
             label={intl.formatMessage({ id: 'scene.sky' })}
