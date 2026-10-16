@@ -74,13 +74,15 @@ function extras(
   return [{}];
 }
 
+// One Map keyed by entry id: entry ids are unique across the whole data set
+// (asserted below), so a jurisdiction's entries never shadow another's.
 const entryById = new Map<string, Entry>(
   (applicability.entries as Entry[]).map((e) => [e.id, e]),
 );
 
 const lightId = (l: { spec: { light?: string } }) => l.spec.light;
 
-/** Relations by entry id, merged over every jurisdiction's own entries. */
+/** The `rel:excludes` ids of an entry, by id. */
 function excludesOf(id: string): string[] {
   const e = entryById.get(id) as Record<string, unknown> | undefined;
   return (e?.['rel:excludes'] as string[] | undefined) ?? [];
@@ -94,11 +96,7 @@ function violationsOf(ev: DisplayEvaluation): string[] {
       !ev.exempted.some((x) => x.id === id) &&
       !ev.overridden.some((x) => x.id === id),
   );
-  if (
-    ev.displays.length === 0 &&
-    fired.length > 0 &&
-    ev.displays.length === 0
-  ) {
+  if (ev.displays.length === 0 && fired.length > 0) {
     const shows = fired.some((id) => {
       const e = entryById.get(id) as
         { lights?: unknown[]; shapes?: unknown[] } | undefined;
@@ -108,9 +106,14 @@ function violationsOf(ev: DisplayEvaluation): string[] {
   }
   ev.displays.forEach((d: Display, i) => {
     const tag = `display ${i} [${d.entries.join('+')}]`;
-    if (d.entries.length === 0) out.push(`${tag}: no entries`);
-    if (d.lights.length + d.shapes.length === 0)
-      out.push(`${tag}: shows nothing`);
+    // A lone empty display is the engine's "nothing to show" (nothing applies,
+    // everything exempted, or only night lights by day). An empty display
+    // beside others is an alternative that names no entry and shows nothing.
+    if (ev.displays.length > 1) {
+      if (d.entries.length === 0) out.push(`${tag}: no entries`);
+      if (d.lights.length + d.shapes.length === 0)
+        out.push(`${tag}: shows nothing`);
+    }
 
     // 2. no duplicate lights: the same spec from the same entry via the same import
     const seen = new Set<string>();
@@ -161,35 +164,62 @@ function violationsOf(ev: DisplayEvaluation): string[] {
 
 /**
  * Violation classes already reported to colregs, keyed by the normalised
- * message the sweep prints. A class listed here is tolerated and must still
- * occur (a stale entry fails), so fixing it upstream forces the line out.
- * Any class not listed fails.
+ * message the sweep prints. `covers` scopes each entry to the records the
+ * report is about: a violation of a listed class on any other record is
+ * unreported and fails. An entry must still cover at least one violation (a
+ * stale entry fails), so fixing it upstream forces the line out.
  */
-const REPORTED: Record<string, string> = {
-  '[..]: no entries': 'mark-brannan/colregs#223',
-  '[..]: shows nothing': 'mark-brannan/colregs#223',
-  '[..]: N sternlights': 'rule:25d_ii gated on propulsion:oars alone (PR body)',
+interface Reported {
+  issue: string;
+  covers: (f: FactRecord, ev: DisplayEvaluation) => boolean;
+}
+// A `may` option is optional, so the engine emits "show nothing" as one more
+// alternative: a display with no entries or no lights, beside the lit ones.
+// colregs#223 has the 23(d)(i) record; 25(b) and 30(d) are the same shape.
+// Covered only when a `may` entry fired; an empty alternative with no `may`
+// entry in play is not this class and fails.
+const emptyAlternative: Reported = {
+  issue: 'mark-brannan/colregs#223',
+  covers: (_f, ev) =>
+    ev.applied.some((id) => ev.modalities[id] === 'modality:may'),
+};
+const REPORTED: Record<string, Reported> = {
+  '[..]: no entries': emptyAlternative,
+  '[..]: shows nothing': emptyAlternative,
+  '[..]: N sternlights': {
+    // rule:25d_ii is gated on propulsion:oars alone, so it co-fires with every
+    // activity and 26(c)'s imported Rule 23 lights add a second sternlight.
+    issue: 'mark-brannan/colregs#224',
+    covers: (f) => f['fact:propulsion'] === 'propulsion:oars',
+  },
 };
 
 describe('property sweep over the fact space (#123)', () => {
+  it('has unique entry ids across every jurisdiction', () => {
+    const ids = (applicability.entries as Entry[]).map((e) => e.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
   it('holds every display invariant across the grid', () => {
-    const failures = new Map<string, string>();
+    const unreported = new Map<string, string>();
+    const covered = new Set<string>();
     for (const { jurisdiction, facts: f } of grid()) {
-      for (const v of violationsOf(evaluateDisplayIn(jurisdiction, f))) {
+      const ev = evaluateDisplayIn(jurisdiction, f);
+      for (const v of violationsOf(ev)) {
         const key = v
           .replace(/display \d+ /, '')
           .replace(/\[[^\]]*\]/, '[..]')
           .replace(/\d+ sternlights/, 'N sternlights')
           .replace(/rule:\S+/g, 'R');
-        if (!failures.has(key))
-          failures.set(key, `${jurisdiction} ${JSON.stringify(f)}`);
+        if (REPORTED[key]?.covers(f, ev)) covered.add(key);
+        else if (!unreported.has(key))
+          unreported.set(key, `${jurisdiction} ${JSON.stringify(f)}`);
       }
     }
-    const unreported = [...failures].filter(([k]) => !(k in REPORTED));
-    const stale = Object.keys(REPORTED).filter((k) => !failures.has(k));
     expect(
-      unreported.map(([v, rec]) => `${v}\n    first record: ${rec}`),
+      [...unreported].map(([v, rec]) => `${v}\n    first record: ${rec}`),
     ).toEqual([]);
+    const stale = Object.keys(REPORTED).filter((k) => !covered.has(k));
     expect(stale, 'reported classes no longer occur; drop them').toEqual([]);
   });
 

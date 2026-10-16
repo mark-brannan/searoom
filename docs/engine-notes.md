@@ -4,7 +4,7 @@ colregs defines predicate semantics and the five relations, and leaves
 final composition to the consumer (REQ-CONS-3). The evaluator in
 `src/engine/evaluate.ts` implements the predicate layer exactly as the
 colregs README states it, replaying all 53 fixture cases verbatim in CI.
-Composing applied entries into _complete lawful displays_ required a
+Composing applied entries into *complete lawful displays* required a
 handful of decisions the data does not make. They are recorded here so
 they can be reviewed as decisions, not archaeology. Each is tested in
 `src/engine/displays.test.ts`.
@@ -49,7 +49,7 @@ they can be reviewed as decisions, not archaeology. Each is tested in
    of 0.2.0 — the import itself is gated by `fact:position` in the data,
    not by a composition decision here.
 
-5. **`one_of` chooses exactly one** (30(d): anchor lights per 30(a) _or_
+5. **`one_of` chooses exactly one** (30(d): anchor lights per 30(a) *or*
    30(b)) — or none, when the carrier is `may` (25(d)(ii): sailing
    lights, or failing that the carrier's own torch; choosing an option
    replaces the carrier's own lights). An option that is itself applied
@@ -93,8 +93,9 @@ tow-length and max-speed bands, day and night, good and restricted visibility,
 under `intl` and `us/inland`. About 21,000 records, roughly a second and a
 half, so it runs on every push with the rest of `npm test`. Across the grid:
 
-1. Where an entry fires, a lawful display exists, and no display is empty
-   (it names entries and shows a light or a shape).
+1. Where an entry that shows a light or a shape fires, a display exists, and
+   no display sitting beside others is empty (it names entries and shows a
+   light or a shape). A lone empty display is the engine's "nothing to show".
 2. No display repeats a light (same spec, entry and import).
 3. At most one sternlight per display.
 4. Sidelights are paired (starboard and port counts equal), or come as the
@@ -106,6 +107,7 @@ half, so it runs on every push with the rest of `npm test`. Across the grid:
    (the Rules reference renders them).
 
 A violation is a colregs issue carrying the failing record, not an app-side
-patch. Classes already reported are listed in the test and tolerated until
-colregs fixes them; a listed class that stops occurring fails the test, so the
-line comes out with the fix.
+patch. Classes already reported are listed in the test with their colregs
+issue and the records they cover, and tolerated until colregs fixes them; the
+same class on any other record fails, and a listed class that stops occurring
+fails the test, so the line comes out with the fix.
