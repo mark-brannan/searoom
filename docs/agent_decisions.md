@@ -30,3 +30,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261016t044105z
 - Light-seating reference is spec stations, not Annex I (nav-wright#50 open) Undo: switch compareToSpec to Annex I seats when nav-wright#50 lands ([#192](https://github.com/mark-brannan/searoom/pull/192))
+
+### 20261016t044108z
+- Misfits listed in output, not failing the seating test Undo: assert misfit list against a committed set ([#192](https://github.com/mark-brannan/searoom/pull/192))
