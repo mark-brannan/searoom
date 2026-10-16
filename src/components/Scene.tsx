@@ -13,13 +13,13 @@ import {
   PX,
   PZ,
   PlanView,
-  ProfileView,
   bearingInArc,
   selectHull,
   skyColor,
 } from 'nav-wright';
 import type { Aspect } from 'nav-wright';
 import { placeLights } from '../render/navWright';
+import { MeshProfileView } from '../render/MeshProfileView';
 import { profileSide, seenFrom } from '../render/profileSide';
 import type { ProfileSide } from '../render/profileSide';
 import { BearingModelView, bearingHullOpacity } from 'nav-wright/benchy';
@@ -338,7 +338,8 @@ function FullScene({
             sky={settings.sky}
             hullHint={settings.hullHint}
           >
-            <ProfileView
+            <MeshProfileView
+              modelUrl={modelUrlForVariant(hull, settings.mesh)}
               hull={hull}
               placed={seenFrom(placed, side)}
               facts={facts}
