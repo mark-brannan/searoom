@@ -21,6 +21,29 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  # Click-through of every mode and one threshold crossing on the built site
+  # (scripts/e2e.mjs), chromium only. A measurement of the site, not a gate,
+  # so it stays out of ci-gate's needs until it has a track record.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Serve dist and run the click-through
+        run: |
+          npx vite preview --port 4173 > preview.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:4173/searoom/ > /dev/null && break
+            sleep 1
+          done
+          node scripts/e2e.mjs
+
   # Refuses to call an empty PR green: a branch whose tree equals its base at
   # the merge base (a stray commit reverted it) merges cleanly and lands
   # nothing. Listed in ci-gate's needs, so it needs no ruleset entry.
