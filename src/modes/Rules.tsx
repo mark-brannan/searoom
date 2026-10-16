@@ -11,12 +11,17 @@
 // The corpus is one of that jurisdiction's; an inherited path reads from the
 // base corpus and says so, a missing one falls back visibly (REQ-LANG-7).
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
 import { CorpusSwitcher } from '../components/CorpusSwitcher';
 import { CorpusLine, MixedNote, Paragraph } from '../components/RuleParagraphs';
-import { entriesForRule, factsForEntry, jurisdictionForEntry, ruleOf } from '../data/cites';
+import {
+  entriesForRule,
+  factsForEntry,
+  jurisdictionForEntry,
+  ruleOf,
+} from '../data/cites';
 import { applicability, images as imagesData } from '../data/colregs';
 import {
   corpusHandle,
@@ -37,6 +42,11 @@ import {
   resolveSkeleton,
   restatedPathsFor,
 } from '../data/jurisdictions';
+import {
+  entriesByParagraph,
+  partOf,
+  searchParagraphs,
+} from '../data/rulesSearch';
 import { jurisdictionExplainers } from '../data/signposts';
 import { useCorpus } from '../state/corpusContext';
 import { serialize, DEFAULT_STATE, defaultCorpusFor } from '../state/urlState';
@@ -68,6 +78,7 @@ export function Rules({
 }) {
   const intl = useIntl();
   const containerRef = useRef<HTMLDivElement>(null);
+  const [query, setQuery] = useState('');
   const { jurisdiction } = state;
   const meta = jurisdictionMeta(jurisdiction);
   const corpus = useCorpus();
@@ -139,6 +150,81 @@ export function Rules({
     [corpus, skeleton],
   );
 
+  // every spelled paragraph resolved once against the corpus in view: the
+  // search reads the same words the reader is shown
+  const allResolved = useMemo(
+    () =>
+      resolveParagraphs(jurisdiction, Object.keys(skeleton), corpus.id).items,
+    [jurisdiction, skeleton, corpus.id],
+  );
+  const resolvedByPath = useMemo(
+    () => new Map(allResolved.map((r) => [r.path, r])),
+    [allResolved],
+  );
+  const hits = useMemo(
+    () =>
+      searchParagraphs(
+        allResolved.map((r) => ({ path: r.path, text: r.shown?.para.text })),
+        query,
+      ),
+    [allResolved, query],
+  );
+  const searching = query.trim().length > 0;
+
+  // part -> rules, for the browse tree
+  const tree = useMemo(() => {
+    const parts = new Map<string, [string, string[]][]>();
+    for (const [rule, paths] of byRule) {
+      const part = partOf(rule);
+      if (!parts.has(part)) parts.set(part, []);
+      parts.get(part)!.push([rule, paths]);
+    }
+    return [...parts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [byRule]);
+
+  const goTo = (p: string) => (ev: React.MouseEvent) => {
+    ev.preventDefault();
+    patch({ rulePath: p });
+  };
+
+  const sandboxChip = (e: { id: string }) => {
+    const link = sandboxLink(e.id, jurisdiction);
+    return (
+      <a
+        key={e.id}
+        className="chip"
+        href={link}
+        onClick={(ev) => {
+          if (!link) return;
+          ev.preventDefault();
+          history.pushState(null, '', link);
+          window.dispatchEvent(new HashChangeEvent('hashchange'));
+        }}
+        title={intl.formatMessage({ id: 'rules.openInSandbox' })}
+      >
+        {e.id} → <FormattedMessage id="rules.openInSandbox" />
+      </a>
+    );
+  };
+
+  // entries citing a paragraph, each one click from the Sandbox
+  const citing = useMemo(
+    () => entriesByParagraph(jurisdiction),
+    [jurisdiction],
+  );
+  const entriesFooter = (p: string) => {
+    const es = citing.get(p) ?? [];
+    if (es.length === 0) return null;
+    return (
+      <div className="chips" data-testid={`cited-by-${p}`}>
+        <span className="corpus-line">
+          <FormattedMessage id="rules.entriesCiting" />
+        </span>
+        {es.map(sandboxChip)}
+      </div>
+    );
+  };
+
   useEffect(() => {
     if (state.rulePath && containerRef.current) {
       const el = containerRef.current.querySelector(
@@ -170,6 +256,113 @@ export function Rules({
             }}
           />
         </p>
+      </div>
+
+      <div className="panel">
+        <input
+          type="search"
+          className="rules-search"
+          value={query}
+          onChange={(ev) => setQuery(ev.target.value)}
+          placeholder={intl.formatMessage({ id: 'rules.search.placeholder' })}
+          aria-label={intl.formatMessage({ id: 'rules.search.label' })}
+        />
+        <p className="corpus-line" data-testid="rules-corpus-top">
+          <CorpusLine corpus={corpus} /> ·{' '}
+          <FormattedMessage
+            id="rules.instrument"
+            values={{
+              instrument: meta?.instrument ?? jurisdiction,
+              edition: meta?.skeleton ?? '',
+              amendedThrough: meta?.amendedThrough ?? '',
+            }}
+          />
+        </p>
+        {searching ? (
+          <div data-testid="rules-results">
+            <p className="elim">
+              <FormattedMessage
+                id="rules.search.count"
+                values={{ count: hits.length }}
+              />
+            </p>
+            {hits.map((p) => {
+              const r = resolvedByPath.get(p)!;
+              return (
+                <Paragraph
+                  key={p}
+                  r={r}
+                  highlight={query}
+                  footer={entriesFooter(p)}
+                  label={
+                    <a
+                      href={serialize({ ...state, mode: 'rules', rulePath: p })}
+                      onClick={goTo(p)}
+                      style={{ textDecoration: 'none' }}
+                    >
+                      <strong>{p}</strong>
+                    </a>
+                  }
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <nav aria-label={intl.formatMessage({ id: 'rules.tree.label' })}>
+            {tree.map(([part, rules]) => (
+              <details
+                key={part}
+                open={rules.some(([r]) => r === ruleOf(state.rulePath ?? ''))}
+              >
+                <summary>
+                  <FormattedMessage id={`rules.part.${part}`} />
+                </summary>
+                {rules.map(([rule, paths]) => (
+                  <details
+                    key={rule}
+                    className="rules-tree-rule"
+                    open={rule === ruleOf(state.rulePath ?? '')}
+                  >
+                    <summary>
+                      <a
+                        href={serialize({
+                          ...state,
+                          mode: 'rules',
+                          rulePath: paths[0],
+                        })}
+                        onClick={goTo(paths[0])}
+                      >
+                        Rule {rule}
+                      </a>
+                      {' — '}
+                      {ruleTitleFor(
+                        jurisdiction,
+                        paths.filter((x) => skeleton[x]),
+                        corpus.id,
+                      ) ?? ''}
+                    </summary>
+                    <div className="chips">
+                      {paths.map((p) => (
+                        <a
+                          key={p}
+                          className={`chip${state.rulePath === p ? ' active' : ''}`}
+                          href={serialize({
+                            ...state,
+                            mode: 'rules',
+                            rulePath: p,
+                          })}
+                          onClick={goTo(p)}
+                        >
+                          {p}
+                        </a>
+                      ))}
+                    </div>
+                  </details>
+                ))}
+              </details>
+            ))}
+          </nav>
+        )}
       </div>
 
       <div className="panel">
@@ -340,27 +533,7 @@ export function Rules({
               fallbackCorpus={resolved.fallbackCorpus}
             />
             {entries.length > 0 && (
-              <div className="chips">
-                {entries.map((e) => {
-                  const link = sandboxLink(e.id, jurisdiction);
-                  return (
-                    <a
-                      key={e.id}
-                      className="chip"
-                      href={link}
-                      onClick={(ev) => {
-                        if (!link) return;
-                        ev.preventDefault();
-                        history.pushState(null, '', link);
-                        window.dispatchEvent(new HashChangeEvent('hashchange'));
-                      }}
-                      title={intl.formatMessage({ id: 'rules.openInSandbox' })}
-                    >
-                      {e.id} → <FormattedMessage id="rules.openInSandbox" />
-                    </a>
-                  );
-                })}
-              </div>
+              <div className="chips">{entries.map(sandboxChip)}</div>
             )}
             {paths.map((p) => {
               const why = voided.get(p);
@@ -389,10 +562,16 @@ export function Rules({
                 >
                   <Paragraph
                     r={r}
+                    highlight={searching ? query : undefined}
+                    footer={entriesFooter(p)}
                     label={
                       <>
                         <a
-                          href={serialize({ ...state, mode: 'rules', rulePath: p })}
+                          href={serialize({
+                            ...state,
+                            mode: 'rules',
+                            rulePath: p,
+                          })}
                           onClick={(ev) => {
                             ev.preventDefault();
                             patch({ rulePath: p });

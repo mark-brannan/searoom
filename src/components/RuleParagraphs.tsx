@@ -15,6 +15,7 @@ import {
 } from '../data/corpusText';
 import type { Corpus, ResolvedParagraph } from '../data/corpusText';
 import { BASE_JURISDICTION } from '../data/jurisdictions';
+import { highlightRuns } from '../data/rulesSearch';
 import { useCorpusId } from '../state/corpusContext';
 
 /** "USCG · national · en-US · intl@2016 (verified)" */
@@ -129,9 +130,15 @@ export function MixedNote({
 export function Paragraph({
   r,
   label,
+  highlight,
+  footer,
 }: {
   r: ResolvedParagraph;
   label?: React.ReactNode;
+  /** search words to mark in the quoted text */
+  highlight?: string;
+  /** shown under the text, e.g. the entries citing this paragraph */
+  footer?: React.ReactNode;
 }) {
   return (
     <div
@@ -140,7 +147,17 @@ export function Paragraph({
     >
       <div>
         {label ?? <strong>{r.path}</strong>}
-        {r.shown ? <> — {r.shown.para.text}</> : null}
+        {r.shown ? (
+          <>
+            {' — '}
+            {highlight
+              ? highlightRuns(r.shown.para.text ?? '', highlight).map(
+                  (run, i) =>
+                    run.hit ? <mark key={i}>{run.text}</mark> : run.text,
+                )
+              : r.shown.para.text}
+          </>
+        ) : null}
       </div>
       {r.shown && (
         <p className="corpus-line">
@@ -154,6 +171,7 @@ export function Paragraph({
         </p>
       )}
       <FallbackNote r={r} />
+      {footer}
     </div>
   );
 }
