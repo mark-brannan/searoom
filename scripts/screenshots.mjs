@@ -29,6 +29,7 @@ const shots = [
   ],
   ['identify', '#/identify'],
   ['quiz', '#/quiz'],
+  ['flashcards', '#/flashcards'],
   ['rules', '#/rules/27(a)(i)'],
   ['sound-stub', '#/sound'],
   ['signpost-us-inland', '#/sandbox?sp=us-inland'],

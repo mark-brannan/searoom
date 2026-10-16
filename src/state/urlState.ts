@@ -19,7 +19,7 @@ import {
 // looser view and casts back to FactRecord at the boundary.
 type FactBag = Record<string, FactValue | undefined>;
 
-export type Mode = 'sandbox' | 'identify' | 'quiz' | 'rules' | 'sound';
+export type Mode = 'sandbox' | 'identify' | 'quiz' | 'flashcards' | 'rules' | 'sound';
 export type View = 'profile' | 'bearing' | 'plan';
 
 export interface AppState {
@@ -194,7 +194,7 @@ export function deserialize(hash: string): AppState {
   const path = qIndex === -1 ? h : h.slice(0, qIndex);
   const query = qIndex === -1 ? '' : h.slice(qIndex + 1);
   const segments = path.split('/').filter(Boolean);
-  const modes: Mode[] = ['sandbox', 'identify', 'quiz', 'rules', 'sound'];
+  const modes: Mode[] = ['sandbox', 'identify', 'quiz', 'flashcards', 'rules', 'sound'];
   if (segments[0] && (modes as string[]).includes(segments[0])) {
     state.mode = segments[0] as Mode;
   }
