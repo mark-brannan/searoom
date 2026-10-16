@@ -48,6 +48,8 @@
   "scene.bearing.thetaValue": "{theta} degrees, {aspect}",
   "scene.benchy.alt": "Benchy view: the vessel as a 3D model with her lights, free to orbit",
   "scene.mesh": "Mesh",
+  "scene.mesh.prev": "Previous mesh",
+  "scene.mesh.next": "Next mesh",
   "scene.benchy.toggle": "Benchy in place of her own model",
   "scene.benchy.tiltLabel": "Tilt",
   "scene.benchy.tiltValue": "{tilt} degrees above the waterline",

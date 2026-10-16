@@ -7,6 +7,8 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../App';
 import type { AppState } from '../state/urlState';
 import type { FactRecord, FactValue } from '../engine/types';
+import { selectHull } from 'nav-wright';
+import { pickMesh } from '../render/hullModels';
 
 // FactRecord (from colregs-engine/schema) types each key's value as its own
 // literal enum, with no index signature — exact for a validated record, too
@@ -116,7 +118,18 @@ export function FactControls({
     // displays most specific concession first (colregs-engine #137), so
     // index 0 is the display the Convention wrote for this vessel — no
     // app-side pick needed.
-    patch({ facts: nextFacts, displayIndex: 0, additionsOn: [] });
+    const change: Patch = { facts: nextFacts, displayIndex: 0, additionsOn: [] };
+    // A new size class, propulsion, activity or position draws a fresh mesh
+    // from the class (searoom#174); other edits keep the one on screen.
+    const nextHull = selectHull(nextFacts);
+    const axes = ['fact:propulsion', 'fact:activity', 'fact:position'] as const;
+    if (
+      nextHull.spec.id !== selectHull(facts).spec.id ||
+      axes.some((k) => nextFacts[k] !== facts[k])
+    ) {
+      change.mesh = pickMesh(nextHull);
+    }
+    patch(change);
   };
 
   const activity = facts['fact:activity'];
