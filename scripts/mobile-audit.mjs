@@ -27,8 +27,8 @@ for (const w of [360, 412]) {
     isMobile: true,
     deviceScaleFactor: 2,
   });
-// the opening mesh is random (searoom#174); pin it to the hull's first variant
-await ctx.addInitScript(() => { Math.random = () => 0; });
+  // the opening mesh is random (searoom#174); pin it to the hull's first variant
+  await ctx.addInitScript(() => { Math.random = () => 0; });
   const page = await ctx.newPage();
   for (const [name, hash] of pages) {
     await page.goto(base + hash, { waitUntil: 'networkidle' });
