@@ -13,6 +13,7 @@ const base = process.argv[3] ?? 'http://localhost:4173/searoom/';
 const goldenDir = 'screenshots/goldens';
 const outDir = 'goldens-out';
 const MAX_DIFF_FRACTION = 0.001; // 0.1% of pixels
+const MAX_HEIGHT = 3000; // px; enough for every sandbox state at 360 px
 const CHANNEL_TOLERANCE = 16; // per-channel delta below this is anti-aliasing noise
 
 const states = [
@@ -91,7 +92,11 @@ async function compare(goldenPng, actualPng) {
         diffPng: c.toDataURL('image/png').split(',')[1],
       };
     },
-    [goldenPng.toString('base64'), actualPng.toString('base64'), CHANNEL_TOLERANCE],
+    [
+      goldenPng.toString('base64'),
+      actualPng.toString('base64'),
+      CHANNEL_TOLERANCE,
+    ],
   );
 }
 
@@ -102,7 +107,17 @@ for (const [w, h] of widths) {
     const file = `${name}-${w}.png`;
     await page.goto(base + hash, { waitUntil: 'networkidle' });
     await page.waitForTimeout(600);
-    const shot = await page.screenshot({ fullPage: false });
+    // Past the viewport: at 360 px the first screen holds only the fact
+    // record, so a viewport shot never sees the vessel drawing or the
+    // displays. Clipped to the viewport width and MAX_HEIGHT so a long page
+    // (the rules list) stays a reviewable PNG.
+    const height = await page.evaluate(
+      () => document.documentElement.scrollHeight,
+    );
+    const shot = await page.screenshot({
+      fullPage: true,
+      clip: { x: 0, y: 0, width: w, height: Math.min(height, MAX_HEIGHT) },
+    });
     if (mode === 'update') {
       writeFileSync(`${goldenDir}/${file}`, shot);
       console.log('wrote', file);
