@@ -8,7 +8,8 @@
 # <root>/.claude/preview/ (gitignored), so each worktree gets its own server.
 #
 # Env for tests: PREVIEW_GATE_CMD overrides the server command (must accept
-# a port as $1 and keep running), PREVIEW_GATE_WAIT the seconds to wait for it.
+# a port as $1 and keep running), PREVIEW_GATE_WAIT the seconds to wait for it,
+# PREVIEW_GATE_PR the PR number (else gh is asked; none -> no Try-it reminder).
 
 set -u
 input=$(cat)
@@ -80,6 +81,12 @@ i=0; wait=${PREVIEW_GATE_WAIT:-20}
 while [ "$i" -lt "$wait" ] && ! listening "$port"; do sleep 1; i=$((i+1)); done
 
 esc() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n' ' '; }
+# a PR open for this branch also needs the paste-ready "## Try it" block in its
+# body (the shared show-dont-tell check is red without it); scripts/try-it.mjs
+# prints it from .github/show-dont-tell.yml.
+pr=${PREVIEW_GATE_PR:-$(gh pr view --json number -q .number 2>/dev/null || true)}
+tryit=""
+[ -n "$pr" ] && tryit=" PR #$pr is open for this branch: its body must carry the Try-it block; run 'node scripts/try-it.mjs $pr' and paste the output into the body if it is not there yet."
 if listening "$port"; then
   # $pid is npm's (or a shell wrapper's), not necessarily the process bound
   # to the port — record the real listener so a later kill actually frees it.
@@ -88,7 +95,7 @@ if listening "$port"; then
     printf '%s\n' "$real_pid" > "$dir/pid"
     pid=$real_pid
   fi
-  printf '{"decision":"block","reason":"%s"}\n' "$(esc "Rendered files changed on this branch, so preview-gate.sh started a dev server: http://localhost:$port serving $root (pid $pid, log $dir/log). Tell the user that URL and worktree path in your reply, then end the turn again.")"
+  printf '{"decision":"block","reason":"%s"}\n' "$(esc "Rendered files changed on this branch, so preview-gate.sh started a dev server: http://localhost:$port serving $root (pid $pid, log $dir/log). Tell the user that URL and worktree path in your reply, then end the turn again.$tryit")"
 else
   kill "$pid" 2>/dev/null
   printf '{"decision":"block","reason":"%s"}\n' "$(esc "Rendered files changed on this branch, but preview-gate.sh could not start a dev server on port $port within ${wait}s. Log tail: $(tail -n 5 "$dir/log"). Fix it or start one by hand, tell the user the URL and worktree path, then end the turn again.")"

@@ -1,5 +1,7 @@
 # Rendered paths: a PR touching any of these must show a picture or a preview
-# URL in its body (mark-brannan/.github show-dont-tell workflow).
+# URL in its body (mark-brannan/.github show-dont-tell workflow), and carry a
+# "## Try it" block that serves the PR's head in one paste. `node
+# scripts/try-it.mjs <pr>` prints that block from the three scalar keys below.
 paths:
   - "src/render/**"   # 3D / WebGL seascape and hull views
   - "src/modes/**"    # the five modes' screens
@@ -7,3 +9,6 @@ paths:
   - "index.html"
   - "public/**"       # icons, og image
   - "screenshots/goldens/**"  # the Playwright goldens
+checkout: ~/searoom                                 # the user's local clone
+install: npm ci
+serve: npm run dev -- --strictPort --port {port}    # {port} = 10000 + PR number

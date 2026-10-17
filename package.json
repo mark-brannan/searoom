@@ -17,7 +17,8 @@
     "screenshots": "node scripts/screenshots.mjs",
     "goldens": "node scripts/goldens.mjs check",
     "goldens:update": "node scripts/goldens.mjs update",
-    "review-pack": "node scripts/fi-review-pack.mjs"
+    "review-pack": "node scripts/fi-review-pack.mjs",
+    "try-it": "node scripts/try-it.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

@@ -29,6 +29,14 @@ out=$(echo '{}' | sh "$hook"); check "server alive -> silent" "$out" ""
 
 out=$(echo '{"stop_hook_active": true}' | sh "$hook"); check "stop_hook_active -> silent" "$out" ""
 
+# an open PR for the branch: the block reason also names the Try-it block
+kill "$pid"; sleep 1
+out=$(echo '{}' | PREVIEW_GATE_PR=7 sh "$hook")
+case "$out" in *'"decision":"block"'*"scripts/try-it.mjs 7"*) r=block ;; *) r="$out" ;; esac
+check "rendered change with an open PR -> reason names try-it" "$r" block
+pid=$(cat .claude/preview/pid)
+out=$(echo '{}' | sh "$hook"); check "server alive -> silent" "$out" ""
+
 kill "$pid"; sleep 1
 out=$(echo '{}' | sh "$hook")
 case "$out" in *'"decision":"block"'*) r=block ;; *) r="$out" ;; esac
