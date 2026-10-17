@@ -37,11 +37,12 @@ export interface MeshScene {
 /** Same default as nav-wright's selectHull when the record has no length. */
 const DEFAULT_LENGTH_M = 12;
 
-const ACTIVITY_SHOWS: Readonly<Record<string, readonly string[]>> = {
+/** `shows` slugs that suit each activity; every one is a slug the catalog uses. */
+export const ACTIVITY_SHOWS: Readonly<Record<string, readonly string[]>> = {
   'activity:towing': ['towing-gear'],
   'activity:pushing': ['push-knees', 'towing-gear'],
-  'activity:fishing': ['fishing-gear', 'gantry', 'trawl-gallows', 'boom'],
-  'activity:trawling': ['fishing-gear', 'gantry', 'trawl-gallows'],
+  'activity:fishing': ['fishing-gear', 'gantry', 'boom'],
+  'activity:trawling': ['fishing-gear', 'gantry'],
   'activity:mine': ['sweep-gear'],
   'activity:diving': ['a-frame'],
   'activity:ram': ['cranes', 'a-frame'],

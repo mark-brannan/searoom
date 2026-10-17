@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { allHulls, meshCatalog, selectHull } from 'nav-wright';
 import type { Hull, MeshRecord } from 'nav-wright';
 import type { FactRecord } from '../engine/types';
-import { rankMeshes, sceneOf } from './meshPicker';
+import { ACTIVITY_SHOWS, rankMeshes, sceneOf } from './meshPicker';
 import { HULL_SCENES } from './hullScenes';
 
 const rec = (file: string, over: Partial<MeshRecord>): MeshRecord =>
@@ -125,6 +125,14 @@ describe('rankMeshes', () => {
     expect(rankMeshes(only, sceneOf(facts({}))).map((m) => m.record.file)).toEqual(['barge-loft.glb']);
     for (const p of ['sail', 'oars', 'power'])
       expect(files(facts({ 'fact:propulsion': `propulsion:${p}` }))).not.toContain('benchy.glb');
+  });
+});
+
+describe('ACTIVITY_SHOWS', () => {
+  it('asks only for shows slugs the catalog uses', () => {
+    const used = new Set(meshCatalog.flatMap((r) => r.shows));
+    for (const slug of [...Object.values(ACTIVITY_SHOWS).flat(), 'wings'])
+      expect(used.has(slug), slug).toBe(true);
   });
 });
 

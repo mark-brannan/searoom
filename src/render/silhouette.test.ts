@@ -65,9 +65,11 @@ describe('every shipped mesh', () => {
         const d = silhouettePath(o, 30, verticalFit(Math.max(...o.top), 30));
         const nums = [...d.matchAll(/(-?\d+\.?\d*),(-?\d+\.?\d*)/g)];
         expect(nums.length, v.name).toBeGreaterThan(200);
-        const xs = nums.map(([, x]) => Number(x));
-        if (Math.max(...xs) > 440) overflow.push(v.name);
-        else for (const x of xs) expect(x, v.name).toBeLessThanOrEqual(440);
+        const right = Math.max(...nums.map(([, x]) => Number(x)));
+        if (right > 440) {
+          overflow.push(v.name);
+          expect(right, v.name).toBeCloseTo(KNOWN_BOW_OVERFLOW[v.name] ?? 440, 0);
+        }
         for (const [, x, y] of nums) {
           expect(Number(x), v.name).toBeGreaterThanOrEqual(0);
           expect(Number(y), `${v.name} y`).toBeGreaterThanOrEqual(0);

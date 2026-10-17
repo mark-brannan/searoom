@@ -29,7 +29,7 @@ import { BearingModelView, bearingHullOpacity } from 'nav-wright/benchy';
 import type { BenchyLabels } from 'nav-wright/benchy';
 import {
   BENCHY_MODEL_URL,
-  modelUrlForVariant,
+  FALLBACK_MODEL_URL,
   modelVariants,
   stepMesh,
 } from '../render/hullModels';
@@ -373,6 +373,10 @@ function FullScene({
   const percentText = (v: number): string =>
     intl.formatNumber(v / 100, { style: 'percent' });
   const variants = useMemo(() => modelVariants(facts), [facts]);
+  const meshUrl =
+    variants.find((v) => v.name === settings.mesh)?.url ??
+    variants[0]?.url ??
+    FALLBACK_MODEL_URL;
   const meshOff = view === 'plan' || (view === 'model' && settings.benchy);
 
   return (
@@ -410,7 +414,7 @@ function FullScene({
               drag={stageDrag}
             >
               <MeshProfileView
-                modelUrl={modelUrlForVariant(facts, settings.mesh)}
+                modelUrl={meshUrl}
                 hull={hull}
                 placed={seenFrom(placed, side)}
                 facts={facts}
@@ -427,7 +431,7 @@ function FullScene({
             modelUrl={
               settings.benchy
                 ? BENCHY_MODEL_URL
-                : modelUrlForVariant(facts, settings.mesh)
+                : meshUrl
             }
             hull={hull}
             placed={placed}
