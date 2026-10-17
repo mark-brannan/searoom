@@ -1,0 +1,9 @@
+# Rendered paths: a PR touching any of these must show a picture or a preview
+# URL in its body (mark-brannan/.github show-dont-tell workflow).
+paths:
+  - "src/render/**"   # 3D / WebGL seascape and hull views
+  - "src/modes/**"    # the five modes' screens
+  - "src/components/**"
+  - "index.html"
+  - "public/**"       # icons, og image
+  - "screenshots/goldens/**"  # the Playwright goldens
