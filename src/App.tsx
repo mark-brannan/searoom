@@ -5,6 +5,7 @@ import { catalogs } from './i18n';
 import { DEFAULT_STATE } from './state/urlState';
 import { startSync, useAppState, usePatch } from './state/store';
 import { Header } from './components/Header';
+import { FirstRunIntro } from './components/FirstRunIntro';
 import { SignpostPanel } from './components/SignpostPanel';
 import { colregsVersion } from './data/colregs';
 import { corpusIn } from './data/corpusText';
@@ -107,6 +108,7 @@ export function App() {
               </span>
             )}
           </footer>
+          {state.mode === 'sandbox' && !state.signpost && <FirstRunIntro />}
           {state.signpost && (
             <SignpostPanel
               id={state.signpost}
