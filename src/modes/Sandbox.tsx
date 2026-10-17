@@ -91,9 +91,9 @@ export function Sandbox() {
     ? ALL_VIEWS.filter((v) => v !== 'plan')
     : ALL_VIEWS;
   // ...so the store never names a tab that is not offered: the scene would
-  // draw Profile while the state and the URL still said plan
+  // draw the 3D view while the state and the URL still said plan
   useEffect(() => {
-    if (arcsShown && state.view === 'plan') patch({ view: 'profile' });
+    if (arcsShown && state.view === 'plan') patch({ view: 'model' });
   }, [arcsShown, state.view, patch]);
 
   const scene = (
@@ -133,7 +133,7 @@ export function Sandbox() {
     />
   );
   const toggle = <ArcsToggle shown={arcsShown} onShown={setArcsShown} />;
-  // the lights-only bearing view, beside the scene; shown unless the URL
+  // the lights-only view, beside the scene; shown unless the URL
   // says it was hidden
   const bearing = (
     <section className="panel bearing-panel">

@@ -11,10 +11,9 @@ const pages = [
   ['sandbox', '#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12'],
   [
     'sandbox-bearing',
-    '#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12&view=bearing&th=340&d=1',
+    '#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12&view=model&th=340&d=1',
   ],
   ['identify', '#/identify'],
-  ['quiz', '#/quiz'],
   ['rules', '#/rules/27(a)(i)'],
   ['sound', '#/sound'],
 ];

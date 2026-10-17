@@ -595,6 +595,28 @@ select {
   color: var(--dim);
 }
 
+/* Benchy is a novelty beside the real controls: small and quiet. */
+.benchy-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--dim);
+  opacity: 0.8;
+}
+
+.benchy-toggle input {
+  accent-color: var(--green-dim);
+  width: 12px;
+  height: 12px;
+  margin: 0;
+}
+
+.benchy-toggle.disabled {
+  opacity: 0.4;
+}
+
 .bearing-panel .scene-svg {
   margin-top: 8px;
 }
@@ -1386,6 +1408,11 @@ table.corpora th {
     width: 22px;
     height: 22px;
     flex: none;
+  }
+
+  /* small to look at, still a full-size target */
+  .benchy-toggle {
+    min-height: 44px;
   }
 
   .check-row button {

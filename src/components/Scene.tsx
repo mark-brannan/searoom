@@ -1,5 +1,5 @@
-// The scene: the view tabs over one display, with its θ, range and
-// presentation settings. Every placed display is drawn through this component;
+// The scene: the 3D view (and the arcs, when offered as a tab) over one
+// display, with its θ, range and presentation settings. Every placed display is drawn through this component;
 // the 'mini' presentation is the tab-less card the Quiz uses.
 
 import { useMemo } from 'react';
@@ -240,7 +240,7 @@ export function Scene({
   views?: View[];
 }) {
   if (presentation === 'mini')
-    return settings.view === 'bearing' ? (
+    return settings.view === 'model' ? (
       <MiniBearing facts={facts} lights={lights} theta={settings.theta} />
     ) : (
       <MiniProfile facts={facts} lights={lights} theta={settings.theta} />
@@ -346,10 +346,10 @@ export function Arcs({
   );
 }
 
-export const ALL_VIEWS: View[] = ['profile', 'bearing', 'plan'];
+export const ALL_VIEWS: View[] = ['model', 'plan'];
 
-// The three tabs are three views of one vessel, so each draws the same
-// controls; one that does not apply to the view stays in place, disabled.
+// The tabs are views of one vessel, so each draws the same controls; one
+// that does not apply to the view stays in place, disabled.
 function FullScene({
   facts,
   lights,
@@ -373,30 +373,33 @@ function FullScene({
   const percentText = (v: number): string =>
     intl.formatNumber(v / 100, { style: 'percent' });
   const variants = modelVariantsForHull(hull);
-  const meshOff = view === 'plan' || (view === 'bearing' && settings.benchy);
+  const meshOff = view === 'plan' || (view === 'model' && settings.benchy);
 
   return (
     <div className="panel scene-panel">
-      <div
-        className="view-tabs"
-        role="tablist"
-        onKeyDown={rovingKeyDown}
-        aria-label={intl.formatMessage({ id: 'view.label' })}
-      >
-        {views.map((v) => (
-          <button
-            key={v}
-            role="tab"
-            aria-selected={view === v}
-            tabIndex={view === v ? 0 : -1}
-            className={`view-tab${view === v ? ' active' : ''}`}
-            onClick={() => onChange({ view: v })}
-          >
-            <FormattedMessage id={`view.${v}`} />
-          </button>
-        ))}
-      </div>
+      {views.length > 1 && (
+        <div
+          className="view-tabs"
+          role="tablist"
+          onKeyDown={rovingKeyDown}
+          aria-label={intl.formatMessage({ id: 'view.label' })}
+        >
+          {views.map((v) => (
+            <button
+              key={v}
+              role="tab"
+              aria-selected={view === v}
+              tabIndex={view === v ? 0 : -1}
+              className={`view-tab${view === v ? ' active' : ''}`}
+              onClick={() => onChange({ view: v })}
+            >
+              <FormattedMessage id={`view.${v}`} />
+            </button>
+          ))}
+        </div>
+      )}
       <div className="scene-main">
+        {/* unreachable: no tab offers 'profile' (refs #218) */}
         {view === 'profile' && (
           <>
             <ProfileStage
@@ -419,7 +422,7 @@ function FullScene({
             </p>
           </>
         )}
-        {view === 'bearing' && (
+        {view === 'model' && (
           <BearingModelView
             modelUrl={
               settings.benchy
@@ -450,7 +453,7 @@ function FullScene({
         )}
         {/* the 3D view draws its own dial and tilt; the flat views borrow
               the same dial, and tilt waits for the camera there */}
-        {view !== 'bearing' && (
+        {view !== 'model' && (
           <>
             <ThetaControl
               theta={settings.theta}
@@ -546,14 +549,14 @@ function FullScene({
           </button>
         </label>
         <label
-          className={`check-row${view === 'bearing' ? '' : ' disabled'}`}
+          className={`benchy-toggle${view === 'model' ? '' : ' disabled'}`}
           htmlFor="benchy"
         >
           <input
             id="benchy"
             type="checkbox"
             checked={settings.benchy}
-            disabled={view !== 'bearing'}
+            disabled={view !== 'model'}
             onChange={(e) => onChange({ benchy: e.target.checked })}
           />
           <FormattedMessage id="scene.benchy.toggle" />

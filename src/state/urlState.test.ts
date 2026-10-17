@@ -26,7 +26,7 @@ describe('URL state round-trip', () => {
         'fact:making_way': false,
         'fact:length_m': 30.5,
       },
-      view: 'bearing',
+      view: 'plan',
       theta: 292,
       tilt: 35,
       displayIndex: 1,
@@ -42,7 +42,9 @@ describe('URL state round-trip', () => {
     expect(deserialize(serialize(state))).toEqual(state);
   });
 
-  it('keeps the bearing view black with a faint hull unless the URL says otherwise', () => {
+  it('opens on the 3D view, black sky, hull plain to see, unless the URL says otherwise', () => {
+    expect(DEFAULT_STATE.view).toBe('model');
+    expect(serialize(DEFAULT_STATE)).not.toContain('view=');
     expect(DEFAULT_STATE.sky).toBe(0);
     expect(DEFAULT_STATE.hullHint).toBeGreaterThan(0);
     const url = serialize(DEFAULT_STATE);
@@ -51,7 +53,7 @@ describe('URL state round-trip', () => {
   });
 
   it('reads hull hint and sky as percent, so hh=0 still turns the hull off', () => {
-    const s = deserialize('#/?view=bearing&hh=0&bg=100');
+    const s = deserialize('#/?view=model&hh=0&bg=100');
     expect(s.hullHint).toBe(0);
     expect(s.sky).toBe(100);
     expect(serialize(s)).toContain('hh=0');
@@ -66,10 +68,10 @@ describe('URL state round-trip', () => {
     expect(deserialize(`#/?hh=${raw}&bg=${raw}`).sky).toBe(want);
   });
 
-  it('opens the bearing view at 0.5 nm and keeps a range in the URL', () => {
+  it('opens the 3D view at 0.5 nm and keeps a range in the URL', () => {
     expect(DEFAULT_STATE.range).toBe(0.5);
     expect(serialize(DEFAULT_STATE)).not.toContain('rg=');
-    const s = deserialize('#/sandbox?view=bearing&rg=3');
+    const s = deserialize('#/sandbox?view=model&rg=3');
     expect(s.range).toBe(3);
     expect(serialize(s)).toContain('rg=3');
     expect(deserialize(serialize(s))).toEqual(s);
@@ -127,34 +129,39 @@ describe('URL state round-trip', () => {
   it('keeps the tilt between the waterline and overhead', () => {
     expect(deserialize('#/sandbox?tl=-20').tilt).toBe(0);
     expect(deserialize('#/sandbox?tl=200').tilt).toBe(85);
-    expect(serialize({ ...DEFAULT_STATE, tilt: 40, view: 'bearing' })).toContain('tl=40');
+    expect(serialize({ ...DEFAULT_STATE, tilt: 40 })).toContain('tl=40');
   });
 
-  it.each(['profile', 'bearing', 'plan'] as const)('round-trips the %s view', (view) => {
+  it.each(['model', 'plan'] as const)('round-trips the %s view', (view) => {
     expect(deserialize(serialize({ ...DEFAULT_STATE, view })).view).toBe(view);
   });
 
-  it('reads the retired Model tab as the merged bearing view, and junk as the default', () => {
-    expect(deserialize('#/sandbox?view=model').view).toBe('bearing');
+  it.each(['bearing', 'profile'])('reads a view=%s link as the 3D view', (view) => {
+    expect(deserialize(`#/sandbox?view=${view}`).view).toBe('model');
+  });
+
+  it('reads a junk view as the default', () => {
     expect(deserialize('#/sandbox?view=bogus').view).toBe(DEFAULT_STATE.view);
   });
 
   it('round-trips Benchy in place of her own model, and leaves it off by default', () => {
-    const state = { ...DEFAULT_STATE, view: 'bearing' as const, benchy: true };
+    const state = { ...DEFAULT_STATE, benchy: true };
     expect(deserialize(serialize(state))).toEqual(state);
+    expect(deserialize('#/sandbox?benchy=1').benchy).toBe(true);
     expect(deserialize(serialize(DEFAULT_STATE)).benchy).toBe(false);
-    expect(deserialize('#/sandbox?view=bearing&bn=0').benchy).toBe(false);
+    expect(deserialize('#/sandbox?benchy=0').benchy).toBe(false);
+    expect(deserialize('#/sandbox?bn=1').benchy).toBe(false);
   });
 
-  it('reads the retired Benchy tab as the bearing view with Benchy on', () => {
+  it('reads a view=benchy link as the 3D view with Benchy on', () => {
     const state = deserialize('#/sandbox?view=benchy&tl=30');
-    expect(state.view).toBe('bearing');
+    expect(state.view).toBe('model');
     expect(state.benchy).toBe(true);
     expect(state.tilt).toBe(30);
   });
 
-  it('round-trips the merged view with its camera and night settings', () => {
-    const state = { ...DEFAULT_STATE, view: 'bearing' as const, theta: 135, tilt: 25, hullHint: 0, sky: 60 };
+  it('round-trips the 3D view with its camera and night settings', () => {
+    const state = { ...DEFAULT_STATE, theta: 135, tilt: 25, hullHint: 0, sky: 60 };
     expect(deserialize(serialize(state))).toEqual(state);
   });
 
@@ -205,16 +212,11 @@ describe('URL state round-trip', () => {
 });
 
 describe('readable routes (#107)', () => {
-  it('quiz seed, question and direction round-trip', () => {
-    const s = deserialize('#/quiz/7/3?dir=reverse');
-    expect([s.mode, s.quizSeed, s.quizN, s.quizDirection]).toEqual(['quiz', 7, 3, 'reverse']);
-    expect(serialize(s)).toMatch(/^#\/quiz\/7\/3\?.*dir=reverse/);
-    expect(deserialize(serialize(s))).toEqual(s);
-  });
-  it('bare #/quiz keeps working', () => {
-    const s = deserialize('#/quiz');
+  it.each(['#/quiz', '#/quiz/7/3?dir=reverse'])('%s lands on the sandbox', (hash) => {
+    const s = deserialize(hash);
+    expect(s.mode).toBe('sandbox');
     expect([s.quizSeed, s.quizN]).toEqual([1, 1]);
-    expect(serialize(s)).toMatch(/^#\/quiz\?/);
+    expect(serialize(s)).toMatch(/^#\/sandbox/);
   });
   it('a preset alias loads the preset and a custom record stays in query fields', () => {
     const s = deserialize('#/sandbox/trawler?th=90');

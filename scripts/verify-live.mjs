@@ -68,7 +68,7 @@ check(
 
 // 4. bearing view: tricolor shows exactly one light from port bow
 await page.goto(
-  `${base}#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12&view=bearing&th=300&d=1`,
+  `${base}#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12&view=model&th=300&d=1`,
   { waitUntil: 'networkidle' },
 );
 const bearingLights = await page
@@ -114,12 +114,6 @@ check(
   `identify white+red: ${candidates} candidates incl. fishing vessel`,
   candidates >= 1 && fishing >= 1,
 );
-
-// 7. quiz: answer a question, get feedback with a citation
-await page.goto(`${base}#/quiz`, { waitUntil: 'networkidle' });
-await page.locator('.quiz-option').first().click();
-const feedback = await page.locator('.quiz-feedback').textContent();
-check('quiz feedback cites a rule', /\d/.test(feedback ?? ''));
 
 // 8. rules deep link highlights the paragraph
 await page.goto(`${base}#/rules/${encodeURIComponent('27(a)(i)')}`, {

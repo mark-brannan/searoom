@@ -19,7 +19,6 @@ const CHANNEL_TOLERANCE = 16; // per-channel delta below this is anti-aliasing n
 const states = [
   ['sandbox', '#/sandbox'],
   ['identify', '#/identify'],
-  ['quiz', '#/quiz'],
   ['rules', '#/rules'],
   ['sound', '#/sound'],
   ['sandbox-power-60m', '#/sandbox?p=power&a=none&pos=underway&mw=1&len=60'],

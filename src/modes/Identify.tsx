@@ -240,7 +240,7 @@ export function Identify() {
                   ...DEFAULT_STATE,
                   mode: 'sandbox',
                   facts: c.facts,
-                  view: 'bearing',
+                  view: 'model',
                   theta: c.thetas[0],
                 })}
                 onClick={(ev) => {
@@ -248,7 +248,7 @@ export function Identify() {
                   patch({
                     mode: 'sandbox',
                     facts: c.facts,
-                    view: 'bearing',
+                    view: 'model',
                     theta: c.thetas[0],
                     displayIndex: 0,
                     additionsOn: [],

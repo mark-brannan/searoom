@@ -82,23 +82,22 @@ describe('parseProgress with a hostile key', () => {
 });
 
 describe('quiz state in the URL', () => {
-  it('round-trips seed, direction, mode, index and rule', () => {
-    const s = {
+  // the Quiz is unwired (refs #218): its link is still written, but no
+  // longer read back, so #/quiz lands on the sandbox
+  it('writes seed, direction, mode, index and rule into a quiz link', () => {
+    const url = serialize({
       ...deserialize('#/quiz'),
-      quizSeed: 4242,
-      quizDirection: 'reverse' as const,
-      quizMode: 'exam' as const,
-      quizN: 4,
-      quizRule: '27',
-    };
-    const back = deserialize(serialize(s));
-    expect(back).toMatchObject({
+      mode: 'quiz',
       quizSeed: 4242,
       quizDirection: 'reverse',
       quizMode: 'exam',
       quizN: 4,
       quizRule: '27',
     });
+    expect(url).toMatch(/^#\/quiz\/4242\/4\?/);
+    expect(url).toContain('dir=reverse');
+    expect(url).toContain('qm=exam');
+    expect(url).toContain('qr=27');
   });
 
   it('ignores junk in a hand-edited link', () => {

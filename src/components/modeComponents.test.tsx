@@ -24,7 +24,7 @@ const html = (n: ReactNode) =>
 
 describe('mode components', () => {
   it('Scene draws the view tabs, or a tab-less mini card', () => {
-    const settings = { view: 'profile' as const, theta: 45 };
+    const settings = { view: 'model' as const, theta: 45 };
     expect(
       html(<Scene facts={facts} lights={lights} settings={settings} />),
     ).toContain('view-tabs');

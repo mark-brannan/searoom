@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs';
 
 const base = process.argv[2] ?? 'http://localhost:4173/searoom/';
 const hash =
-  '#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12&view=bearing&th=0&d=1';
+  '#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12&view=model&th=0&d=1';
 
 const browser = await chromium.launch();
 const context = await browser.newContext({

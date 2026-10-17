@@ -1,7 +1,7 @@
-// Component tests for the Sandbox's three view wrappers (profile, bearing,
-// plan): each renders under the real IntlProvider and its mount point is
-// present. Server rendering, so no DOM library is needed; the 3D bearing
-// canvas draws client-side only, so for it we assert its controls render.
+// Component tests for the Sandbox's views (the 3D model, and the arcs when
+// they are a tab): each renders under the real IntlProvider. Server
+// rendering, so no DOM library is needed; the 3D canvas draws client-side
+// only, so for it we assert its controls render.
 import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { IntlProvider } from 'react-intl';
@@ -23,109 +23,98 @@ function render(view: View, extra: Partial<AppState> = {}): string {
   );
 }
 
-describe('Sandbox view wrappers', () => {
-  it('profile view draws the scene SVG with its hull hint and sky', () => {
-    const html = render('profile');
-    expect(html).toContain('scene-svg');
-    expect(html).toContain('id="hull-hint"');
-    expect(html).toContain('id="sky"');
+function withArcsHidden(fn: () => void) {
+  vi.stubGlobal('window', {
+    localStorage: { getItem: () => 'hidden', setItem: () => {} },
   });
+  try {
+    fn();
+  } finally {
+    vi.unstubAllGlobals();
+  }
+}
 
-  // one vessel, three views: every tab draws the same controls, and one that
-  // does not apply there stays in place, disabled
-  const CONTROLS = [
-    'theta',
-    'tilt',
-    'hull-hint',
-    'range',
-    'sky',
-    'mesh',
-    'benchy',
-  ];
+describe('Sandbox views', () => {
   const disabled = (html: string, id: string) =>
     new RegExp(`id="${id}"[^>]*disabled=""`).test(html) ||
     new RegExp(`disabled=""[^>]*id="${id}"`).test(html);
 
-  it('profile, bearing and arcs show the same control set', () => {
-    vi.stubGlobal('window', {
-      localStorage: { getItem: () => 'hidden', setItem: () => {} },
-    });
-    try {
-      for (const v of ['profile', 'bearing', 'plan'] as const) {
+  it('opens on the 3D view, its camera tilt live', () => {
+    expect(DEFAULT_STATE.view).toBe('model');
+    const html = render(DEFAULT_STATE.view);
+    expect(html).not.toContain('data-side=');
+    expect(disabled(html, 'tilt')).toBe(false);
+    expect(disabled(html, 'benchy')).toBe(false);
+  });
+
+  // one vessel, every tab draws the same controls, and one that does not
+  // apply there stays in place, disabled
+  const CONTROLS = ['theta', 'tilt', 'hull-hint', 'range', 'sky', 'mesh', 'benchy'];
+
+  it('the 3D view and the arcs show the same control set', () => {
+    withArcsHidden(() => {
+      for (const v of ['model', 'plan'] as const) {
         const html = render(v);
         for (const id of CONTROLS)
           expect(html, `${v} ${id}`).toContain(`id="${id}"`);
       }
-    } finally {
-      vi.unstubAllGlobals();
-    }
+    });
   });
 
   it('a control that does not apply to the view is disabled, not hidden', () => {
-    const profile = render('profile');
-    expect(disabled(profile, 'benchy')).toBe(true);
-    expect(disabled(profile, 'tilt')).toBe(true);
-    expect(disabled(profile, 'mesh')).toBe(false);
-    expect(disabled(profile, 'range')).toBe(false);
-    const bearing = render('bearing');
+    const model = render('model');
     for (const id of ['benchy', 'mesh', 'range', 'sky', 'hull-hint'])
-      expect(disabled(bearing, id), id).toBe(false);
-    expect(disabled(render('bearing', { benchy: true }), 'mesh')).toBe(true);
+      expect(disabled(model, id), id).toBe(false);
+    expect(disabled(render('model', { benchy: true }), 'mesh')).toBe(true);
+    withArcsHidden(() => {
+      const plan = render('plan');
+      for (const id of ['tilt', 'benchy', 'mesh', 'range', 'sky', 'hull-hint'])
+        expect(disabled(plan, id), id).toBe(true);
+    });
   });
 
-  it('shows the bearing view beside the scene by default, and hides it on request', () => {
+  it('shows the lights-only view beside the scene by default, and hides it on request', () => {
     const panel = (html: string) =>
       html.slice(html.indexOf('bearing-panel'), html.indexOf('arcs-panel'));
-    for (const v of ['profile', 'bearing'] as const) {
-      const html = panel(render(v));
-      expect(html).toContain('<svg');
-      expect(html).toContain('aria-expanded="true"');
-    }
-    const hidden = panel(render('profile', { bearingAside: false }));
+    const shown = panel(render('model'));
+    expect(shown).toContain('<svg');
+    expect(shown).toContain('aria-expanded="true"');
+    const hidden = panel(render('model', { bearingAside: false }));
     expect(hidden).not.toContain('<svg');
     expect(hidden).toContain('aria-expanded="false"');
   });
 
-  it('with the arcs panel shown, a plan view shows the profile and the arcs beside it', () => {
+  it('a stale profile view still lands on the 3D view, never the side profile', () => {
+    const html = render('profile');
+    expect(html).not.toContain('data-side=');
+    expect(disabled(html, 'tilt')).toBe(false);
+  });
+
+  it('with the arcs panel shown, a plan view shows the 3D view and the arcs beside it', () => {
     const html = render('plan');
-    expect(html).toContain('data-side="starboard"');
+    expect(html).not.toContain('data-side=');
+    expect(disabled(html, 'tilt')).toBe(false);
     expect(html).toContain('plan-svg');
   });
 
-  it('bearing view renders its hull hint, sky and mesh controls', () => {
-    const html = render('bearing');
-    expect(html).toContain('id="hull-hint"');
-    expect(html).toContain('id="sky"');
-    expect(html).toContain('id="benchy"');
-  });
-
-  it('bearing view has a range control, 0.5 to 3 nm, opening at 0.5 nm', () => {
-    const html = render('bearing');
+  it('3D view has a range control, 0.5 to 3 nm, opening at 0.5 nm', () => {
+    const html = render('model');
     expect(html).toMatch(
       /id="range"[^>]*min="0.5"[^>]*max="3"[^>]*step="0.1"[^>]*value="0.5"/,
     );
-    expect(html).toContain('0.5 nm');
   });
 
-  it('the arcs leave the tabs while the arcs panel is shown', () => {
-    for (const v of ['profile', 'bearing'] as const) {
-      const html = render(v);
+  it('with the arcs beside it, the 3D view stands alone with no tab bar', () => {
+    const html = render('model');
+    expect(html).not.toContain('role="tablist"');
+  });
+
+  it('hiding the arcs panel brings the Arcs tab back beside the 3D view', () => {
+    withArcsHidden(() => {
+      const html = render('plan');
       expect(html.match(/role="tab"/g)).toHaveLength(2);
       expect(html.match(/aria-selected="true"/g)).toHaveLength(1);
-    }
-  });
-
-  it('hiding the arcs panel brings the Arcs tab back', () => {
-    vi.stubGlobal('window', {
-      localStorage: { getItem: () => 'hidden', setItem: () => {} },
-    });
-    try {
-      const html = render('plan');
-      expect(html.match(/role="tab"/g)).toHaveLength(3);
-      expect(html).not.toContain('data-side=');
       expect(html).toContain('plan-svg');
-    } finally {
-      vi.unstubAllGlobals();
-    }
+    });
   });
 });
