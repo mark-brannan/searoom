@@ -8,7 +8,6 @@ import { isJurisdiction } from '../data/jurisdictions';
 import { catalogs } from '../i18n';
 import type { AppState } from './urlState';
 import { deserialize } from './urlState';
-import { selectHull } from 'nav-wright';
 import { pickInitialMesh } from '../render/hullModels';
 
 export const SETTINGS_KEY = 'searoom.settings.v1';
@@ -61,7 +60,7 @@ export function stateFromHash(
   // the hash, so reload and share keep it. An explicit `ms` always wins.
   const query = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : '';
   if (!new URLSearchParams(query).has('ms'))
-    state.mesh = pickInitialMesh(selectHull(state.facts), rand);
+    state.mesh = pickInitialMesh(state.facts, rand);
   if (hash.replace(/^#/, '') !== '') return state;
   if (stored.locale) state.locale = stored.locale;
   if (stored.jurisdiction) {

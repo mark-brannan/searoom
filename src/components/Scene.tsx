@@ -30,7 +30,7 @@ import type { BenchyLabels } from 'nav-wright/benchy';
 import {
   BENCHY_MODEL_URL,
   modelUrlForVariant,
-  modelVariantsForHull,
+  modelVariants,
   stepMesh,
 } from '../render/hullModels';
 import {
@@ -372,7 +372,7 @@ function FullScene({
   const stageDrag = useDragRotate<HTMLDivElement>(settings.theta, onTheta);
   const percentText = (v: number): string =>
     intl.formatNumber(v / 100, { style: 'percent' });
-  const variants = modelVariantsForHull(hull);
+  const variants = useMemo(() => modelVariants(facts), [facts]);
   const meshOff = view === 'plan' || (view === 'model' && settings.benchy);
 
   return (
@@ -410,7 +410,7 @@ function FullScene({
               drag={stageDrag}
             >
               <MeshProfileView
-                modelUrl={modelUrlForVariant(hull, settings.mesh)}
+                modelUrl={modelUrlForVariant(facts, settings.mesh)}
                 hull={hull}
                 placed={seenFrom(placed, side)}
                 facts={facts}
@@ -427,7 +427,7 @@ function FullScene({
             modelUrl={
               settings.benchy
                 ? BENCHY_MODEL_URL
-                : modelUrlForVariant(hull, settings.mesh)
+                : modelUrlForVariant(facts, settings.mesh)
             }
             hull={hull}
             placed={placed}
@@ -525,7 +525,12 @@ function FullScene({
           >
             {variants.map((v, i) => (
               <option key={v.name} value={i === 0 ? '' : v.name}>
-                {v.name.slice(hull.spec.id.length + 1).replace(/\.glb$/, '')}
+                {v.fits
+                  ? v.label
+                  : intl.formatMessage(
+                      { id: 'scene.mesh.scaled' },
+                      { name: v.label },
+                    )}
               </option>
             ))}
           </select>
@@ -534,7 +539,7 @@ function FullScene({
             disabled={meshOff}
             aria-label={intl.formatMessage({ id: 'scene.mesh.prev' })}
             onClick={() =>
-              onChange({ mesh: stepMesh(hull, settings.mesh, -1) })
+              onChange({ mesh: stepMesh(facts, settings.mesh, -1) })
             }
           >
             {'‹'}
@@ -543,7 +548,7 @@ function FullScene({
             type="button"
             disabled={meshOff}
             aria-label={intl.formatMessage({ id: 'scene.mesh.next' })}
-            onClick={() => onChange({ mesh: stepMesh(hull, settings.mesh, 1) })}
+            onClick={() => onChange({ mesh: stepMesh(facts, settings.mesh, 1) })}
           >
             {'›'}
           </button>

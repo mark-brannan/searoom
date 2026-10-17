@@ -6,8 +6,9 @@ import { gzipSync } from 'node:zlib';
 
 // Ceilings in gzip bytes: measured + 5%. Lower them when the bundle shrinks.
 // The total also carries the mesh Profile view (#191, +5229 B), which loads
-// three.js for the Sandbox's Profile tab.
-const CEILING = { main: 125757, total: 514744 };
+// three.js for the Sandbox's Profile tab, and nav-wright's mesh catalog
+// (the Mesh picker's data, +9455 B).
+const CEILING = { main: 125757, total: 524199 };
 const dir = 'dist/assets';
 const gz = (f) => gzipSync(readFileSync(`${dir}/${f}`)).length;
 const files = readdirSync(dir).filter((f) => /\.(js|css)$/.test(f));
