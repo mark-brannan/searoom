@@ -139,3 +139,4 @@ export function silhouettePath(
   for (let c = n - 1; c >= 0; c--) out.push(pt(centre(c), outline.bottom[c]));
   return `M${out.join(' L')} Z`;
 }
+// throwaway
