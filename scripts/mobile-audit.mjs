@@ -27,6 +27,9 @@ for (const w of [360, 412]) {
     isMobile: true,
     deviceScaleFactor: 2,
   });
+  await ctx.addInitScript(() => {
+    localStorage.setItem('searoom.introSeen', '1');
+  });
   // the opening mesh is random (searoom#174); pin it to the hull's first variant
   await ctx.addInitScript(() => { Math.random = () => 0; });
   const page = await ctx.newPage();
