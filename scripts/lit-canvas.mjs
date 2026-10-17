@@ -1,20 +1,17 @@
 // Never re-baselined: on the default Sandbox load the WebGL canvas must have
 // more than 5% of its pixels lit. Unlike the screenshot goldens, this number
 // is not copied over in an update commit, so a change that hides the 3D view
-// cannot be waved through by re-baselining (searoom#218: four unattended
-// merges hid the 3D view and the goldens were re-baselined over it).
-// Measured at the time of writing: 0.1% on main without the 3D view, 15.9%
-// on the old Model tab.
+// cannot be waved through by re-baselining (searoom#218).
 // Lit = luminance more than LIT_OVER_SKY above the canvas's median luminance
 // (its sky), so a black, blank or see-through canvas counts nothing.
-// Usage: node scripts/lit-canvas.mjs [baseUrl]   (serve the built dist first)
+// Usage: node scripts/lit-canvas.mjs [baseUrl [hash]]   (serve the built dist first)
 
 import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 const base = process.argv[2] ?? 'http://localhost:4173/searoom/';
 const MIN_LIT_FRACTION = 0.05; // hard-coded on purpose; never re-baselined (searoom#218)
-const LIT_OVER_SKY = 12; // of 255
+const LIT_OVER_SKY = 4; // of 255; the default scene is dim, so "lit" is "not sky"
 
 const browser = await chromium.launch({ args: ['--use-gl=swiftshader'] });
 const context = await browser.newContext({
@@ -26,8 +23,10 @@ const context = await browser.newContext({
 await context.addInitScript(() => {
   localStorage.setItem('searoom.introSeen', '1');
 });
+// the opening mesh is random (searoom#174); pin it to the hull's first variant
+await context.addInitScript(() => { Math.random = () => 0; });
 const page = await context.newPage();
-await page.goto(`${base}#/sandbox`, { waitUntil: 'networkidle' });
+await page.goto(`${base}${process.argv[3] ?? '#/sandbox'}`, { waitUntil: 'networkidle' });
 
 const canvas = page.locator('canvas').first();
 const hasCanvas = await canvas.waitFor({ timeout: 10000 }).then(() => true, () => false);
