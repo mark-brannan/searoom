@@ -75,6 +75,14 @@ export const KNOWN_MISFITS: ReadonlySet<string> = new Set([
   'cruise-ship',
   'warship',
   'dredger',
+  'pusher',
+  'partly-submerged',
+  'aground',
+  'dive-support',
+  'fishing-gear',
+  'mine-clearance',
+  'restricted-ability',
+  'wing-in-ground',
 ]);
 
 /** Vite's `?url` import under vitest resolves to a root-relative path, with
