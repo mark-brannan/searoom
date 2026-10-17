@@ -525,7 +525,8 @@ function FullScene({
           >
             {variants.map((v, i) => (
               <option key={v.name} value={i === 0 ? '' : v.name}>
-                {v.name.slice(hull.spec.id.length + 1).replace(/\.glb$/, '')}
+                {v.label ??
+                  v.name.slice(hull.spec.id.length + 1).replace(/\.glb$/, '')}
               </option>
             ))}
           </select>

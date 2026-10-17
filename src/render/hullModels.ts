@@ -10,7 +10,7 @@
 // idealized profile's. Registering a mesh to a hull's HullSpec stations is
 // searoom#22 facet 2; which meshes exist at all is nav-wright#34 and #44.
 
-import { selectHull, type Hull } from 'nav-wright';
+import { selectHull, tracedVessels, type Hull } from 'nav-wright';
 import type { FactRecord } from '../engine/types';
 import benchyModelUrl from 'nav-wright/models/3dbenchy-lowpoly.glb?url';
 import openModelUrl from 'nav-wright/models/open-kenney-boat-row-large.glb?url';
@@ -92,6 +92,31 @@ export function shippedModelUrl(file: string): string | undefined {
 export interface ModelVariant {
   name: string;
   url: string;
+  /** Shown in the picker in place of the file name's suffix. */
+  label?: string;
+}
+
+// STOPGAP, not the model: which size class's Mesh picker offers each traced
+// vessel, so they are reachable from the main view. Superseded by a mesh
+// catalog that carries length, family and realism per mesh.
+const TRACED_HULL: Readonly<Record<string, string>> = {
+  'com-pac-16': 'sail-small',
+  'catalina-30-mkii': 'sail-small',
+  'westsail-32': 'sail-large',
+  'hans-christian-38t': 'sail-large',
+  'cheoy-lee-clipper-48-schooner': 'sail-large',
+  'thomas-w-lawson': 'sail-large',
+  wyoming: 'sail-large',
+};
+
+function tracedVariants(id: string): ModelVariant[] {
+  return tracedVessels
+    .filter((v) => TRACED_HULL[v.id] === id && shippedModelUrl(v.model))
+    .map((v) => ({
+      name: v.model,
+      url: shippedModelUrl(v.model)!,
+      label: v.name,
+    }));
 }
 
 /**
@@ -110,7 +135,10 @@ export function modelVariantsForHull(hull: Hull): ModelVariant[] {
   const first = Object.entries(SHIPPED_MODELS).find(
     ([, u]) => u === registered,
   );
-  return first ? [{ name: first[0], url: first[1] }, ...others] : others;
+  const traced = tracedVariants(id);
+  return first
+    ? [{ name: first[0], url: first[1] }, ...others, ...traced]
+    : [...others, ...traced];
 }
 
 /**
