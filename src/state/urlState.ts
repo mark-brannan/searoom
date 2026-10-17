@@ -21,7 +21,8 @@ import {
 type FactBag = Record<string, FactValue | undefined>;
 
 export type Mode = 'sandbox' | 'identify' | 'quiz' | 'rules' | 'sound';
-export type View = 'profile' | 'bearing' | 'plan';
+// 'profile' is unwired from the Sandbox (refs #218); the type keeps its code compiling.
+export type View = 'profile' | 'model' | 'plan';
 
 export interface AppState {
   mode: Mode;
@@ -43,18 +44,18 @@ export interface AppState {
    */
   corpus: string;
   rulePath: string | null;
-  /** Bearing view hull hint, percent: 0 is off, 100 is plain to see. */
+  /** 3D view hull hint, percent: 0 is off, 100 is plain to see. */
   hullHint: number;
-  /** Bearing view range to her, nautical miles: the hull hint is full at
+  /** 3D view range to her, nautical miles: the hull hint is full at
    *  RANGE_MIN_NM and gone by RANGE_MAX_NM (nav-wright's hullHintOpacity). */
   range: number;
-  /** Bearing view sky, percent: 0 is black, 100 is a lighter night blue. */
+  /** 3D view sky, percent: 0 is black, 100 is a lighter night blue. */
   sky: number;
-  /** Bearing view draws Benchy in place of her own model, at her size. */
+  /** 3D view draws Benchy in place of her own model, at her size. */
   benchy: boolean;
-  /** Bearing view mesh, by nav-wright file name; '' is the hull's default. */
+  /** 3D view mesh, by nav-wright file name; '' is the hull's default. */
   mesh: string;
-  /** The lights-only bearing view beside the Profile and 3D views. */
+  /** The lights-only view beside the 3D view. */
   bearingAside: boolean;
   drawer: boolean;
   /** Quiz run seed; question n asks seed + n - 1, so a URL reopens it. */
@@ -91,7 +92,7 @@ export const DEFAULT_STATE: AppState = {
   mode: 'sandbox',
   jurisdiction: BASE_JURISDICTION,
   facts: DEFAULT_FACTS,
-  view: 'profile',
+  view: 'model',
   theta: 45,
   tilt: DEFAULT_TILT,
   displayIndex: 0,
@@ -120,7 +121,7 @@ const percent = (v: string | null): number | null => {
   return Number.isFinite(n) ? Math.round(Math.min(100, Math.max(0, n))) : null;
 };
 
-/** The bearing view's range control: moonlight's reach to where she is gone. */
+/** The 3D view's range control: moonlight's reach to where she is gone. */
 export const RANGE_MIN_NM = 0.5;
 export const RANGE_MAX_NM = 3;
 export const RANGE_STEP_NM = 0.1;
@@ -222,7 +223,7 @@ export function serialize(state: AppState): string {
     params.set('hh', String(Math.round(state.hullHint)));
   if (state.range !== DEFAULT_STATE.range) params.set('rg', String(state.range));
   if (state.sky !== DEFAULT_STATE.sky) params.set('bg', String(Math.round(state.sky)));
-  if (state.benchy) params.set('bn', '1');
+  if (state.benchy) params.set('benchy', '1');
   if (state.mesh) params.set('ms', state.mesh);
   if (!state.bearingAside) params.set('ba', '0');
   if (state.drawer) params.set('dd', '1');
@@ -259,7 +260,8 @@ export function deserialize(hash: string): AppState {
   const path = qIndex === -1 ? h : h.slice(0, qIndex);
   const query = qIndex === -1 ? '' : h.slice(qIndex + 1);
   const segments = path.split('/').filter(Boolean);
-  const modes: Mode[] = ['sandbox', 'identify', 'quiz', 'rules', 'sound'];
+  // the Quiz is unwired (refs #218): #/quiz lands on the sandbox
+  const modes: Mode[] = ['sandbox', 'identify', 'rules', 'sound'];
   if (segments[0] && (modes as string[]).includes(segments[0])) {
     state.mode = segments[0] as Mode;
   }
@@ -295,12 +297,12 @@ export function deserialize(hash: string): AppState {
   if (preset || Object.keys(facts).length > 0)
     state.facts = { ...base, ...facts } as FactRecord;
   const view = params.get('view');
-  if (view === 'profile' || view === 'bearing' || view === 'plan') state.view = view;
-  // the Model and Benchy tabs merged into the bearing view; an old link
-  // lands there, Benchy's with Benchy on
-  else if (view === 'model') state.view = 'bearing';
+  if (view === 'model' || view === 'plan') state.view = view;
+  // the bearing and profile views live in the 3D model now; Benchy's link
+  // lands there with Benchy on
+  else if (view === 'bearing' || view === 'profile') state.view = 'model';
   else if (view === 'benchy') {
-    state.view = 'bearing';
+    state.view = 'model';
     state.benchy = true;
   }
   const th = Number(params.get('th'));
@@ -329,7 +331,7 @@ export function deserialize(hash: string): AppState {
   state.hullHint = percent(params.get('hh')) ?? state.hullHint;
   state.range = rangeNm(params.get('rg')) ?? state.range;
   state.sky = percent(params.get('bg')) ?? state.sky;
-  if (params.get('bn') === '1') state.benchy = true;
+  if (params.get('benchy') === '1') state.benchy = true;
   state.mesh = params.get('ms') ?? '';
   if (params.get('ba') === '0') state.bearingAside = false;
   if (params.get('dd') === '1') state.drawer = true;

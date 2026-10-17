@@ -54,13 +54,13 @@ const SIGNPOSTS = signpostContexts();
 /** First match wins; `undefined` hash means the key has no single screen. */
 const SCREENS = [
   [/^sound\./, 'Äänimerkit', '#/sound?loc=fi'],
-  [/^quiz\./, 'Visa', '#/quiz?loc=fi'],
+  [/^quiz\./, 'Visa', undefined], // the Quiz is unwired (refs #218)
   [/^identify\./, 'Tunnista', '#/identify?loc=fi'],
   [/^(color|light)\./, 'Tunnista — valot', '#/identify?loc=fi'],
   [/^(locale|sp\.(locale|jurisdictions|parts|corpora))\./, 'Kielivalitsin', '#/sandbox?sp=locale-picker&loc=fi'],
   [/^signpost\./, 'Viitoituspaneeli', '#/sandbox?sp=us-inland&loc=fi'],
   [/^(rules|corpus|fallback|jurisdiction)\./, 'Säännöt', '#/rules/27(a)(i)?loc=fi'],
-  [/^(aspect|scene)\./, 'Harjoittelu — suuntima', '#/sandbox?p=power&a=trawling&pos=underway&mw=1&len=30&view=bearing&th=340&loc=fi'],
+  [/^(aspect|scene)\./, 'Harjoittelu — suuntima', '#/sandbox?p=power&a=trawling&pos=underway&mw=1&len=30&view=model&th=340&loc=fi'],
   [/^(app|mode|header|night|view|sandbox|fact|propulsion|activity|position|obstruction_side|modality|drawer)\./, 'Harjoittelu', '#/sandbox?p=power&a=trawling&pos=underway&mw=1&len=30&loc=fi'],
 ];
 

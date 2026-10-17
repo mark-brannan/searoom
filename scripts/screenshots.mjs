@@ -13,7 +13,7 @@ const shots = [
   ['sandbox-sloop', '#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12'],
   [
     'sandbox-sloop-bearing',
-    '#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12&view=bearing&th=340&d=1',
+    '#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12&view=model&th=340&d=1',
   ],
   [
     'sandbox-plan-arcs',
@@ -32,7 +32,6 @@ const shots = [
     '#/sandbox?p=power&a=towing&pos=underway&mw=1&len=30&tow=150',
   ],
   ['identify', '#/identify'],
-  ['quiz', '#/quiz'],
   ['rules', '#/rules/27(a)(i)'],
   ['sound-stub', '#/sound'],
   ['signpost-us-inland', '#/sandbox?sp=us-inland'],

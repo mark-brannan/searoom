@@ -35,7 +35,7 @@ describe('settings persistence', () => {
 
   it('does not overlay stored settings on a query-less path link', () => {
     saveSettings({ locale: 'fi', jurisdiction: other });
-    const s = stateFromHash('#/quiz');
+    const s = stateFromHash('#/rules');
     expect(s.locale).toBe('en');
     expect(s.jurisdiction).not.toBe(other);
   });

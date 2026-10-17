@@ -19,9 +19,6 @@ const Sandbox = lazy(() =>
 const Identify = lazy(() =>
   import('./modes/Identify').then((m) => ({ default: m.Identify })),
 );
-const Quiz = lazy(() =>
-  import('./modes/Quiz').then((m) => ({ default: m.Quiz })),
-);
 const Rules = lazy(() =>
   import('./modes/Rules').then((m) => ({ default: m.Rules })),
 );
@@ -40,12 +37,12 @@ export function App() {
 
   const body = useMemo(() => {
     switch (state.mode) {
+      // the Quiz is unwired (refs #218): its mode draws the sandbox
+      case 'quiz':
       case 'sandbox':
         return <Sandbox />;
       case 'identify':
         return <Identify />;
-      case 'quiz':
-        return <Quiz />;
       case 'rules':
         return <Rules />;
       case 'sound':

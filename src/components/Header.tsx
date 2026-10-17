@@ -18,7 +18,8 @@ export function pickJurisdiction(value: string): Patch {
     ? { signpost: value.slice(SIGNPOST_PREFIX.length) }
     : { jurisdiction: value };
 }
-const MODES: Mode[] = ['sandbox', 'identify', 'quiz', 'rules', 'sound'];
+// the Quiz is unwired (refs #218); its mode and code stay
+const MODES: Mode[] = ['sandbox', 'identify', 'rules', 'sound'];
 
 export function Header() {
   const state = useApp((s) => s.state);
