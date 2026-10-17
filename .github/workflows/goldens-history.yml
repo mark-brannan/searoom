@@ -17,11 +17,14 @@ permissions:
 jobs:
   goldens-history:
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     env:
       ENGINE_DIR: ${{ github.workspace }}/.golden-diff-engine/.github/scripts
     steps:
       - uses: actions/checkout@v7
         with: { fetch-depth: 0, persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
       - uses: actions/checkout@v7
         with:
           repository: mark-brannan/.github
