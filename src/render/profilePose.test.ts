@@ -11,7 +11,7 @@
 // target, same theta/tilt-to-position math — onto that box, and compares the
 // result to ProfileView's PX/PZ pixel position for the same light.
 //
-// Every registered mesh is already known (KNOWN_MISFITS, meshProfile.ts) not
+// Every hull's best-fit mesh is already known (KNOWN_MISFITS, meshProfile.ts) not
 // to fit its hull's stations; its pose is recorded in KNOWN_POSE_MISFITS as an
 // expected failure for the same reason.
 
@@ -19,12 +19,12 @@ import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import { evaluateDisplay } from 'colregs-engine';
 import type { FactRecord } from '../engine/types';
-import { allHulls, PX, PZ } from 'nav-wright';
+import { PX, PZ, selectHull } from 'nav-wright';
 import { placeLights } from './navWright';
-import type { Hull } from 'nav-wright';
 import { lights } from '../data/colregs';
 import { anchorLights } from 'nav-wright/profile';
-import { hasRegisteredModel, modelUrlForHull } from './hullModels';
+import { defaultModelUrl, modelVariants } from './hullModels';
+import { HULL_SCENES } from './hullScenes';
 import { KNOWN_MISFITS, loadHullScene, worldProfile } from './meshProfile';
 
 /** BenchyModel's own constants (searoom's copy: nav-wright's are internal). */
@@ -97,35 +97,29 @@ const LENGTH_M = 12;
 const POSE_TOLERANCE = 0.08;
 
 /** A mesh that misses its stations (KNOWN_MISFITS) necessarily poses its
- * lights off the profile too.
- * Measured misses (Δ/canvas) at the time of writing:
- *
- * open: starboard sidelight 0.19, port 0.16, sternlight 0.11.
- * power-small: masthead 0.25, sternlight 0.13.
- * power-large: masthead 0.14, starboard sidelight 0.13, sternlight 0.14.
- * sail-small: masthead 0.20, sternlight 0.14.
- * sail-large: starboard sidelight 0.09, port 0.10, sternlight 0.35.
- * trawler: masthead 0.11, starboard sidelight 0.14, port 0.10, sternlight 0.13.
- * tug: starboard sidelight 0.13, port 0.09, sternlight 0.13.
- * container-ship: masthead 0.26, starboard sidelight 0.38, port 0.34,
- * sternlight 0.17.
- */
-const KNOWN_POSE_MISFITS: ReadonlySet<string> = KNOWN_MISFITS;
+ * lights off the profile too: every hull's best-fit mesh does, by 0.13
+ * (power-small, tug, pilot-boat) to 0.50 (bulker) of the canvas on its worst
+ * light, measured at the time of writing. The failure report prints each. */
+const KNOWN_POSE_MISFITS: ReadonlyMap<string, string> = KNOWN_MISFITS;
 
-const registered = (Object.values(allHulls) as Hull[]).filter(hasRegisteredModel);
+const registered = Object.entries(HULL_SCENES).map(([id, facts]) => ({
+  id,
+  hull: selectHull(facts),
+  mesh: modelVariants(facts)[0].name,
+  url: defaultModelUrl(facts),
+}));
 
 describe('3D pose vs. 2D profile at theta=90, tilt=0 (searoom#22 facet 4)', () => {
   it('has at least one registered mesh to check', () => {
-    expect(registered.map((h) => h.spec.id)).not.toEqual([]);
+    expect(registered.map((r) => r.id)).not.toEqual([]);
   });
 
-  for (const hull of registered) {
-    const { id } = hull.spec;
-    const expectedToFail = KNOWN_POSE_MISFITS.has(id);
+  for (const { id, hull, mesh, url } of registered) {
+    const expectedToFail = KNOWN_POSE_MISFITS.get(id) === mesh;
     const run = expectedToFail ? it.fails : it;
     const title = expectedToFail
-      ? `${id}: pose is a known misfit (remove from KNOWN_POSE_MISFITS once the mesh registers)`
-      : `${id}: 3D pose agrees with the 2D profile within ${POSE_TOLERANCE} of the canvas`;
+      ? `${id} on ${mesh}: pose is a known misfit (remove from KNOWN_POSE_MISFITS once the mesh registers)`
+      : `${id} on ${mesh}: 3D pose agrees with the 2D profile within ${POSE_TOLERANCE} of the canvas`;
 
     run(title, async () => {
       const evaln = evaluateDisplay(FACTS);
@@ -133,7 +127,7 @@ describe('3D pose vs. 2D profile at theta=90, tilt=0 (searoom#22 facet 4)', () =
       const placed = placeLights(display.lights, hull.spec, FACTS, lights);
       expect(placed.length).toBeGreaterThan(0);
 
-      const profile = worldProfile(await loadHullScene(modelUrlForHull(hull)), LENGTH_M);
+      const profile = worldProfile(await loadHullScene(url), LENGTH_M);
       const anchored = anchorLights(
         placed,
         LENGTH_M,

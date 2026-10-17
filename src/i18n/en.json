@@ -59,6 +59,7 @@
   "scene.mesh": "Mesh",
   "scene.mesh.prev": "Previous mesh",
   "scene.mesh.next": "Next mesh",
+  "scene.mesh.scaled": "{name} (scaled)",
   "scene.benchy.toggle": "Benchy in place of her own model",
   "scene.benchy.tiltLabel": "Tilt",
   "scene.benchy.tiltValue": "{tilt} degrees above the waterline",

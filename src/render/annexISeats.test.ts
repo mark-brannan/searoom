@@ -46,7 +46,7 @@ describe('annexISeatBreaches', () => {
     ).toEqual([]);
   });
 
-  it('flags the ferry-loft seats: both masthead lights abaft amidships, 0.01 L apart', () => {
+  it('flags the loft-ferry seats: both masthead lights abaft amidships, 0.01 L apart', () => {
     const cites = annexISeatBreaches(
       placed,
       [at(-0.31 * 60), at(-0.32 * 60), at(0.39 * 60)],
@@ -96,7 +96,7 @@ async function meshDrawn(facts: FactRecord, mesh = ''): Promise<boolean> {
   const length = facts['fact:length_m'] as number;
   const display = evaluateDisplayIn('intl', facts).displays[0];
   const placed = placeLights(display.lights, hull.spec, facts, lightCatalog);
-  const scene = await loadHullScene(modelUrlForVariant(hull, mesh));
+  const scene = await loadHullScene(modelUrlForVariant(facts, mesh));
   const profile = profileHullModel(scene, length, hull.spec);
   if (!profile) throw new Error(`${hull.spec.id}: mesh has no profile`);
   const seats = seatLights(profile, placed, length, hull);
@@ -106,9 +106,9 @@ async function meshDrawn(facts: FactRecord, mesh = ''): Promise<boolean> {
 const preset = (id: string) => PRESETS.find((p) => p.id === id)!.facts;
 
 describe('the Profile view falls back when the mesh seats break Annex I', () => {
-  it('draws the hand-drawn profile for the 60 m ship on ferry-loft', async () => {
+  it('draws the hand-drawn profile for the 60 m ship on loft-ferry', async () => {
     expect(selectHull(ship60).spec.id).toBe('ferry');
-    expect(await meshDrawn(ship60, 'ferry-loft.glb')).toBe(false);
+    expect(await meshDrawn(ship60, 'loft-ferry.glb')).toBe(false);
   });
 
   it('still draws the sloop and the trawler from their meshes', async () => {

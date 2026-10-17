@@ -1,83 +1,82 @@
 import { describe, expect, it } from 'vitest';
-import { allHulls } from 'nav-wright';
-import type { Hull } from 'nav-wright';
+import { meshCatalog } from 'nav-wright';
 import {
   FALLBACK_MODEL_URL,
-  hasRegisteredModel,
-  modelUrlForHull,
+  defaultModelUrl,
   modelUrlForVariant,
-  modelVariantsForHull,
+  modelVariants,
+  pickInitialMesh,
   pickMesh,
   stepMesh,
 } from './hullModels';
+import { HULL_SCENES } from './hullScenes';
 
-const hulls = Object.values(allHulls) as Hull[];
+const scenes = Object.entries(HULL_SCENES);
 
-describe('modelUrlForHull', () => {
-  it('resolves a non-empty .glb url for every hull id', () => {
-    for (const hull of hulls) {
-      expect(modelUrlForHull(hull), hull.spec.id).toMatch(/\.glb/);
+describe('defaultModelUrl', () => {
+  it('resolves a shipped mesh of her own, not Benchy, for every hull scene', () => {
+    for (const [id, facts] of scenes) {
+      expect(defaultModelUrl(facts), id).toMatch(/\.glb/);
+      expect(defaultModelUrl(facts), id).not.toBe(FALLBACK_MODEL_URL);
     }
-  });
-
-  it('registers a mesh of its own for every hull in the roster', () => {
-    for (const hull of hulls) {
-      expect(hasRegisteredModel(hull), hull.spec.id).toBe(true);
-      expect(modelUrlForHull(hull), hull.spec.id).not.toBe(FALLBACK_MODEL_URL);
-    }
-  });
-
-  it('keys the map by HullSpec.id, not the allHulls key', () => {
-    const fake = { spec: { id: 'no-such-hull' } } as Hull;
-    expect(hasRegisteredModel(fake)).toBe(false);
-    expect(modelUrlForHull(fake)).toBe(FALLBACK_MODEL_URL);
   });
 });
 
-describe('modelVariantsForHull', () => {
-  it('offers the registered mesh first, then every other shipped mesh, lofts included', () => {
-    for (const hull of hulls) {
-      const variants = modelVariantsForHull(hull);
-      expect(variants[0].url, hull.spec.id).toBe(modelUrlForHull(hull));
-      expect(variants.map((v) => v.name), hull.spec.id).toContain(`${hull.spec.id}-loft.glb`);
+describe('modelVariants', () => {
+  it('offers the best fit first, and every catalog mesh but Benchy resolves to a shipped file', () => {
+    for (const [id, facts] of scenes) {
+      const variants = modelVariants(facts);
+      expect(variants[0].url, id).toBe(defaultModelUrl(facts));
+      expect(variants[0].fits, id).toBe(true);
     }
+    const offered = new Set(scenes.flatMap(([, f]) => modelVariants(f).map((v) => v.name)));
+    const shipped = meshCatalog.filter((r) => r.kind !== 'calibration').map((r) => r.file);
+    expect(shipped.filter((f) => !offered.has(f))).toEqual([]);
   });
 
-  it('gives a hull its kit meshes as well as its loft', () => {
-    const tug = hulls.find((h) => h.spec.id === 'tug')!;
-    expect(modelVariantsForHull(tug).length).toBeGreaterThanOrEqual(6);
+  it('labels each mesh by the catalog name, and no two the same', () => {
+    for (const [id, facts] of scenes) {
+      const labels = modelVariants(facts).map((v) => v.label);
+      expect(new Set(labels).size, id).toBe(labels.length);
+    }
+    const tug = modelVariants(HULL_SCENES.tug);
+    expect(tug.find((v) => v.name === 'westsail-32.glb')?.label).toBe('Westsail 32');
   });
 
-  it('falls back to the default for a name the hull does not have', () => {
-    const tug = hulls.find((h) => h.spec.id === 'tug')!;
-    expect(modelUrlForVariant(tug, 'tug-loft.glb')).toMatch(/tug-loft/);
-    expect(modelUrlForVariant(tug, 'ferry-loft.glb')).toBe(modelUrlForHull(tug));
+  it('falls back to the best fit for a name the scene does not offer', () => {
+    const tug = HULL_SCENES.tug;
+    expect(modelUrlForVariant(tug, 'loft-tug.glb')).toMatch(/loft-tug\.glb/);
+    expect(modelUrlForVariant(tug, 'no-such-mesh.glb')).toBe(defaultModelUrl(tug));
+    expect(modelUrlForVariant(tug, '')).toBe(defaultModelUrl(tug));
   });
 });
 
 describe('pickMesh and stepMesh', () => {
-  it('only ever picks a mesh that fits the hull class, and reaches every one', () => {
-    for (const hull of hulls) {
-      const names = modelVariantsForHull(hull).map((v) => v.name);
+  it("only ever picks a mesh of the scene's class, and reaches every one", () => {
+    for (const [id, facts] of scenes) {
+      const variants = modelVariants(facts);
+      expect(variants.filter((v) => v.inClass).every((v) => v.fits), id).toBe(true);
+      const fitting = variants.filter((v) => v.inClass).map((v) => v.name);
       const seen = new Set<string>();
-      for (let i = 0; i < names.length; i++) {
-        const pick = pickMesh(hull, () => (i + 0.5) / names.length);
-        expect(pick === '' || names.includes(pick), hull.spec.id).toBe(true);
-        seen.add(pick === '' ? names[0] : pick);
+      for (let i = 0; i < fitting.length; i++) {
+        const pick = pickMesh(facts, () => (i + 0.5) / fitting.length);
+        seen.add(pick === '' ? variants[0].name : pick);
+        expect(pickInitialMesh(facts, () => (i + 0.5) / fitting.length), id).toBe(fitting[i]);
       }
-      expect(seen.size, hull.spec.id).toBe(names.length);
+      expect([...seen].sort(), id).toEqual([...fitting].sort());
       // the edge of the range stays inside too
-      expect(['', ...names]).toContain(pickMesh(hull, () => 0.999999999));
+      expect(['', ...fitting]).toContain(pickMesh(facts, () => 0.999999999));
     }
   });
 
-  it('steps through the class and wraps', () => {
-    for (const hull of hulls) {
-      const n = modelVariantsForHull(hull).length;
+  it('steps through every offered mesh and wraps', () => {
+    for (const [id, facts] of scenes) {
+      const variants = modelVariants(facts);
+      const n = variants.length;
       let m = '';
-      for (let i = 0; i < n; i++) m = stepMesh(hull, m, 1);
-      expect(m, hull.spec.id).toBe('');
-      expect(stepMesh(hull, '', -1)).toBe(n === 1 ? '' : modelVariantsForHull(hull)[n - 1].name);
+      for (let i = 0; i < n; i++) m = stepMesh(facts, m, 1);
+      expect(m, id).toBe('');
+      expect(stepMesh(facts, '', -1)).toBe(n === 1 ? '' : variants[n - 1].name);
     }
   });
 });
