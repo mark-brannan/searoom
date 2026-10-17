@@ -373,10 +373,9 @@ function FullScene({
   const percentText = (v: number): string =>
     intl.formatNumber(v / 100, { style: 'percent' });
   const variants = useMemo(() => modelVariants(facts), [facts]);
-  const meshUrl =
-    variants.find((v) => v.name === settings.mesh)?.url ??
-    variants[0]?.url ??
-    FALLBACK_MODEL_URL;
+  const meshVariant =
+    variants.find((v) => v.name === settings.mesh) ?? variants[0];
+  const meshUrl = meshVariant?.url ?? FALLBACK_MODEL_URL;
   const meshOff = view === 'plan' || (view === 'model' && settings.benchy);
 
   return (
@@ -433,6 +432,7 @@ function FullScene({
                 ? BENCHY_MODEL_URL
                 : meshUrl
             }
+            mesh={settings.benchy ? undefined : meshVariant?.record}
             hull={hull}
             placed={placed}
             facts={facts}

@@ -8,6 +8,7 @@
 // fit, any other value a file name.
 
 import { meshCatalog, selectHull } from 'nav-wright';
+import type { MeshRecord } from 'nav-wright';
 import type { FactRecord } from '../engine/types';
 import benchyModelUrl from 'nav-wright/models/3dbenchy-lowpoly.glb?url';
 import { rankMeshes, sceneOf } from './meshPicker';
@@ -39,6 +40,8 @@ export interface ModelVariant {
   fits: boolean;
   /** Ties the best fit on length, activity and propulsion: a random pick's pool. */
   inClass: boolean;
+  /** The catalog record, which the 3D view frames the mesh by. */
+  record: MeshRecord;
 }
 
 /**
@@ -62,6 +65,7 @@ export function modelVariants(facts: FactRecord): ModelVariant[] {
         : record.name,
     fits,
     inClass,
+    record,
   }));
 }
 
