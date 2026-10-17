@@ -15,6 +15,10 @@ const check = (name, ok) => {
 
 const browser = await chromium.launch();
 const context = await browser.newContext({ colorScheme: 'dark' });
+// The first-run intro (#108) would cover the page; mark it seen.
+await context.addInitScript(() => {
+  localStorage.setItem('searoom.introSeen', '1');
+});
 // the opening mesh is random (searoom#174); pin it to the hull's first variant
 await context.addInitScript(() => { Math.random = () => 0; });
 const page = await context.newPage();
