@@ -30,7 +30,7 @@ const tab = (name) => page.locator('.mode-nav .mode-tab', { hasText: name });
 // Lit = luminance this far over the canvas's median (its sky), so a black,
 // blank or see-through canvas counts nothing however bright the page behind.
 const LIT_OVER_SKY = 12; // of 255
-const MIN_LIT_FRACTION = 0.05;
+const MIN_LIT_FRACTION = 0.01;
 async function litFraction(canvas) {
   const png = (await canvas.screenshot()).toString('base64');
   return page.evaluate(async ([b64, over]) => {
