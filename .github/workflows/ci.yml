@@ -87,6 +87,21 @@ jobs:
           path: goldens-out/
           if-no-files-found: ignore
 
+  # How far each golden under screenshots/goldens moved, base to head: pixel
+  # fraction, SSIM and changed regions, as a sticky PR comment, a job summary
+  # and an old | new | diff artifact; `goldens-large` on a redesign-sized
+  # move. A measurement, not a gate, so it stays out of ci-gate's needs. The
+  # engine and its pencil thresholds live in mark-brannan/.github (#218).
+  golden-diff:
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: mark-brannan/.github/.github/workflows/golden-diff.yml@main
+    with:
+      paths: screenshots/goldens/**
+      label: goldens-large
+
   # Refuses to call an empty PR green: a branch whose tree equals its base at
   # the merge base (a stray commit reverted it) merges cleanly and lands
   # nothing. Listed in ci-gate's needs, so it needs no ruleset entry.
