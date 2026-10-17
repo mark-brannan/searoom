@@ -10,7 +10,7 @@ check() { if [ "$2" = "$3" ]; then echo "ok   $1"; else echo "FAIL $1: expected 
 cd "$tmp" && git init -q -b main . && git config user.email t@t && git config user.name t
 mkdir src && echo a > src/a.ts && git add . && git commit -qm init
 git checkout -qb feature
-export CLAUDE_PROJECT_DIR=$tmp PREVIEW_GATE_WAIT=5
+export CLAUDE_PROJECT_DIR=$tmp PREVIEW_GATE_WAIT=5 PREVIEW_GATE_PR=
 # a stand-in server: listens on $1 until killed
 export PREVIEW_GATE_CMD="node -e 'require(\"net\").createServer().listen(+process.argv[1])'"
 

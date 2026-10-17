@@ -46,7 +46,7 @@ inside it — Vite serves whatever worktree it's launched from, not `main`.
 
 To try a pull request, paste the one command under its **Try it** heading: it
 fetches the PR's head into a worktree of its own and serves it on port
-`10000 + PR number`. `npm run try-it -- <pr>` prints that block.
+`10000 + PR number`.
 
 ## Not for navigation
 

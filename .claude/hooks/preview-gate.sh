@@ -9,7 +9,7 @@
 #
 # Env for tests: PREVIEW_GATE_CMD overrides the server command (must accept
 # a port as $1 and keep running), PREVIEW_GATE_WAIT the seconds to wait for it,
-# PREVIEW_GATE_PR the PR number (else gh is asked; none -> no Try-it reminder).
+# PREVIEW_GATE_PR the open PR number, empty for none (unset: gh is asked).
 
 set -u
 input=$(cat)
@@ -84,7 +84,7 @@ esc() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n' ' '; }
 # a PR open for this branch also needs the paste-ready "## Try it" block in its
 # body (the shared show-dont-tell check is red without it); scripts/try-it.mjs
 # prints it from .github/show-dont-tell.yml.
-pr=${PREVIEW_GATE_PR:-$(gh pr view --json number -q .number 2>/dev/null || true)}
+pr=${PREVIEW_GATE_PR-$(gh pr view --json number,state -q 'select(.state=="OPEN") | .number' 2>/dev/null || true)}
 tryit=""
 [ -n "$pr" ] && tryit=" PR #$pr is open for this branch: its body must carry the Try-it block; run 'node scripts/try-it.mjs $pr' and paste the output into the body if it is not there yet."
 if listening "$port"; then
