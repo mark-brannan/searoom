@@ -96,22 +96,19 @@ export interface ModelVariant {
   label?: string;
 }
 
-// STOPGAP, not the model: which size class's Mesh picker offers each traced
-// vessel, so they are reachable from the main view. Superseded by a mesh
-// catalog that carries length, family and realism per mesh.
-const TRACED_HULL: Readonly<Record<string, string>> = {
-  'com-pac-16': 'sail-small',
-  'catalina-30-mkii': 'sail-small',
-  'westsail-32': 'sail-large',
-  'hans-christian-38t': 'sail-large',
-  'cheoy-lee-clipper-48-schooner': 'sail-large',
-  'thomas-w-lawson': 'sail-large',
-  wyoming: 'sail-large',
-};
+// A traced vessel is offered in the Mesh picker of the size class her own
+// length selects when she is a sailing vessel, so she turns up when the
+// length slider sits near her LOA.
+function tracedHullId(loaM: number): string {
+  return selectHull({
+    'fact:propulsion': 'propulsion:sail',
+    'fact:length_m': loaM,
+  } as FactRecord).spec.id;
+}
 
 function tracedVariants(id: string): ModelVariant[] {
   return tracedVessels
-    .filter((v) => TRACED_HULL[v.id] === id && shippedModelUrl(v.model))
+    .filter((v) => tracedHullId(v.loaM) === id && shippedModelUrl(v.model))
     .map((v) => ({
       name: v.model,
       url: shippedModelUrl(v.model)!,
