@@ -14,6 +14,11 @@ finished turn.
   URL, so you have to relay it. Pid, port and log sit in `.claude/preview/`
   (gitignored, one per worktree). `sh .claude/hooks/preview-gate.test.sh`
   runs its tests.
+- **Every PR touching rendered files carries a `## Try it` block**: one
+  paste that serves that PR's head from its own worktree, no edits needed.
+  `npm run try-it -- <pr>` prints it from `.github/show-dont-tell.yml`; the
+  shared show-dont-tell check is red without it, and the Stop hook reminds
+  you when the branch has a PR.
 
 ## Stage: pre-consumer
 

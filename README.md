@@ -44,6 +44,10 @@ npx vite preview --port 4181
 Working in a git worktree (`.claude/worktrees/<name>`)? Run the command from
 inside it — Vite serves whatever worktree it's launched from, not `main`.
 
+To try a pull request, paste the one command under its **Try it** heading: it
+fetches the PR's head into a worktree of its own and serves it on port
+`10000 + PR number`.
+
 ## Not for navigation
 
 Searoom is a study tool. It is not navigation equipment and must not be
