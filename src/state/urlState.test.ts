@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { MAX_TILT } from 'nav-wright/benchy';
 import { evaluateDisplay } from 'colregs-engine';
 import {
   DEFAULT_FACTS,
@@ -128,7 +129,7 @@ describe('URL state round-trip', () => {
 
   it('keeps the tilt between the waterline and overhead', () => {
     expect(deserialize('#/sandbox?tl=-20').tilt).toBe(0);
-    expect(deserialize('#/sandbox?tl=200').tilt).toBe(85);
+    expect(deserialize('#/sandbox?tl=200').tilt).toBe(MAX_TILT);
     expect(serialize({ ...DEFAULT_STATE, tilt: 40 })).toContain('tl=40');
   });
 

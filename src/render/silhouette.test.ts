@@ -51,7 +51,9 @@ describe('every shipped mesh', () => {
         expect(nums.length, v.name).toBeGreaterThan(200);
         for (const [, x, y] of nums) {
           expect(Number(x), v.name).toBeGreaterThanOrEqual(0);
-          expect(Number(x), v.name).toBeLessThanOrEqual(440);
+          // A traced vessel is fitted by her hull, so a bowsprit or boomkin
+          // (Hans Christian's runs 20px) may run past the frame.
+          expect(Number(x), v.name).toBeLessThanOrEqual(v.label ? 480 : 440);
           expect(Number(y), `${v.name} y`).toBeGreaterThanOrEqual(0);
         }
       }

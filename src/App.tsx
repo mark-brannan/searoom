@@ -26,6 +26,10 @@ const Sound = lazy(() =>
   import('./modes/Sound').then((m) => ({ default: m.Sound })),
 );
 
+const Vessels = lazy(() =>
+  import('./modes/Vessels').then((m) => ({ default: m.Vessels })),
+);
+
 export function App() {
   const state = useAppState();
   const patch = usePatch();
@@ -47,6 +51,8 @@ export function App() {
         return <Rules />;
       case 'sound':
         return <Sound />;
+      case 'vessels':
+        return <Vessels />;
     }
   }, [state.mode]);
 

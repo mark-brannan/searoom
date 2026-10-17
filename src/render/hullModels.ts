@@ -10,7 +10,7 @@
 // idealized profile's. Registering a mesh to a hull's HullSpec stations is
 // searoom#22 facet 2; which meshes exist at all is nav-wright#34 and #44.
 
-import { selectHull, type Hull } from 'nav-wright';
+import { selectHull, tracedVessels, type Hull } from 'nav-wright';
 import type { FactRecord } from '../engine/types';
 import benchyModelUrl from 'nav-wright/models/3dbenchy-lowpoly.glb?url';
 import openModelUrl from 'nav-wright/models/open-kenney-boat-row-large.glb?url';
@@ -83,10 +83,37 @@ const SHIPPED_MODELS: Readonly<Record<string, string>> = Object.fromEntries(
   ).map(([path, url]) => [path.split('/').pop()!, url]),
 );
 
+/** The URL of a mesh nav-wright ships, by file name; undefined when absent. */
+export function shippedModelUrl(file: string): string | undefined {
+  return SHIPPED_MODELS[file];
+}
+
 /** One mesh a hull can be drawn with. `name` is the file name, the URL key. */
 export interface ModelVariant {
   name: string;
   url: string;
+  /** Shown in the picker in place of the file name's suffix. */
+  label?: string;
+}
+
+// A traced vessel is offered in the Mesh picker of the size class her own
+// length selects when she is a sailing vessel, so she turns up when the
+// length slider sits near her LOA.
+function tracedHullId(loaM: number): string {
+  return selectHull({
+    'fact:propulsion': 'propulsion:sail',
+    'fact:length_m': loaM,
+  } as FactRecord).spec.id;
+}
+
+function tracedVariants(id: string): ModelVariant[] {
+  return tracedVessels
+    .filter((v) => tracedHullId(v.loaM) === id && shippedModelUrl(v.model))
+    .map((v) => ({
+      name: v.model,
+      url: shippedModelUrl(v.model)!,
+      label: v.name,
+    }));
 }
 
 /**
@@ -105,7 +132,10 @@ export function modelVariantsForHull(hull: Hull): ModelVariant[] {
   const first = Object.entries(SHIPPED_MODELS).find(
     ([, u]) => u === registered,
   );
-  return first ? [{ name: first[0], url: first[1] }, ...others] : others;
+  const traced = tracedVariants(id);
+  return first
+    ? [{ name: first[0], url: first[1] }, ...others, ...traced]
+    : [...others, ...traced];
 }
 
 /**

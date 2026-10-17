@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { allHulls } from 'nav-wright';
+import { allHulls, tracedVessels } from 'nav-wright';
 import type { Hull } from 'nav-wright';
 import {
   FALLBACK_MODEL_URL,
@@ -39,7 +39,10 @@ describe('modelVariantsForHull', () => {
     for (const hull of hulls) {
       const variants = modelVariantsForHull(hull);
       expect(variants[0].url, hull.spec.id).toBe(modelUrlForHull(hull));
-      expect(variants.map((v) => v.name), hull.spec.id).toContain(`${hull.spec.id}-loft.glb`);
+      expect(
+        variants.map((v) => v.name),
+        hull.spec.id,
+      ).toContain(`${hull.spec.id}-loft.glb`);
     }
   });
 
@@ -51,7 +54,9 @@ describe('modelVariantsForHull', () => {
   it('falls back to the default for a name the hull does not have', () => {
     const tug = hulls.find((h) => h.spec.id === 'tug')!;
     expect(modelUrlForVariant(tug, 'tug-loft.glb')).toMatch(/tug-loft/);
-    expect(modelUrlForVariant(tug, 'ferry-loft.glb')).toBe(modelUrlForHull(tug));
+    expect(modelUrlForVariant(tug, 'ferry-loft.glb')).toBe(
+      modelUrlForHull(tug),
+    );
   });
 });
 
@@ -77,7 +82,18 @@ describe('pickMesh and stepMesh', () => {
       let m = '';
       for (let i = 0; i < n; i++) m = stepMesh(hull, m, 1);
       expect(m, hull.spec.id).toBe('');
-      expect(stepMesh(hull, '', -1)).toBe(n === 1 ? '' : modelVariantsForHull(hull)[n - 1].name);
+      expect(stepMesh(hull, '', -1)).toBe(
+        n === 1 ? '' : modelVariantsForHull(hull)[n - 1].name,
+      );
     }
+  });
+});
+
+describe('traced vessels in the Mesh picker', () => {
+  it('offers every traced vessel under some hull', () => {
+    const offered = hulls.flatMap((h) =>
+      modelVariantsForHull(h).map((v) => v.name),
+    );
+    for (const v of tracedVessels) expect(offered).toContain(v.model);
   });
 });
