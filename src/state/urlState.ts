@@ -20,7 +20,13 @@ import {
 // looser view and casts back to FactRecord at the boundary.
 type FactBag = Record<string, FactValue | undefined>;
 
-export type Mode = 'sandbox' | 'identify' | 'quiz' | 'rules' | 'sound';
+export type Mode =
+  | 'sandbox'
+  | 'identify'
+  | 'quiz'
+  | 'rules'
+  | 'sound'
+  | 'vessels';
 // 'profile' is unwired from the Sandbox (refs #218); the type keeps its code compiling.
 export type View = 'profile' | 'model' | 'plan';
 
@@ -261,7 +267,7 @@ export function deserialize(hash: string): AppState {
   const query = qIndex === -1 ? '' : h.slice(qIndex + 1);
   const segments = path.split('/').filter(Boolean);
   // the Quiz is unwired (refs #218): #/quiz lands on the sandbox
-  const modes: Mode[] = ['sandbox', 'identify', 'rules', 'sound'];
+  const modes: Mode[] = ['sandbox', 'identify', 'rules', 'sound', 'vessels'];
   if (segments[0] && (modes as string[]).includes(segments[0])) {
     state.mode = segments[0] as Mode;
   }

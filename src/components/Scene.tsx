@@ -256,7 +256,7 @@ export function Scene({
   );
 }
 
-function useSceneLabels(): BenchyLabels {
+export function useSceneLabels(): BenchyLabels {
   const intl = useIntl();
   return useMemo(
     () => ({

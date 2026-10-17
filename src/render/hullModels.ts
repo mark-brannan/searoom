@@ -83,6 +83,11 @@ const SHIPPED_MODELS: Readonly<Record<string, string>> = Object.fromEntries(
   ).map(([path, url]) => [path.split('/').pop()!, url]),
 );
 
+/** The URL of a mesh nav-wright ships, by file name; undefined when absent. */
+export function shippedModelUrl(file: string): string | undefined {
+  return SHIPPED_MODELS[file];
+}
+
 /** One mesh a hull can be drawn with. `name` is the file name, the URL key. */
 export interface ModelVariant {
   name: string;
