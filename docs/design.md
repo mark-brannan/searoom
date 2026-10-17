@@ -85,7 +85,7 @@ repos, and the app's CI catches colregs regressions before consumers do.
 
 ### The scene renderer
 
-Three views over one display, SVG throughout, night-dark theme as the
+Three views over one display, night-dark theme as the
 default (this is a night-lights app; dark isn't a preference, it's the
 subject):
 
