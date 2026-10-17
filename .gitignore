@@ -5,3 +5,5 @@ tsconfig.tsbuildinfo
 .claude/preview/
 fi-review-pack/
 goldens-out/
+out/
+.golden-diff-engine/
