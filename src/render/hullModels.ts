@@ -31,6 +31,14 @@ import bulkerLoft from 'nav-wright/models/bulker-loft.glb?url';
 import cruiseShipLoft from 'nav-wright/models/cruise-ship-loft.glb?url';
 import warshipLoft from 'nav-wright/models/warship-loft.glb?url';
 import dredgerLoft from 'nav-wright/models/dredger-loft.glb?url';
+import pusherLoft from 'nav-wright/models/pusher-loft.glb?url';
+import partlySubmergedLoft from 'nav-wright/models/partly-submerged-loft.glb?url';
+import agroundLoft from 'nav-wright/models/aground-loft.glb?url';
+import diveSupportLoft from 'nav-wright/models/dive-support-loft.glb?url';
+import fishingGearLoft from 'nav-wright/models/fishing-gear-loft.glb?url';
+import mineClearanceLoft from 'nav-wright/models/mine-clearance-loft.glb?url';
+import restrictedAbilityLoft from 'nav-wright/models/restricted-ability-loft.glb?url';
+import wingInGroundLoft from 'nav-wright/models/wing-in-ground-loft.glb?url';
 
 /** Benchy, which the bearing view can draw in place of any hull's own mesh. */
 export const BENCHY_MODEL_URL: string = benchyModelUrl;
@@ -69,6 +77,14 @@ const HULL_MODEL_URLS: Readonly<Record<string, string>> = {
   'cruise-ship': cruiseShipLoft,
   warship: warshipLoft,
   dredger: dredgerLoft,
+  pusher: pusherLoft,
+  'partly-submerged': partlySubmergedLoft,
+  aground: agroundLoft,
+  'dive-support': diveSupportLoft,
+  'fishing-gear': fishingGearLoft,
+  'mine-clearance': mineClearanceLoft,
+  'restricted-ability': restrictedAbilityLoft,
+  'wing-in-ground': wingInGroundLoft,
 };
 
 // Every mesh nav-wright ships, by file name. Files are named `<hull-id>-<variant>.glb`
