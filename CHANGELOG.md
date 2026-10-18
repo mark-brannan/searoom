@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.3](https://github.com/mark-brannan/searoom/compare/v0.1.2...v0.1.3) (2026-10-18)
+
+
+### Added
+
+* **intro:** first-run intro card on the Sandbox ([#108](https://github.com/mark-brannan/searoom/issues/108), item 1) ([#210](https://github.com/mark-brannan/searoom/issues/210)) ([7014c99](https://github.com/mark-brannan/searoom/commit/7014c993668e10046d67020b676d3121954e99f4))
+* **sandbox:** the 3D model is the primary view; Profile and Quiz unwired (refs [#218](https://github.com/mark-brannan/searoom/issues/218)) ([#221](https://github.com/mark-brannan/searoom/issues/221)) ([68f9fe2](https://github.com/mark-brannan/searoom/commit/68f9fe207c441b329c5f3a7220bbab70e9e0c542))
+* **try-it:** every rendered PR carries a paste-ready "Try it" dev-server block ([#228](https://github.com/mark-brannan/searoom/issues/228)) ([35be680](https://github.com/mark-brannan/searoom/commit/35be680076dca638da02155afda54719a5d108c8))
+
 ## [0.1.2](https://github.com/mark-brannan/searoom/compare/v0.1.1...v0.1.2) (2026-10-16)
 
 
