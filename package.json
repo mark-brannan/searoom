@@ -25,7 +25,7 @@
     "@react-three/fiber": "^9.8.1",
     "colregs": "github:mark-brannan/colregs#v0.3.8",
     "colregs-engine": "github:mark-brannan/colregs-engine#v0.1.11",
-    "nav-wright": "github:mark-brannan/nav-wright#5a959aecf09ebe6a47bdea881e706e5ea2b937d2",
+    "nav-wright": "github:mark-brannan/nav-wright#f6575e582b0eb9d330f96840cf6cec5d5b5c675f",
     "react": "~19.3.1",
     "react-dom": "~19.3.1",
     "react-intl": "^10.2.2",
