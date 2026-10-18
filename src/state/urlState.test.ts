@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_TILT } from 'nav-wright/benchy';
 import { evaluateDisplay } from 'colregs-engine';
 import {
   DEFAULT_FACTS,
   DEFAULT_STATE,
+  MAX_TILT,
   defaultCorpusFor,
   deserialize,
   serialize,

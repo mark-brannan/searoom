@@ -23,9 +23,9 @@
   "dependencies": {
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.1",
-    "colregs": "github:mark-brannan/colregs#main",
-    "colregs-engine": "github:mark-brannan/colregs-engine#main",
-    "nav-wright": "github:mark-brannan/nav-wright#main",
+    "colregs": "github:mark-brannan/colregs#v0.3.8",
+    "colregs-engine": "github:mark-brannan/colregs-engine#v0.1.11",
+    "nav-wright": "github:mark-brannan/nav-wright#v0.1.9",
     "react": "~19.3.1",
     "react-dom": "~19.3.1",
     "react-intl": "^10.2.2",
