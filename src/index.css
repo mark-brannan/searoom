@@ -1676,3 +1676,14 @@ nav details > summary {
 .intro-card button {
   margin-top: 8px;
 }
+
+/* Vessels mode: one card per traced vessel. */
+.vessels {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 60rem;
+}
+
+.vessel-card h2 {
+  margin: 0 0 0.25rem;
+}
