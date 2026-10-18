@@ -85,19 +85,14 @@ describe('corpus index', () => {
 });
 
 describe('reference corpus coverage', () => {
-  // colregs #185: 30(d)(i) and 30(d)(ii) are in the skeleton but the USCG
-  // corpus has neither their text nor a recorded gap. Pinned so the drift is
-  // visible and this test flips the day the package fixes it.
-  const knownDrift = ['30(d)(i)', '30(d)(ii)'];
-
-  it('supplies text or a recorded gap for every skeleton path (colregs #185 excepted)', () => {
+  it('supplies text or a recorded gap for every skeleton path', () => {
     const uncovered = skeletonPaths.filter((p) => {
       const r = resolveParagraph(BASE_JURISDICTION, p, referenceCorpus.id);
       const gap = (referenceCorpus.gaps ?? []).some((g) => g.path === p);
       expect(r.fallback).toBe(false);
       return r.shown === undefined && !gap;
     });
-    expect(uncovered).toEqual(knownDrift);
+    expect(uncovered).toEqual([]);
   });
 });
 

@@ -14,10 +14,14 @@ const activities = (cs: Candidate[]) =>
 
 describe('identify: vertical order', () => {
   it('white over red is the pilot vessel, not the fishing vessel', () => {
-    const a = activities(identifyCandidates([w, r], undefined, 'vertical'));
-    expect(a.has('activity:pilot')).toBe(true);
-    expect(a.has('activity:fishing')).toBe(false);
-    expect(a.has('activity:trawling')).toBe(false);
+    const cs = identifyCandidates([w, r], undefined, 'vertical');
+    expect(activities(cs).has('activity:pilot')).toBe(true);
+    // bow-on, an aground vessel's fore anchor light sits over its 30(d) reds
+    const afloat = activities(
+      cs.filter((c) => c.facts['fact:position'] !== 'position:aground'),
+    );
+    expect(afloat.has('activity:fishing')).toBe(false);
+    expect(afloat.has('activity:trawling')).toBe(false);
   });
 
   it('red over white is the fishing vessel', () => {
