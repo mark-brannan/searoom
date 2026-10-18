@@ -43,9 +43,5 @@
     "typescript": "^7.0.2",
     "vite": "^8.3.3",
     "vitest": "^5.0.1"
-  },
-  "overrides": {
-    "colregs": "github:mark-brannan/colregs#v0.3.8",
-    "colregs-engine": "github:mark-brannan/colregs-engine#v0.1.11"
   }
 }
