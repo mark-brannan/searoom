@@ -8,22 +8,22 @@
 // HullSpec's analytic stations. The two agree only if the mesh is shaped like
 // the profile — which nothing checked until this test.
 //
-// For every hull id with a registered mesh, this loads the .glb the way the
-// view does (same placement, same edge sampling, same profile), then compares
-// each seat the mesh yields with the spec station it stands in for, as a
-// fraction of the vessel's length.
+// For every hull the app can draw (hullScenes.ts), this loads the mesh the
+// picker offers first for that hull's scene, the way the view does (same
+// placement, same edge sampling, same profile), then compares each seat the
+// mesh yields with the spec station it stands in for, as a fraction of the
+// vessel's length.
 //
-// Eight hulls carry a Kenney Watercraft Kit mesh (nav-wright#44): cartoon
-// boats, short and tall. The other ten carry a mesh lofted from their own 2D
-// drawings (nav-wright scripts/loft-hulls.mjs). None yet lands every light
-// within tolerance; each is recorded in KNOWN_MISFITS (meshProfile.ts) as an
+// None yet lands every light within tolerance; each is recorded in
+// KNOWN_MISFITS (meshProfile.ts) with the mesh it was measured on, as an
 // expected failure (`it.fails`), so the day a mesh that fits lands, this test
-// flips loudly instead of silently passing a misfit.
+// flips loudly instead of silently passing a misfit. A hull whose best-fit
+// mesh changes runs as a plain test until its entry is re-measured.
 
 import { describe, expect, it } from 'vitest';
-import { allHulls } from 'nav-wright';
-import type { Hull } from 'nav-wright';
-import { hasRegisteredModel, modelUrlForHull } from './hullModels';
+import { selectHull } from 'nav-wright';
+import { defaultModelUrl, modelVariants } from './hullModels';
+import { HULL_SCENES } from './hullScenes';
 import {
   KNOWN_MISFITS,
   REGISTRATION_TOLERANCE,
@@ -35,28 +35,27 @@ import {
 /** Any length works — every figure is divided back out by it. */
 const LENGTH_M = 2;
 
-const registered = (Object.values(allHulls) as Hull[]).filter(
-  hasRegisteredModel,
-);
+const registered = Object.entries(HULL_SCENES).map(([id, facts]) => ({
+  id,
+  hull: selectHull(facts),
+  mesh: modelVariants(facts)[0].name,
+  url: defaultModelUrl(facts),
+}));
 
 describe('hull mesh registration', () => {
   it('has at least one registered mesh to check', () => {
-    expect(registered.map((h) => h.spec.id)).not.toEqual([]);
+    expect(registered.map((r) => r.id)).not.toEqual([]);
   });
 
-  for (const hull of registered) {
-    const { id } = hull.spec;
-    const expectedToFail = KNOWN_MISFITS.has(id);
+  for (const { id, hull, mesh, url } of registered) {
+    const expectedToFail = KNOWN_MISFITS.get(id) === mesh;
     const run = expectedToFail ? it.fails : it;
     const title = expectedToFail
-      ? `${id}: mesh is a known misfit for its spec (remove from KNOWN_MISFITS when it registers)`
-      : `${id}: mesh stations agree with the spec within ${REGISTRATION_TOLERANCE} of LOA`;
+      ? `${id} on ${mesh}: a known misfit for its spec (remove from KNOWN_MISFITS when it registers)`
+      : `${id} on ${mesh}: mesh stations agree with the spec within ${REGISTRATION_TOLERANCE} of LOA`;
 
     run(title, async () => {
-      const profile = worldProfile(
-        await loadHullScene(modelUrlForHull(hull)),
-        LENGTH_M,
-      );
+      const profile = worldProfile(await loadHullScene(url), LENGTH_M);
       const misses = compare(hull.spec, profile, LENGTH_M).filter(
         (m) => Math.abs(m.delta) > REGISTRATION_TOLERANCE,
       );

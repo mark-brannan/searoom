@@ -73,11 +73,10 @@ describe('settings persistence', () => {
 });
 
 describe('opening mesh (searoom#174)', async () => {
-  const { selectHull } = await import('nav-wright');
-  const { modelVariantsForHull } = await import('../render/hullModels');
+  const { modelVariants } = await import('../render/hullModels');
   const { serialize, deserialize } = await import('./urlState');
   const hash = '#/sandbox?p=power&a=none&pos=underway&len=30';
-  const variants = modelVariantsForHull(selectHull(deserialize(hash).facts));
+  const variants = modelVariants(deserialize(hash).facts).filter((v) => v.inClass);
 
   it('draws from the class: first and last index, by name', () => {
     expect(variants.length).toBeGreaterThan(1);

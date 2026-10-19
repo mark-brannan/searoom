@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { tracedVessels } from 'nav-wright';
+import { meshCatalog } from 'nav-wright';
 import { vesselModelUrl, vesselsByLength } from './Vessels';
+
+const traced = meshCatalog.filter((r) => r.kind === 'traced');
 
 describe('traced vessels', () => {
   it('lists at least one vessel', () => {
-    expect(tracedVessels.length).toBeGreaterThan(0);
-    expect(vesselsByLength).toHaveLength(tracedVessels.length);
+    expect(traced.length).toBeGreaterThan(0);
+    expect(vesselsByLength).toHaveLength(traced.length);
   });
-  it.each(tracedVessels.map((v) => [v.id, v] as const))(
+  it.each(traced.map((v) => [v.file, v] as const))(
     '%s resolves to a mesh URL',
-    (_id, v) => {
+    (_file, v) => {
       expect(vesselModelUrl(v)).toMatch(/\.glb/);
     },
   );

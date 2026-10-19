@@ -64,6 +64,7 @@
   "scene.mesh": "Malli",
   "scene.mesh.prev": "Edellinen malli",
   "scene.mesh.next": "Seuraava malli",
+  "scene.mesh.scaled": "{name} (skaalattu)",
   "scene.benchy.toggle": "Benchy aluksen oman mallin tilalla",
   "scene.benchy.tiltLabel": "Kallistus",
   "scene.benchy.tiltValue": "{tilt} astetta vesirajan yläpuolella",

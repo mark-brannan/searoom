@@ -129,6 +129,8 @@ describe('URL state round-trip', () => {
 
   it('keeps the tilt between the waterline and overhead', () => {
     expect(deserialize('#/sandbox?tl=-20').tilt).toBe(0);
+    // nav-wright's MAX_TILT: straight down from overhead
+    expect(MAX_TILT).toBe(90);
     expect(deserialize('#/sandbox?tl=200').tilt).toBe(MAX_TILT);
     expect(serialize({ ...DEFAULT_STATE, tilt: 40 })).toContain('tl=40');
   });
@@ -197,16 +199,16 @@ describe('URL state round-trip', () => {
     expect(deserialize('#/sandbox?ba=junk').bearingAside).toBe(true);
   });
 
-  it('round-trips the picked mesh for every hull, and omits the default', async () => {
-    const { allHulls } = await import('nav-wright');
-    const { modelVariantsForHull, pickMesh } = await import('../render/hullModels');
+  it('round-trips the picked mesh for every hull scene, and omits the default', async () => {
+    const { HULL_SCENES } = await import('../render/hullScenes');
+    const { modelVariants, pickMesh } = await import('../render/hullModels');
     expect(serialize(DEFAULT_STATE)).not.toContain('ms=');
-    for (const hull of Object.values(allHulls)) {
-      for (const v of modelVariantsForHull(hull)) {
+    for (const facts of Object.values(HULL_SCENES)) {
+      for (const v of modelVariants(facts)) {
         const url = serialize({ ...DEFAULT_STATE, mesh: v.name });
         expect(deserialize(url).mesh).toBe(v.name);
       }
-      const mesh = pickMesh(hull, () => 0.7);
+      const mesh = pickMesh(facts, () => 0.7);
       expect(deserialize(serialize({ ...DEFAULT_STATE, mesh })).mesh).toBe(mesh);
     }
   });
