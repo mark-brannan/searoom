@@ -33,8 +33,12 @@ const tab = (name) => page.locator('.mode-nav .mode-tab', { hasText: name });
 // must draw a WebGL canvas in the scene, and the vessel on it must read.
 // Lit = luminance this far over the canvas's median (its sky), so a black,
 // blank or see-through canvas counts nothing however bright the page behind.
-const LIT_OVER_SKY = 12; // of 255
-const MIN_LIT_FRACTION = 0.01;
+const LIT_OVER_SKY = 4; // of 255; the traced hull is dark at night, so "lit" is "not sky"
+// The floor separates the model present from the model absent (searoom#218),
+// not bright from dark. Measured on 52257be, default Sandbox, same scene canvas:
+//   model present (Hans Christian 38T): 0.583% lit
+//   model absent (empty glTF; the masthead light alone): 0.102% lit
+const MIN_LIT_FRACTION = 0.003;
 async function litFraction(canvas) {
   const png = (await canvas.screenshot()).toString('base64');
   return page.evaluate(async ([b64, over]) => {
@@ -52,9 +56,7 @@ async function litFraction(canvas) {
     return lum.filter((v) => v > sky + over).length / lum.length;
   }, [png, LIT_OVER_SKY]);
 }
-// Benchy, not the opening mesh: the catalog's default (loft-fishing-gear) reads
-// at 0.1% lit, under the bar, while Benchy reads 7.1% (measured on 3bd4355).
-await page.goto(`${base}#/sandbox?benchy=1`, { waitUntil: 'networkidle' });
+await page.goto(`${base}#/sandbox`, { waitUntil: 'networkidle' });
 const sceneCanvas = page.locator('.scene-main canvas').first();
 const hasCanvas = await sceneCanvas.waitFor({ timeout: 10000 }).then(() => true, () => false);
 let lit = 0;
@@ -66,7 +68,7 @@ if (hasCanvas) {
   }
 }
 check(
-  `Sandbox draws a lit 3D vessel, Benchy (${hasCanvas ? `${(lit * 100).toFixed(1)}% lit` : 'no canvas'}, need > ${MIN_LIT_FRACTION * 100}%)`,
+  `Sandbox draws a lit 3D vessel (${hasCanvas ? `${(lit * 100).toFixed(2)}% lit` : 'no canvas'}, need > ${(MIN_LIT_FRACTION * 100).toFixed(1)}%)`,
   hasCanvas && lit > MIN_LIT_FRACTION,
 );
 

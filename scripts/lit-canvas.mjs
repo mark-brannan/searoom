@@ -1,5 +1,5 @@
 // Never re-baselined: on the default Sandbox load the WebGL canvas must have
-// more than 5% of its pixels lit. Unlike the screenshot goldens, this number
+// more than 0.3% of its pixels lit. Unlike the screenshot goldens, this number
 // is not copied over in an update commit, so a change that hides the 3D view
 // cannot be waved through by re-baselining (searoom#218).
 // Lit = luminance more than LIT_OVER_SKY above the canvas's median luminance
@@ -10,7 +10,13 @@ import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 const base = process.argv[2] ?? 'http://localhost:4173/searoom/';
-const MIN_LIT_FRACTION = 0.05; // hard-coded on purpose; never re-baselined (searoom#218)
+// The floor separates the model present from the model absent, not bright from
+// dark: the traced hull's night render is dark on purpose (accepted by Solace,
+// 2026-10-21). Measured on 52257be, 1280x900 swiftshader, three runs each:
+//   model present (Hans Christian 38T): 0.583% lit
+//   model absent (empty glTF; the masthead light alone): 0.102% lit
+// 0.3% sits 2.9x over absent and 1.9x under present.
+const MIN_LIT_FRACTION = 0.003; // hard-coded on purpose; never re-baselined (searoom#218)
 const LIT_OVER_SKY = 4; // of 255; the default scene is dim, so "lit" is "not sky"
 
 const browser = await chromium.launch({ args: ['--use-gl=swiftshader'] });
@@ -70,11 +76,11 @@ if (hasCanvas) {
 }
 await browser.close();
 
-const pct = (lit * 100).toFixed(1);
+const pct = (lit * 100).toFixed(2);
 if (!hasCanvas || lit <= MIN_LIT_FRACTION) {
   console.error(
-    `FAIL default Sandbox WebGL canvas: ${hasCanvas ? `${pct}% lit` : 'no canvas'}, need > ${MIN_LIT_FRACTION * 100}%`,
+    `FAIL default Sandbox WebGL canvas: ${hasCanvas ? `${pct}% lit` : 'no canvas'}, need > ${(MIN_LIT_FRACTION * 100).toFixed(1)}%`,
   );
   process.exit(1);
 }
-console.log(`ok   default Sandbox WebGL canvas ${pct}% lit (need > ${MIN_LIT_FRACTION * 100}%)`);
+console.log(`ok   default Sandbox WebGL canvas ${pct}% lit (need > ${(MIN_LIT_FRACTION * 100).toFixed(1)}%)`);
