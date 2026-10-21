@@ -1,20 +1,74 @@
 name: Deploy
 
+# One Pages site, rebuilt whole on every run: main at the root, and each
+# holding branch (hold/*) under preview/<slug>/ beside it, listed at preview/.
+#
+# Pages serves one deployment per repo, so a preview cannot be deployed on its
+# own: every run rebuilds main plus every live holding branch into one
+# artifact. And the github-pages environment admits deployments from main
+# only, so every trigger here runs on main's ref:
+#   push to main      a merge; also takes a merged holding branch's preview down
+#   workflow_run      CI finished on a push to hold/*; runs on the default
+#                     branch, whatever branch CI ran on
+#   delete            a hold/* branch deleted; runs on the default branch
+#   workflow_dispatch by hand, from main
+# The hold/ prefix is written here four times and in scripts/preview-sites.mjs.
+
 on:
   push:
     branches: [main]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: ['hold/**']
+  delete:
+  workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
+# Only a run that will deploy may cancel the one in flight. Every merged PR
+# deletes its branch, and a delete run for a non-hold branch, or a CI
+# pull_request run on a hold branch, deploys nothing: it gets a group of its own.
 concurrency:
-  group: pages
+  group: >-
+    ${{ ((github.event_name != 'delete' || startsWith(github.event.ref, 'hold/')) &&
+         (github.event_name != 'workflow_run' || github.event.workflow_run.event == 'push'))
+        && 'pages' || format('pages-noop-{0}', github.run_id) }}
   cancel-in-progress: true
 
 jobs:
+  plan:
+    # workflow_run: only CI's push runs from this repo's own branches, not its
+    # pull_request runs (the same push, twice) or a fork's.
+    if: >-
+      github.ref == 'refs/heads/main' && (
+        github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'workflow_run' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_repository.full_name == github.repository) ||
+        (github.event_name == 'delete' &&
+          github.event.ref_type == 'branch' &&
+          startsWith(github.event.ref, 'hold/')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      previews: ${{ steps.list.outputs.previews }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: list
+        run: echo "previews=$(node scripts/preview-sites.mjs "$GITHUB_REPOSITORY")" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
   build:
+    needs: plan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,12 +79,89 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-main
+          path: dist
+          retention-days: 1
+
+  # A broken holding branch drops out of this run's site; it never blocks main.
+  build-preview:
+    needs: plan
+    if: needs.plan.outputs.previews != '[]'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.previews) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run build -- --base="/${REPO_NAME}/preview/${SLUG}/"
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+          SLUG: ${{ matrix.slug }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-preview-${{ matrix.slug }}
+          path: dist
+          retention-days: 1
+
+  assemble:
+    needs: [plan, build, build-preview]
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: site-main
+          path: site
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: site-preview-*
+          path: previews
+      - name: Place previews under preview/<slug>/
+        run: |
+          mkdir -p site/preview previews
+          {
+            echo '<!doctype html><meta charset="utf-8">'
+            echo '<meta name="viewport" content="width=device-width">'
+            echo '<title>searoom previews</title><h1>Previews</h1><ul>'
+          } > site/preview/index.html
+          echo '### Previews' >> "$GITHUB_STEP_SUMMARY"
+          echo "$PREVIEWS" | jq -c '.[]' | while read -r p; do
+            slug=$(echo "$p" | jq -r .slug)
+            branch=$(echo "$p" | jq -r .branch)
+            branch_html=$(echo "$p" | jq -r '.branch | @html')
+            sha=$(echo "$p" | jq -r .sha | cut -c1-7)
+            if [ -d "previews/site-preview-$slug" ]; then
+              mv "previews/site-preview-$slug" "site/preview/$slug"
+              echo "<li><a href=\"$slug/\">$branch_html</a> <code>$sha</code></li>" >> site/preview/index.html
+              echo "- [$branch]($BASE_URL/preview/$slug/) at \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "- $branch at \`$sha\`: build failed, not deployed" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+          echo '</ul>' >> site/preview/index.html
+        env:
+          PREVIEWS: ${{ needs.plan.outputs.previews }}
+          BASE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: site
+
   deploy:
-    needs: build
+    needs: assemble
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -39,10 +170,9 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
   verify-live:
     needs: deploy
-    permissions:
-      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
