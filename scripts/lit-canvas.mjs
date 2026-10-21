@@ -11,8 +11,8 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 
 const base = process.argv[2] ?? 'http://localhost:4173/searoom/';
 // The floor separates the model present from the model absent, not bright from
-// dark: the traced hull's night render is dark on purpose (accepted by Solace,
-// 2026-10-21). Measured on 52257be, 1280x900 swiftshader, three runs each:
+// dark: the traced hull's night render is dark on purpose. Measured on 52257be,
+// 1280x900 swiftshader, three runs each:
 //   model present (Hans Christian 38T): 0.583% lit
 //   model absent (empty glTF; the masthead light alone): 0.102% lit
 // 0.3% sits 2.9x over absent and 1.9x under present.
