@@ -14,7 +14,8 @@
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-// Keep in step with the workflow_run and delete filters in deploy.yml.
+// Keep in step with deploy.yml: the workflow_run filter, the concurrency
+// group and plan's if.
 export const PREFIX = 'hold/';
 
 /** The path segment a branch is served under: hold/Night_Mode → night-mode. */

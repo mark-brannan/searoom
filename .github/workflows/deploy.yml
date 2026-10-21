@@ -12,8 +12,8 @@ name: Deploy
 #                     branch, whatever branch CI ran on
 #   delete            a hold/* branch deleted; runs on the default branch
 #   workflow_dispatch by hand, from main
-# The hold/ prefix is written in this file (filter, concurrency group, plan's
-# if) and in scripts/preview-sites.mjs.
+# The hold/ prefix is spelled in the workflow_run filter, the concurrency
+# group and plan's if, and in PREFIX in scripts/preview-sites.mjs.
 
 on:
   push:
