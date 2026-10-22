@@ -107,7 +107,7 @@ export const DEFAULT_STATE: AppState = {
   locale: 'en',
   corpus: DEFAULT_CORPUS_ID,
   rulePath: null,
-  hullHint: 70,
+  hullHint: 30,
   range: 0.5,
   sky: 0,
   benchy: false,
