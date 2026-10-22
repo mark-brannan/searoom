@@ -48,6 +48,11 @@ To try a pull request, paste the one command under its **Try it** heading: it
 fetches the PR's head into a worktree of its own and serves it on port
 `10000 + PR number`.
 
+A holding branch, `hold/<name>`, is also deployed beside the live site at
+`https://mark-brannan.github.io/searoom/preview/<name>/` once its CI run
+finishes, and comes down when it merges or is deleted; `preview/` lists the
+ones up. `.github/workflows/deploy.yml` says how.
+
 ## Not for navigation
 
 Searoom is a study tool. It is not navigation equipment and must not be
