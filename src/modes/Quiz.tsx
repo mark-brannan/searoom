@@ -4,6 +4,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
+import { MiniProfile } from '../components/MiniProfile';
 import { describeFacts } from '../components/factLabel';
 import { citeOf } from '../engine/quiz';
 import type { QuizQuestion } from '../engine/quiz';
@@ -23,39 +24,11 @@ import type { Progress } from '../engine/quizProgress';
 import { RuleParagraphs } from '../components/RuleParagraphs';
 import { QUIZ_MODES } from '../state/urlState';
 import { useAppState, usePatch } from '../state/store';
-import { Glow, PX, PZ, bearingInArc, bearingLabel, selectHull } from 'nav-wright';
+import { Glow, bearingInArc, bearingLabel, selectHull } from 'nav-wright';
 import { placeLights } from '../render/navWright';
 import { lights } from '../data/colregs';
 import type { AppState } from '../state/urlState';
 import type { Display, FactRecord } from '../engine/types';
-
-function MiniProfile({
-  facts,
-  display,
-}: {
-  facts: FactRecord;
-  display: Display;
-}) {
-  const hull = selectHull(facts);
-  const placed = placeLights(display.lights, hull.spec, facts, lights);
-  return (
-    <svg viewBox="0 0 440 240" className="scene-svg" aria-hidden="true">
-      <rect width="440" height="240" fill="var(--sea-night)" />
-      <line x1="0" y1={PZ(0)} x2="440" y2={PZ(0)} stroke="var(--waterline)" />
-      <hull.Profile />
-      {placed.map((l) => (
-        <Glow
-          key={l.key}
-          x={PX(l.fx) + l.py * 10}
-          y={PZ(l.z)}
-          color={l.color}
-          flashing={l.character === 'flashing'}
-          dim={l.py < -0.05}
-        />
-      ))}
-    </svg>
-  );
-}
 
 /** A reverse question's card: lights only on black, the strict exam view. */
 export function MiniBearing({

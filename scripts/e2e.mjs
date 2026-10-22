@@ -76,6 +76,7 @@ check(
 for (const [name, hash, probe] of [
   ['Sandbox', '#/sandbox', '.sandbox-grid'],
   ['Identify', '#/identify', '.color-btn'],
+  ['Flashcards', '#/flashcards', '.flashcard'],
   ['Rules', '#/rules', '[id^="rule-"]'],
   ['Sound', '#/sound', '.panel'],
 ]) {
