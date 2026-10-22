@@ -74,8 +74,8 @@ jobs:
             sleep 1
           done
           node scripts/goldens.mjs check
-      # Never re-baselined: the default Sandbox must draw a WebGL canvas with
-      # more than 5% of its pixels lit (searoom#218). Its own step, so its
+      # Never re-baselined: the default Sandbox must draw a WebGL canvas
+      # whose vessel is seen and dim (searoom#218). Its own step, so its
       # seconds show on the run; runs even when the goldens differ.
       - name: Default Sandbox canvas is lit
         if: always()

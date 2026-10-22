@@ -1,4 +1,4 @@
-// CI end-to-end: the default Sandbox draws a lit 3D vessel, every mode
+// CI end-to-end: the default Sandbox draws a dim 3D vessel, every mode
 // opens from the header nav, plus one threshold crossing on the length
 // slider. Chromium only, software WebGL so the 3D canvas draws headless;
 // colorScheme is set to dark explicitly (the night theme is the app's identity).
@@ -6,6 +6,7 @@
 
 import { chromium } from 'playwright';
 import AxeBuilder from '@axe-core/playwright';
+import { canvasLight } from './canvas-light.mjs';
 
 const base = process.argv[2] ?? 'http://localhost:4173/searoom/';
 let failures = 0;
@@ -29,47 +30,26 @@ page.on('pageerror', (e) => errors.push(String(e)));
 await page.goto(base, { waitUntil: 'networkidle' });
 const tab = (name) => page.locator('.mode-nav .mode-tab', { hasText: name });
 
-// The 3D vessel is the Sandbox's primary view (refs #218): the default page
-// must draw a WebGL canvas in the scene, and the vessel on it must read.
-// Lit = luminance this far over the canvas's median (its sky), so a black,
-// blank or see-through canvas counts nothing however bright the page behind.
-const LIT_OVER_SKY = 4; // of 255; the traced hull is dark at night, so "lit" is "not sky"
-// The floor separates the model present from the model absent (searoom#218),
-// not bright from dark. Measured on 52257be, default Sandbox, same scene canvas:
-//   model present (Hans Christian 38T): 0.583% lit
-//   model absent (empty glTF; the masthead light alone): 0.102% lit
-const MIN_LIT_FRACTION = 0.003;
-async function litFraction(canvas) {
-  const png = (await canvas.screenshot()).toString('base64');
-  return page.evaluate(async ([b64, over]) => {
-    const im = new Image();
-    await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = 'data:image/png;base64,' + b64; });
-    const c = document.createElement('canvas');
-    c.width = im.width;
-    c.height = im.height;
-    const x = c.getContext('2d', { willReadFrequently: true });
-    x.drawImage(im, 0, 0);
-    const d = x.getImageData(0, 0, im.width, im.height).data;
-    const lum = new Float32Array(d.length / 4);
-    for (let i = 0; i < lum.length; i++) lum[i] = 0.2126 * d[4 * i] + 0.7152 * d[4 * i + 1] + 0.0722 * d[4 * i + 2];
-    const sky = Float32Array.from(lum).sort()[lum.length >> 1];
-    return lum.filter((v) => v > sky + over).length / lum.length;
-  }, [png, LIT_OVER_SKY]);
-}
+// The 3D vessel is the Sandbox's primary view, dim by default (refs #218):
+// the default page draws a WebGL canvas whose vessel is seen and not bright.
+// Seen and bright are defined, and the floors measured, in lit-canvas.mjs.
+const MIN_SEEN_FRACTION = 0.008;
+const MAX_BRIGHT_FRACTION = 0.003;
 await page.goto(`${base}#/sandbox`, { waitUntil: 'networkidle' });
 const sceneCanvas = page.locator('.scene-main canvas').first();
 const hasCanvas = await sceneCanvas.waitFor({ timeout: 10000 }).then(() => true, () => false);
-let lit = 0;
+let light = { seen: 0, bright: 0 };
 if (hasCanvas) {
   // the mesh streams in after the canvas mounts; give it a few frames
-  for (let i = 0; i < 10 && lit <= MIN_LIT_FRACTION; i++) {
+  for (let i = 0; i < 10 && light.seen <= MIN_SEEN_FRACTION; i++) {
     await page.waitForTimeout(500);
-    lit = await litFraction(sceneCanvas);
+    light = await canvasLight(page, await sceneCanvas.screenshot());
   }
 }
+const pct = (f) => `${(f * 100).toFixed(2)}%`;
 check(
-  `Sandbox draws a lit 3D vessel (${hasCanvas ? `${(lit * 100).toFixed(2)}% lit` : 'no canvas'}, need > ${(MIN_LIT_FRACTION * 100).toFixed(1)}%)`,
-  hasCanvas && lit > MIN_LIT_FRACTION,
+  `Sandbox draws a dim 3D vessel (${hasCanvas ? `${pct(light.seen)} seen, need > ${pct(MIN_SEEN_FRACTION)}; ${pct(light.bright)} bright, need <= ${pct(MAX_BRIGHT_FRACTION)}` : 'no canvas'})`,
+  hasCanvas && light.seen > MIN_SEEN_FRACTION && light.bright <= MAX_BRIGHT_FRACTION,
 );
 
 // every mode: click its tab, expect it active and its body non-blank
