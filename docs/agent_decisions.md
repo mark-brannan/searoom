@@ -72,3 +72,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261016t112712z
 - searoom#174: bearing view also shows beside the Arcs tab Undo: add a view !== 'plan' condition in Sandbox (no PR, branch claude/feat174view-1016n)
+
+### 20261022t055500z
+- searoom canvas check: 'seen' = off the sea by >2/255 either way, black sky excluded; floor 0.3% -> 0.8% on the new metric; new ceiling 'bright' (>4/255 over the sea) <= 0.3% Undo: revert scripts/canvas-light.mjs and the two constants in lit-canvas.mjs and e2e.mjs ([#218](https://github.com/mark-brannan/searoom/issues/218)) (no PR, branch claude/searoom-218-postmortem-6c2019)
