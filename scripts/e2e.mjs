@@ -6,7 +6,7 @@
 
 import { chromium } from 'playwright';
 import AxeBuilder from '@axe-core/playwright';
-import { canvasLight } from './canvas-light.mjs';
+import { canvasLight, MIN_SEEN_FRACTION, MAX_BRIGHT_FRACTION } from './canvas-light.mjs';
 
 const base = process.argv[2] ?? 'http://localhost:4173/searoom/';
 let failures = 0;
@@ -32,9 +32,7 @@ const tab = (name) => page.locator('.mode-nav .mode-tab', { hasText: name });
 
 // The 3D vessel is the Sandbox's primary view, dim by default (refs #218):
 // the default page draws a WebGL canvas whose vessel is seen and not bright.
-// Seen and bright are defined, and the floors measured, in lit-canvas.mjs.
-const MIN_SEEN_FRACTION = 0.008;
-const MAX_BRIGHT_FRACTION = 0.003;
+// Seen and bright, and the bar they pass, are defined in canvas-light.mjs.
 await page.goto(`${base}#/sandbox`, { waitUntil: 'networkidle' });
 const sceneCanvas = page.locator('.scene-main canvas').first();
 const hasCanvas = await sceneCanvas.waitFor({ timeout: 10000 }).then(() => true, () => false);

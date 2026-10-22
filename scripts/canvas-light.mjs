@@ -3,6 +3,14 @@
 //            sky excluded, so the default hull's dark silhouette counts
 //   bright — pixels more than BRIGHT_OVER_SEA above the sea: lights and a lit hull
 // Shared by e2e.mjs and lit-canvas.mjs (searoom#218).
+// The pass bar, hard-coded on purpose and never re-baselined (searoom#218).
+// Measured on c17e6d0, 1280x900 swiftshader, two runs each, identical:
+//   hull hint   0: 0.467% seen, 0.102% bright (the masthead light alone)
+//   hull hint  30: 1.231% seen, 0.103% bright (the default)
+//   hull hint  70: 1.399% seen, 0.583% bright
+//   hull hint 100: 1.901% seen, 1.019% bright
+export const MIN_SEEN_FRACTION = 0.008;
+export const MAX_BRIGHT_FRACTION = 0.003;
 const SEEN_OFF_SEA = 2; // of 255
 const BRIGHT_OVER_SEA = 4; // of 255
 const BLACK = 0.5; // the night sky at sky 0 renders as pure black

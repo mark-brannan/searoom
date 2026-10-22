@@ -6,19 +6,12 @@
 
 import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { canvasLight } from './canvas-light.mjs';
+import { canvasLight, MIN_SEEN_FRACTION, MAX_BRIGHT_FRACTION } from './canvas-light.mjs';
 
 const base = process.argv[2] ?? 'http://localhost:4173/searoom/';
 // Seen and bright are defined in canvas-light.mjs. The default hull is dark
-// on the sea, not lit (#221's thread: "dimness, darkness, obscurity BY DEFAULT"),
-// so the floor counts its silhouette and the ceiling fails a glowing hull.
-// Measured on c17e6d0, 1280x900 swiftshader, two runs each, identical:
-//   hull hint   0: 0.467% seen, 0.102% bright (the masthead light alone)
-//   hull hint  30: 1.231% seen, 0.103% bright (the default)
-//   hull hint  70: 1.399% seen, 0.583% bright
-//   hull hint 100: 1.901% seen, 1.019% bright
-const MIN_SEEN_FRACTION = 0.008; // hard-coded on purpose; never re-baselined (searoom#218)
-const MAX_BRIGHT_FRACTION = 0.003; // likewise
+// on the sea, not lit, so the floor counts its silhouette and the ceiling
+// fails a glowing hull.
 
 const browser = await chromium.launch({ args: ['--use-gl=swiftshader'] });
 const context = await browser.newContext({

@@ -77,7 +77,7 @@ jobs:
       # Never re-baselined: the default Sandbox must draw a WebGL canvas
       # whose vessel is seen and dim (searoom#218). Its own step, so its
       # seconds show on the run; runs even when the goldens differ.
-      - name: Default Sandbox canvas is lit
+      - name: Default Sandbox canvas shows a dim vessel
         if: always()
         run: node scripts/lit-canvas.mjs
       - if: always()
