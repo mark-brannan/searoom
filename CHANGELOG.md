@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.1.3](https://github.com/mark-brannan/searoom/compare/v0.1.2...v0.1.3) (2026-10-22)
+
+
+### Added
+
+* **intro:** first-run intro card on the Sandbox ([#108](https://github.com/mark-brannan/searoom/issues/108), item 1) ([#210](https://github.com/mark-brannan/searoom/issues/210)) ([7014c99](https://github.com/mark-brannan/searoom/commit/7014c993668e10046d67020b676d3121954e99f4))
+* **render:** adopt nav-wright's mesh catalog for the Mesh picker ([#230](https://github.com/mark-brannan/searoom/issues/230)) ([52257be](https://github.com/mark-brannan/searoom/commit/52257be87dd7668883033a2d2bfb34b6ca74316f))
+* **sandbox:** the 3D model is the primary view; Profile and Quiz unwired (refs [#218](https://github.com/mark-brannan/searoom/issues/218)) ([#221](https://github.com/mark-brannan/searoom/issues/221)) ([68f9fe2](https://github.com/mark-brannan/searoom/commit/68f9fe207c441b329c5f3a7220bbab70e9e0c542))
+* **try-it:** every rendered PR carries a paste-ready "Try it" dev-server block ([#228](https://github.com/mark-brannan/searoom/issues/228)) ([35be680](https://github.com/mark-brannan/searoom/commit/35be680076dca638da02155afda54719a5d108c8))
+* **vessels:** a Vessels mode showing every traced sailing vessel in 3D ([#229](https://github.com/mark-brannan/searoom/issues/229)) ([9233300](https://github.com/mark-brannan/searoom/commit/9233300f62e946207f8b071c640a2caf9c0e3d4d))
+
+
+### Fixed
+
+* **goldens:** re-baseline traced-hull sandbox goldens, lit floor separates model from no model ([#239](https://github.com/mark-brannan/searoom/issues/239)) ([ac6e061](https://github.com/mark-brannan/searoom/commit/ac6e061462775a76a9ce079ca2b03bdd146ebcce))
+* **sandbox:** default hull hint back to 30, check the default hull is dim ([#240](https://github.com/mark-brannan/searoom/issues/240)) ([b2e654f](https://github.com/mark-brannan/searoom/commit/b2e654f1e757efae80635617316459808d451c34))
+
 ## [0.1.2](https://github.com/mark-brannan/searoom/compare/v0.1.1...v0.1.2) (2026-10-16)
 
 
