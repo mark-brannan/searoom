@@ -5,7 +5,11 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 
 // Ceilings in gzip bytes: measured + 5%. Lower them when the bundle shrinks.
-const CEILING = { main: 125757, total: 509515 };
+// The total also carries the mesh Profile view (#191, +5229 B), which loads
+// three.js for the Sandbox's Profile tab, nav-wright's mesh catalog (the
+// Mesh picker's data) and the colregs v0.3.8 / nav-wright 5a959ae pins.
+// Re-measured 536055 B at those pins.
+const CEILING = { main: 125757, total: 562858 };
 const dir = 'dist/assets';
 const gz = (f) => gzipSync(readFileSync(`${dir}/${f}`)).length;
 const files = readdirSync(dir).filter((f) => /\.(js|css)$/.test(f));

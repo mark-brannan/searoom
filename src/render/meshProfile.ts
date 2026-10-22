@@ -9,9 +9,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-// Not on nav-wright's export map: the pure profile API lives inside the
-// package, next to the component that uses it. This reaches past the map on
-// purpose; the alternative is re-deriving it and drifting from it.
+// The pure profile API, from nav-wright's public `./profile` entry point.
 import {
   PROFILE_STATIONS,
   bowShoulder,
@@ -20,63 +18,77 @@ import {
   placeHullModel,
   sampleEdges,
   stationProfile,
-} from '../../node_modules/nav-wright/dist/modelTransform.js';
+} from 'nav-wright/profile';
 import type { HullSpec } from 'nav-wright';
-import type { StationProfile } from '../../node_modules/nav-wright/dist/modelTransform.js';
+import type { StationProfile } from 'nav-wright/profile';
 
 /**
- * Hull ids whose registered mesh is known not to fit, with the measured
- * misses (Δ/LOA) at the time of writing. Remove an id here when a mesh that
- * registers lands; hullRegistration.test.ts then fails until it does, and
- * profilePose.test.ts, whose pose follows the mesh, reads the same set.
+ * Hull ids whose best-fit mesh (the picker's first offer for the hull's scene,
+ * hullScenes.ts) is known not to fit, each with the mesh it was measured on
+ * and its two worst misses (Δ/LOA). hullRegistration.test.ts expects a
+ * failure only while the hull still draws that mesh: remove an entry when a
+ * mesh that registers lands, and re-measure one whose best fit changes.
+ * profilePose.test.ts, whose pose follows the mesh, reads the same map.
  *
- * Kenney Watercraft Kit meshes have cartoon proportions, so every one misses
- * somewhere:
- *
- * open → boat-row-large: sidelight x -0.24, deck +0.09, half-beam +0.28;
- * masthead x -0.12, top +0.09; stern x -0.10, transom top +0.17.
- * power-small → boat-speed-j: sidelight x +0.11, deck +0.08, half-beam +0.06;
- * masthead x -0.47; aft mast x -0.25; stern x -0.08, transom top +0.21.
- * power-large → boat-house-c: sidelight x +0.29, half-beam +0.10; masthead
- * x -0.21, top +0.27; stern x -0.06, transom top +0.10.
- * sail-small → boat-sail-b: sidelight x +0.16, deck +0.16, half-beam +0.08;
- * masthead x -0.13, top +0.73; stern x -0.06, transom top +0.16.
- * sail-large → ship-small: sidelight deck +0.25, half-beam +0.07; masthead
- * top +0.51; aft mast x +0.15; stern x -0.06, transom top +0.80.
- * trawler → boat-fishing-small: sidelight x +0.33, deck +0.12, half-beam
- * +0.07; masthead x -0.14, top +0.38; aft mast x +0.18; stern x -0.07,
- * transom top +0.18.
- * tug → boat-tow-b: sidelight x +0.29, deck +0.07, half-beam +0.07; masthead
- * x +0.13, top +0.26; aft mast x +0.34; stern x -0.08, transom top +0.16.
- * container-ship → ship-cargo-a: sidelight x +0.56, deck -0.12; masthead
- * x -0.11; aft mast x +0.39.
- *
- * Every lofted mesh (nav-wright scripts/loft-hulls.mjs) misses here. The
- * mesh is the hull's own profile and plan drawings, so the misses measure
- * how far anchorLights' reading of a drawing (bow shoulder from the plan
- * outline, mast band from the tallest structure) sits from the spec's
- * hand-set stations. Closing that is nav-wright#50
- * (place lights from Annex I geometry) or a per-spec retune.
+ * Every one misses. The lofts are the hull's own profile and plan drawings,
+ * so their misses measure how far anchorLights' reading of a drawing (bow
+ * shoulder from the plan outline, mast band from the tallest structure)
+ * sits from the spec's hand-set stations; closing that is nav-wright#50
+ * (place lights from Annex I geometry) or a per-spec retune. The traced
+ * sloop carries her real mast, far above the spec's idealized one. Four
+ * hulls draw a loft of another hull's drawing, which ties theirs in the
+ * catalog (trawler and seiner on fishing-gear, partly-submerged on barge,
+ * tanker on bulker, restricted-ability on dredger).
  */
-export const KNOWN_MISFITS: ReadonlySet<string> = new Set([
-  'open',
-  'power-small',
-  'power-large',
-  'sail-small',
-  'sail-large',
-  'square-rigger',
-  'trawler',
-  'seiner',
-  'tug',
-  'barge',
-  'pilot-boat',
-  'ferry',
-  'container-ship',
-  'tanker',
-  'bulker',
-  'cruise-ship',
-  'warship',
-  'dredger',
+export const KNOWN_MISFITS: ReadonlyMap<string, string> = new Map([
+  // masthead x +0.46, aft masthead x +0.19
+  ['open', 'loft-open.glb'],
+  // aft masthead x +0.22, sternlight x -0.07
+  ['power-small', 'loft-power-small.glb'],
+  // masthead x -0.38, sidelight x +0.26
+  ['power-large', 'loft-power-large.glb'],
+  // masthead y +0.90, aft masthead x +0.16
+  ['sail-small', 'hans-christian-38t.glb'],
+  // aft masthead x +0.22, sidelight x +0.07
+  ['sail-large', 'loft-sail-large.glb'],
+  // masthead x -0.24, sidelight x +0.07
+  ['square-rigger', 'loft-square-rigger.glb'],
+  // masthead x -0.35, sidelight x +0.18
+  ['trawler', 'loft-fishing-gear.glb'],
+  // masthead x -0.35, sidelight x +0.15
+  ['seiner', 'loft-fishing-gear.glb'],
+  // sidelight x +0.23, aft masthead x +0.20
+  ['tug', 'loft-tug.glb'],
+  // masthead x -0.34, sidelight x +0.33
+  ['pusher', 'loft-pusher.glb'],
+  // masthead x +0.23, sidelight x +0.10
+  ['barge', 'loft-barge.glb'],
+  // sidelight x +0.23, masthead x +0.23
+  ['partly-submerged', 'loft-barge.glb'],
+  // aft masthead x +0.22, sidelight x +0.08
+  ['pilot-boat', 'loft-pilot-boat.glb'],
+  // masthead x -0.59, sidelight x +0.21
+  ['ferry', 'loft-ferry.glb'],
+  // masthead x -0.60, sidelight x +0.56
+  ['container-ship', 'loft-container-ship.glb'],
+  // masthead x -0.71, sidelight x +0.68
+  ['tanker', 'loft-bulker.glb'],
+  // masthead x -0.72, sidelight x +0.71
+  ['bulker', 'loft-bulker.glb'],
+  // masthead x -0.59, sidelight x +0.52
+  ['dredger', 'loft-dredger.glb'],
+  // masthead x -0.29, sidelight x +0.17
+  ['mine-clearance', 'loft-mine-clearance.glb'],
+  // masthead x -0.35, sidelight x +0.18
+  ['fishing-gear', 'loft-fishing-gear.glb'],
+  // sidelight x +0.60, masthead x -0.55
+  ['aground', 'loft-aground.glb'],
+  // aft masthead x +0.55, sternlight y +0.20
+  ['dive-support', 'loft-dive-support.glb'],
+  // masthead x -0.53, sternlight y +0.23
+  ['wing-in-ground', 'loft-wing-in-ground.glb'],
+  // masthead x -0.50, sidelight x +0.22
+  ['restricted-ability', 'loft-dredger.glb'],
 ]);
 
 /** Vite's `?url` import under vitest resolves to a root-relative path, with

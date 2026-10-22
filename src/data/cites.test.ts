@@ -19,9 +19,15 @@ import { factsForEntry, jurisdictionForEntry, paragraphsForCite } from './cites'
 // situation-fixtures.json instead of skipping.
 const DISPLAY_CATEGORIES = new Set([undefined, 'category:display']);
 
+// Entries whose `when` reads a pair: or self:act: key (the 34(a)-(d) sound
+// signals) need a Situation, not a FactRecord, so evaluateDisplay cannot fire them.
+const readsSituation = (when: Record<string, unknown> | undefined) =>
+  Object.keys(when ?? {}).some((k) => k.startsWith('pair:') || k.startsWith('self:act:'));
+
 describe('entry reachability', () => {
   for (const entry of applicability.entries) {
     if (!DISPLAY_CATEGORIES.has(entry.category)) continue;
+    if (readsSituation(entry.when)) continue;
     it(`${entry.id} has a fixture fact record that fires it`, () => {
       const facts = factsForEntry(entry.id);
       expect(facts).toBeDefined();

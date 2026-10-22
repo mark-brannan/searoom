@@ -85,19 +85,17 @@ repos, and the app's CI catches colregs regressions before consumers do.
 
 ### The scene renderer
 
-Three views over one display, SVG throughout, night-dark theme as the
-default (this is a night-lights app; dark isn't a preference, it's the
-subject):
+One display, night-dark by default (this is a night-lights app; dark isn't a
+preference, it's the subject). The Sandbox opens on the 3D scene, the primary
+view; the others are secondary:
 
-- **Profile** — the boat from abeam: curated base drawing + lights placed on
-  it, each light glowing its Rule 21 colour. `geometry.json` informs
-  placement where it helps; idealized is fine.
-- **Bearing** — the exam-critical view: black field, lights only, seen from a
-  relative bearing the user drags around a dial. Sidelight cutoffs, masthead
-  arc edges and aspect changes happen live as θ sweeps. Optionally a faint
-  hull hint.
-- **Plan** — top-down arcs: each light's `from_deg`/`to_deg` sector drawn
-  around the hull, the view that explains *why* the bearing view changes.
+- **3D** (`model`) — the vessel seen from a relative bearing the user drags
+  around a dial: night, hull dimmed by default, lights exact. Sidelight
+  cutoffs, masthead arc edges and aspect changes happen live as θ sweeps.
+- **Bearing** (`bearingAside`) — the exam view beside the scene: black field,
+  lights only, turning with it.
+- **Arcs** (`plan`) — top-down: each light's `from_deg`/`to_deg` sector drawn
+  around the hull, the view that explains *why* the bearing changes.
 
 Base drawing set, curated small: sail (small/large), power (small/large,
 planing/displacement), ship, tug + tow, pusher, trawler/fishing boat,

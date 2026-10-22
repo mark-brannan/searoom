@@ -17,11 +17,12 @@ import {
   today,
 } from '../state/leitner';
 import type { Boxes } from '../state/leitner';
-import type { AppState } from '../state/urlState';
+import { useAppState } from '../state/store';
 
 const SESSION_CAP = 20;
 
-export function Flashcards({ state }: { state: AppState }) {
+export function Flashcards() {
+  const state = useAppState();
   const intl = useIntl();
   const [boxes, setBoxes] = useState<Boxes>(() => loadBoxes());
   const [rule, setRule] = useState('');
@@ -68,7 +69,8 @@ export function Flashcards({ state }: { state: AppState }) {
     const next = grade(boxes, card.id, right, day);
     setBoxes(next);
     saveBoxes(next);
-    if (!right) setRequeued((r) => [...r, card]);
+    // a miss is re-queued once: a re-queued card missed again waits for tomorrow
+    if (!right && !requeued.includes(card)) setRequeued((r) => [...r, card]);
     setFlipped(false);
     setIndex((i) => i + 1);
   };

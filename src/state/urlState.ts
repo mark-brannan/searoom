@@ -4,6 +4,7 @@
 
 import type { FactRecord, FactValue } from '../engine/types';
 import { BASE_JURISDICTION, isJurisdiction } from '../data/jurisdictions';
+import { PRESETS } from '../data/presets';
 import { DEFAULT_TILT, MAX_TILT } from 'nav-wright/benchy';
 import {
   DEFAULT_CORPUS_ID,
@@ -19,8 +20,16 @@ import {
 // looser view and casts back to FactRecord at the boundary.
 type FactBag = Record<string, FactValue | undefined>;
 
-export type Mode = 'sandbox' | 'identify' | 'quiz' | 'flashcards' | 'rules' | 'sound';
-export type View = 'profile' | 'bearing' | 'plan';
+export type Mode =
+  | 'sandbox'
+  | 'identify'
+  | 'quiz'
+  | 'flashcards'
+  | 'rules'
+  | 'sound'
+  | 'vessels';
+// 'profile' is unwired from the Sandbox (refs #218); the type keeps its code compiling.
+export type View = 'profile' | 'model' | 'plan';
 
 export interface AppState {
   mode: Mode;
@@ -42,16 +51,32 @@ export interface AppState {
    */
   corpus: string;
   rulePath: string | null;
-  /** Bearing view hull hint, percent: 0 is off, 100 is plain to see. */
+  /** 3D view hull hint, percent: 0 is off, 100 is plain to see. */
   hullHint: number;
-  /** Bearing view sky, percent: 0 is black, 100 is a lighter night blue. */
+  /** 3D view range to her, nautical miles: the hull hint is full at
+   *  RANGE_MIN_NM and gone by RANGE_MAX_NM (nav-wright's hullHintOpacity). */
+  range: number;
+  /** 3D view sky, percent: 0 is black, 100 is a lighter night blue. */
   sky: number;
-  /** Bearing view draws Benchy in place of her own model, at her size. */
+  /** 3D view draws Benchy in place of her own model, at her size. */
   benchy: boolean;
-  /** Bearing view mesh, by nav-wright file name; '' is the hull's default. */
+  /** 3D view mesh, by nav-wright file name; '' is the hull's default. */
   mesh: string;
+  /** The lights-only view beside the 3D view. */
+  bearingAside: boolean;
   drawer: boolean;
+  /** Quiz run seed; question n asks seed + n - 1, so a URL reopens it. */
+  quizSeed: number;
+  /** Quiz question number within the run, from 1. */
+  quizN: number;
+  quizDirection: 'forward' | 'reverse';
+  quizMode: QuizMode;
+  /** Quiz drill: only scenarios exercising this rule number; '' is all. */
+  quizRule: string;
 }
+
+export type QuizMode = 'practice' | 'drill' | 'exam';
+export const QUIZ_MODES: QuizMode[] = ['practice', 'drill', 'exam'];
 
 export const DEFAULT_FACTS: FactRecord = {
   'fact:propulsion': 'propulsion:sail',
@@ -74,7 +99,7 @@ export const DEFAULT_STATE: AppState = {
   mode: 'sandbox',
   jurisdiction: BASE_JURISDICTION,
   facts: DEFAULT_FACTS,
-  view: 'profile',
+  view: 'model',
   theta: 45,
   tilt: DEFAULT_TILT,
   displayIndex: 0,
@@ -83,17 +108,39 @@ export const DEFAULT_STATE: AppState = {
   locale: 'en',
   corpus: DEFAULT_CORPUS_ID,
   rulePath: null,
-  hullHint: 30,
+  hullHint: 70,
+  range: 0.5,
   sky: 0,
   benchy: false,
   mesh: '',
+  bearingAside: true,
   drawer: false,
+  quizSeed: 1,
+  quizN: 1,
+  quizDirection: 'forward',
+  quizMode: 'practice',
+  quizRule: '',
 };
 
 const percent = (v: string | null): number | null => {
   if (v === null || v.trim() === '') return null;
   const n = Number(v);
   return Number.isFinite(n) ? Math.round(Math.min(100, Math.max(0, n))) : null;
+};
+
+/** The 3D view's range control: moonlight's reach to where she is gone. */
+export const RANGE_MIN_NM = 0.5;
+export const RANGE_MAX_NM = 3;
+export const RANGE_STEP_NM = 0.1;
+
+/** A range param in nm, clamped to the control and rounded to its step;
+ *  junk is null so the default stands. */
+const rangeNm = (v: string | null): number | null => {
+  if (v === null || v.trim() === '') return null;
+  const n = Number(v);
+  if (!Number.isFinite(n)) return null;
+  const clamped = Math.min(RANGE_MAX_NM, Math.max(RANGE_MIN_NM, n));
+  return Math.round(clamped * 10) / 10; // RANGE_STEP_NM
 };
 
 // short param <-> fact key. The 4th element, for 'enum' params, is the
@@ -145,6 +192,17 @@ function paramToEnum(key: string, v: string): string {
   return `${prefix}:${v}`;
 }
 
+/** The preset whose fact record this is exactly, unless it is the default. */
+function presetAlias(facts: FactRecord): string | null {
+  if (JSON.stringify(sortedFacts(facts)) === JSON.stringify(sortedFacts(DEFAULT_FACTS)))
+    return null;
+  const want = JSON.stringify(sortedFacts(facts));
+  return PRESETS.find((p) => JSON.stringify(sortedFacts(p.facts)) === want)?.id ?? null;
+}
+function sortedFacts(f: FactRecord): [string, unknown][] {
+  return Object.entries(f).sort(([a], [b]) => a.localeCompare(b));
+}
+
 export function serialize(state: AppState): string {
   const params = new URLSearchParams();
   for (const [short, key, kind] of FACT_PARAMS) {
@@ -170,14 +228,29 @@ export function serialize(state: AppState): string {
   if (cp !== defaultCorpusFor(state.jurisdiction)) params.set('cp', cp);
   if (state.hullHint !== DEFAULT_STATE.hullHint)
     params.set('hh', String(Math.round(state.hullHint)));
+  if (state.range !== DEFAULT_STATE.range) params.set('rg', String(state.range));
   if (state.sky !== DEFAULT_STATE.sky) params.set('bg', String(Math.round(state.sky)));
-  if (state.benchy) params.set('bn', '1');
+  if (state.benchy) params.set('benchy', '1');
   if (state.mesh) params.set('ms', state.mesh);
+  if (!state.bearingAside) params.set('ba', '0');
   if (state.drawer) params.set('dd', '1');
-  const path =
-    state.mode === 'rules' && state.rulePath
-      ? `/rules/${encodeURIComponent(state.rulePath)}`
-      : `/${state.mode}`;
+  let path = `/${state.mode}`;
+  if (state.mode === 'rules' && state.rulePath)
+    path = `/rules/${encodeURIComponent(state.rulePath)}`;
+  else if (state.mode === 'quiz') {
+    if (state.quizDirection !== 'forward') params.set('dir', state.quizDirection);
+    if (state.quizMode !== 'practice') params.set('qm', state.quizMode);
+    if (state.quizRule) params.set('qr', state.quizRule);
+    if (state.quizSeed !== 1 || state.quizN !== 1)
+      path = `/quiz/${state.quizSeed}/${state.quizN}`;
+  } else if (state.mode === 'sandbox') {
+    // a preset's name stands in for its fact record
+    const alias = presetAlias(state.facts);
+    if (alias) {
+      for (const [short] of FACT_PARAMS) params.delete(short);
+      path = `/sandbox/${alias}`;
+    }
+  }
   const q = params.toString();
   return `#${path}${q ? `?${q}` : ''}`;
 }
@@ -194,14 +267,26 @@ export function deserialize(hash: string): AppState {
   const path = qIndex === -1 ? h : h.slice(0, qIndex);
   const query = qIndex === -1 ? '' : h.slice(qIndex + 1);
   const segments = path.split('/').filter(Boolean);
-  const modes: Mode[] = ['sandbox', 'identify', 'quiz', 'flashcards', 'rules', 'sound'];
+  // the Quiz is unwired (refs #218): #/quiz lands on the sandbox
+  const modes: Mode[] = ['sandbox', 'identify', 'flashcards', 'rules', 'sound', 'vessels'];
   if (segments[0] && (modes as string[]).includes(segments[0])) {
     state.mode = segments[0] as Mode;
   }
   if (state.mode === 'rules' && segments[1]) {
     state.rulePath = decodeURIComponent(segments[1]);
   }
+  if (state.mode === 'quiz') {
+    const seed = Number(segments[1]);
+    const n = Number(segments[2]);
+    if (Number.isInteger(seed) && seed >= 0) state.quizSeed = seed;
+    if (Number.isInteger(n) && n >= 1) state.quizN = n;
+  }
   const params = new URLSearchParams(query);
+  if (params.get('dir') === 'reverse') state.quizDirection = 'reverse';
+  const preset =
+    state.mode === 'sandbox' && segments[1]
+      ? PRESETS.find((p) => p.id === segments[1])
+      : undefined;
   const facts: FactBag = {};
   for (const [short, key, kind, enumValues] of FACT_PARAMS) {
     const v = params.get(short);
@@ -214,15 +299,17 @@ export function deserialize(hash: string): AppState {
       if (Number.isFinite(n)) facts[key] = n;
     }
   }
-  if (Object.keys(facts).length > 0)
-    state.facts = { ...DEFAULT_FACTS, ...facts } as FactRecord;
+  // query fields refine the aliased preset, or the default record without one
+  const base = preset ? preset.facts : DEFAULT_FACTS;
+  if (preset || Object.keys(facts).length > 0)
+    state.facts = { ...base, ...facts } as FactRecord;
   const view = params.get('view');
-  if (view === 'profile' || view === 'bearing' || view === 'plan') state.view = view;
-  // the Model and Benchy tabs merged into the bearing view; an old link
-  // lands there, Benchy's with Benchy on
-  else if (view === 'model') state.view = 'bearing';
+  if (view === 'model' || view === 'plan') state.view = view;
+  // the bearing and profile views live in the 3D model now; Benchy's link
+  // lands there with Benchy on
+  else if (view === 'bearing' || view === 'profile') state.view = 'model';
   else if (view === 'benchy') {
-    state.view = 'bearing';
+    state.view = 'model';
     state.benchy = true;
   }
   const th = Number(params.get('th'));
@@ -249,9 +336,15 @@ export function deserialize(hash: string): AppState {
   const chosen = cp ? corpusById(cp) : undefined;
   if (chosen && jurisdictionOf(chosen) === state.jurisdiction) state.corpus = chosen.id;
   state.hullHint = percent(params.get('hh')) ?? state.hullHint;
+  state.range = rangeNm(params.get('rg')) ?? state.range;
   state.sky = percent(params.get('bg')) ?? state.sky;
-  if (params.get('bn') === '1') state.benchy = true;
+  if (params.get('benchy') === '1') state.benchy = true;
   state.mesh = params.get('ms') ?? '';
+  if (params.get('ba') === '0') state.bearingAside = false;
   if (params.get('dd') === '1') state.drawer = true;
+  const qm = params.get('qm');
+  if (qm === 'drill' || qm === 'exam') state.quizMode = qm;
+  const qr = params.get('qr');
+  if (qr && /^\d{1,2}$/.test(qr)) state.quizRule = qr;
   return state;
 }

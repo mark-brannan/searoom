@@ -35,9 +35,7 @@ export function CorpusRow({
     >
       <span className="grow label">
         {corpusHandle(corpus)} · {corpus.source.publisher}
-        <span className="corpus-line">
-          {corpus.source.title}
-        </span>
+        <span className="corpus-line">{corpus.source.title}</span>
         <span className="corpus-line">
           <FormattedMessage
             id="corpus.paragraphCount"

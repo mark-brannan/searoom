@@ -1,9 +1,10 @@
 /// <reference types="node" />
 // Light seating over every mesh nav-wright ships (searoom#99).
 //
-// hullRegistration.test.ts checks the one mesh registered per hull. The
-// 3D tab can draw any shipped variant (hullModels.ts modelVariantsForHull),
-// so this walks all of them: the lights are seated by nav-wright's
+// hullRegistration.test.ts checks each hull's best-fit mesh. The 3D tab can
+// draw any catalog mesh (hullModels.ts modelVariants), so this walks all of
+// them, each paired with the hull selectHull picks for her own scene
+// (hullScenes.ts sceneForMesh): the lights are seated by nav-wright's
 // `anchorLights` from a profile read out of the mesh, and compared with the
 // station the existing placement rules (HullSpec) put each light at.
 //
@@ -18,9 +19,10 @@
 
 import { readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { allHulls } from 'nav-wright';
+import { meshCatalog, selectHull } from 'nav-wright';
 import type { Hull } from 'nav-wright';
-import { modelVariantsForHull } from './hullModels';
+import { modelVariants } from './hullModels';
+import { HULL_SCENES, sceneForMesh } from './hullScenes';
 import {
   REGISTRATION_TOLERANCE,
   compareToSpec,
@@ -30,7 +32,7 @@ import {
 
 const LENGTH_M = 2;
 
-const hulls = Object.values(allHulls) as Hull[];
+const meshes = meshCatalog.filter((r) => r.kind !== 'calibration');
 
 interface Verdict {
   hull: string;
@@ -64,10 +66,10 @@ async function seat(hull: Hull, name: string, url: string): Promise<Verdict> {
 describe('light seating on every shipped mesh (searoom#99)', () => {
   it('seats the lights on every mesh, and lists the misfits', async () => {
     const verdicts: Verdict[] = [];
-    for (const hull of hulls) {
-      for (const { name, url } of modelVariantsForHull(hull)) {
-        verdicts.push(await seat(hull, name, url));
-      }
+    for (const record of meshes) {
+      const facts = sceneForMesh(record);
+      const variant = modelVariants(facts).find((v) => v.name === record.file)!;
+      verdicts.push(await seat(selectHull(facts), record.file, variant.url));
     }
 
     const seated = verdicts.filter((v) => !v.unseatable);
@@ -90,16 +92,14 @@ describe('light seating on every shipped mesh (searoom#99)', () => {
     expect(unseatable.map((v) => `${v.mesh}: ${v.unseatable}`)).toEqual([]);
   }, 120_000);
 
-  it('covers every hull-owned mesh nav-wright ships', () => {
+  it('offers every mesh nav-wright ships but Benchy, and has a record for each', () => {
     const covered = new Set(
-      hulls.flatMap((h) => modelVariantsForHull(h).map((v) => v.name)),
+      Object.values(HULL_SCENES).flatMap((f) => modelVariants(f).map((v) => v.name)),
     );
-    const ids = hulls.map((h) => h.spec.id);
     const shipped = readdirSync(
       new URL('../../node_modules/nav-wright/models/', import.meta.url),
-    ).filter(
-      (f) => f.endsWith('.glb') && ids.some((id) => f.startsWith(`${id}-`)),
-    );
+    ).filter((f) => f.endsWith('.glb') && f !== '3dbenchy-lowpoly.glb');
     expect(shipped.filter((f) => !covered.has(f))).toEqual([]);
+    expect(meshes.map((r) => r.file).sort()).toEqual(shipped.sort());
   });
 });

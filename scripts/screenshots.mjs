@@ -13,7 +13,7 @@ const shots = [
   ['sandbox-sloop', '#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12'],
   [
     'sandbox-sloop-bearing',
-    '#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12&view=bearing&th=340&d=1',
+    '#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12&view=model&th=340&d=1',
   ],
   [
     'sandbox-plan-arcs',
@@ -27,8 +27,11 @@ const shots = [
     'sandbox-ship-55m',
     '#/sandbox?p=power&a=none&pos=underway&mw=1&len=55',
   ],
+  [
+    'sandbox-preset-tug',
+    '#/sandbox?p=power&a=towing&pos=underway&mw=1&len=30&tow=150',
+  ],
   ['identify', '#/identify'],
-  ['quiz', '#/quiz'],
   ['flashcards', '#/flashcards'],
   ['rules', '#/rules/27(a)(i)'],
   ['sound-stub', '#/sound'],
@@ -44,6 +47,12 @@ const context = await browser.newContext({
   colorScheme: 'dark',
   viewport: { width: 1280, height: 900 },
 });
+// The intro (#108) would cover every shot; mark it seen, and shoot it fresh below.
+await context.addInitScript(() => {
+  localStorage.setItem('searoom.introSeen', '1');
+});
+// the opening mesh is random (searoom#174); pin it to the hull's first variant
+await context.addInitScript(() => { Math.random = () => 0; });
 const page = await context.newPage();
 
 for (const [name, hash] of shots) {
@@ -59,5 +68,16 @@ await page.goto(base + shots[0][1], { waitUntil: 'networkidle' });
 await page.waitForTimeout(400);
 await page.screenshot({ path: `${outDir}/sandbox-phone.png` });
 console.log('sandbox-phone');
+
+// the first-run intro: a clean context, nothing seen yet
+const fresh = await browser.newContext({
+  colorScheme: 'dark',
+  viewport: { width: 1280, height: 900 },
+});
+const first = await fresh.newPage();
+await first.goto(base + shots[0][1], { waitUntil: 'networkidle' });
+await first.waitForTimeout(400);
+await first.screenshot({ path: `${outDir}/first-run-intro.png` });
+console.log('first-run-intro');
 
 await browser.close();

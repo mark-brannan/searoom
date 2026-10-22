@@ -19,6 +19,8 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - name: i18n catalogs
+        run: npm run i18n:check
       - run: npm run build
       - name: Bundle budget
         run: node scripts/bundle-budget.mjs
@@ -46,6 +48,60 @@ jobs:
           done
           node scripts/e2e.mjs
 
+  # Screenshot goldens (scripts/goldens.mjs): every mode's default state plus
+  # three sandbox states, dark, at 1280 and 360 px. Fails when a shot differs
+  # from screenshots/goldens by more than 0.1% of pixels. goldens-out/ (the
+  # actual renders, plus red-mask diff-*.png for failures) is uploaded either
+  # way; on a deliberate change, copy the renders over screenshots/goldens in
+  # the update commit. A measurement, not a gate, so it stays out of ci-gate's
+  # needs until it has a track record.
+  goldens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Serve dist and compare against the goldens
+        run: |
+          npx vite preview --port 4173 > preview.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:4173/searoom/ > /dev/null && break
+            sleep 1
+          done
+          node scripts/goldens.mjs check
+      # Never re-baselined: the default Sandbox must draw a WebGL canvas with
+      # more than 5% of its pixels lit (searoom#218). Its own step, so its
+      # seconds show on the run; runs even when the goldens differ.
+      - name: Default Sandbox canvas is lit
+        if: always()
+        run: node scripts/lit-canvas.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: goldens-out
+          path: goldens-out/
+          if-no-files-found: ignore
+
+  # How far each golden under screenshots/goldens moved, base to head: pixel
+  # fraction, SSIM and changed regions, as a sticky PR comment, a job summary
+  # and an old | new | diff artifact; `goldens-large` on a redesign-sized
+  # move. A measurement, not a gate, so it stays out of ci-gate's needs. The
+  # engine and its pencil thresholds live in mark-brannan/.github (#218).
+  golden-diff:
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: mark-brannan/.github/.github/workflows/golden-diff.yml@main
+    with:
+      paths: screenshots/goldens/**
+      label: goldens-large
+
   # Refuses to call an empty PR green: a branch whose tree equals its base at
   # the merge base (a stray commit reverted it) merges cleanly and lands
   # nothing. Listed in ci-gate's needs, so it needs no ruleset entry.
@@ -55,6 +111,13 @@ jobs:
     permissions:
       contents: read
     uses: mark-brannan/.github/.github/workflows/nonempty-diff.yml@main
+
+  # The squash title is the commit release-please reads, so it carries a
+  # type: `fix(area): ...`, not `area: ...`.
+  pr-title:
+    permissions:
+      pull-requests: read
+    uses: mark-brannan/.github/.github/workflows/pr-title.yml@main
 
   # A measurement, not a gate, so it stays out of ci-gate's needs. Writes the
   # sticky PR comment, hence pull-requests: write.
@@ -73,7 +136,7 @@ jobs:
   # evaluate when a dependency failed or was skipped, so it reports an explicit
   # pass or fail of its own rather than inheriting the skip.
   ci-gate:
-    needs: [check, nonempty]
+    needs: [check, nonempty, pr-title]
     if: always()
     # It reads nothing and writes nothing; the results go in as an input.
     permissions: {}

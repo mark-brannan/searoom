@@ -83,3 +83,31 @@ they can be reviewed as decisions, not archaeology. Each is tested in
 If any of these turn out to disagree with the data's intent, that is a
 colregs conversation (an issue with the failing fact record), not a
 quiet app-side patch.
+
+## Sweep invariants
+
+`src/engine/sweep.test.ts` (searoom #123) evaluates the engine over a grid of
+fact records: every propulsion, activity and position value, making way, the
+COLREGS length thresholds (7, 12, 20, 50, 100 m and a value either side), the
+tow-length and max-speed bands, day and night, good and restricted visibility,
+under `intl` and `us/inland`. About 21,000 records, roughly a second and a
+half, so it runs on every push with the rest of `npm test`. Across the grid:
+
+1. Where an entry that shows a light or a shape fires, a display exists, and
+   no display sitting beside others is empty (it names entries and shows a
+   light or a shape). A lone empty display is the engine's "nothing to show".
+2. No display repeats a light (same spec, entry and import).
+3. At most one sternlight per display.
+4. Sidelights are paired (starboard and port counts equal), or come as the
+   combined `light:sidelights`, never both.
+5. Entries a `rel:excludes` relation separates are never in one display.
+6. A standing `shall` entry (not exempted, overridden or replaced by a
+   chosen alternative) is in every display.
+7. `known_omissions` is present and every record carries cite, what and why
+   (the Rules reference renders them).
+
+A violation is a colregs issue carrying the failing record, not an app-side
+patch. Classes already reported are listed in the test with their colregs
+issue and the records they cover, and tolerated until colregs fixes them; the
+same class on any other record fails, and a listed class that stops occurring
+fails the test, so the line comes out with the fix.

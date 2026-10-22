@@ -43,22 +43,27 @@ const fixtures = fixturesJson as unknown as {
   cases: {
     name: string;
     facts: FactRecord;
-    expect: string[];
+    expect: (string | { entry: string; modality?: string })[];
     jurisdiction?: string;
   }[];
 };
+
+/** Fixture `expect` items are entry ids, or `{entry, modality}` objects. */
+function expectsEntry(expect: (string | { entry: string })[], entryId: string): boolean {
+  return expect.some((e) => (typeof e === 'string' ? e : e.entry) === entryId);
+}
 
 /**
  * A representative fact record firing the given entry — the first fixture
  * that exercises it (REQ-VERIFY-3 guarantees one exists for every entry).
  */
 export function factsForEntry(entryId: string): FactRecord | undefined {
-  return fixtures.cases.find((c) => c.expect.includes(entryId))?.facts;
+  return fixtures.cases.find((c) => expectsEntry(c.expect, entryId))?.facts;
 }
 
 /** The jurisdiction whose fixtures exercise an entry, if one is pinned. */
 export function jurisdictionForEntry(entryId: string): string | undefined {
-  const c = fixtures.cases.find((x) => x.expect.includes(entryId));
+  const c = fixtures.cases.find((x) => expectsEntry(x.expect, entryId));
   return c && (c.jurisdiction ?? fixtures.jurisdiction);
 }
 
