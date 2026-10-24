@@ -149,3 +149,25 @@ jobs:
             | "denials: \(.permission_denials // [] | length)",
               (.permission_denials[]? | "  \(.tool_name): \(.tool_input | tojson)"),
               "result: \(.result // "")"' "$EXECUTION_FILE"
+
+      # The run's cost (mark-brannan/claude#219): the execution file ends in
+      # the CLI's `result` message, which carries total_cost_usd and usage.
+      # One JSON line in the `headless-run` artifact, the shape the shared
+      # claude-review leaves, so metrics-db collects it with the reviews'.
+      - name: Record the cost of the run
+        if: always() && steps.claude.outputs.execution_file != ''
+        env:
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+        run: |
+          jq -c --arg repo "$GITHUB_REPOSITORY" --arg issue "$ISSUE" \
+            '([.[] | select(.type == "system" and .subtype == "init")][0].model) as $model
+            | [.[] | select(.type == "result")] | last // {} | {ts: (now | todate),
+              what: "claude-issue-trial", repo: $repo, pr: null, issue: ($issue | tonumber? // $issue),
+              model: $model, total_cost_usd, usage,
+              outcome: (if (.is_error // false) and .subtype == "success" then "error" else (.subtype // "no result") end)}' \
+            "$EXECUTION_FILE" | tee headless-run.jsonl
+      - if: always() && hashFiles('headless-run.jsonl') != ''
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: headless-run
+          path: headless-run.jsonl
