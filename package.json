@@ -28,7 +28,7 @@
     "nav-wright": "github:mark-brannan/nav-wright#f6575e582b0eb9d330f96840cf6cec5d5b5c675f",
     "react": "~19.3.1",
     "react-dom": "~19.3.1",
-    "react-intl": "^10.2.2",
+    "react-intl": "^12.1.5",
     "three": "^0.186.0",
     "three-stdlib": "^2.36.1",
     "zustand": "^5.0.15"
