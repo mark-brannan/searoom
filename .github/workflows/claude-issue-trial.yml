@@ -154,24 +154,26 @@ jobs:
       # the CLI's `result` message, which carries total_cost_usd and usage.
       # One JSON line in the `headless-run` artifact, the shape the shared
       # claude-review leaves, so metrics-db collects it with the reviews'.
-      - name: Record the cost of the run
+      # The PR the trial opened, if any, is where spend puts the cost.
+      - name: Find the trial's PR
+        id: trial-pr
         if: always() && steps.claude.outcome != 'skipped'
         env:
-          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
           GH_TOKEN: ${{ github.token }}
-          ROW: >-
-            ([.[] | select(.type == "system" and .subtype == "init")][0].model) as $model
-            | [.[] | select(.type == "result")] | last // {} | {ts: (now | todate),
-            what: "claude-issue-trial", repo: $repo, pr: ($pr | tonumber? // null), issue: ($issue | tonumber? // $issue),
-            model: $model, total_cost_usd, usage,
-            outcome: (if (.is_error // false) and (.subtype // "success") == "success" then "error" else (.subtype // "no result") end)}
-        # A run killed or timed out leaves no execution file, or one jq cannot
-        # read; it still gets a row, with no cost and outcome "no result".
-        # The PR the trial opened, if any, is where spend puts the cost.
         run: |
           PR=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "agent-trial/$ISSUE" --state all --json number --jq '.[0].number // empty' || true)
-          args=(-c --arg repo "$GITHUB_REPOSITORY" --arg issue "$ISSUE" --arg pr "$PR" "$ROW")
-          { jq "${args[@]}" "${EXECUTION_FILE:-/nonexistent}" 2>/dev/null || echo '[]' | jq "${args[@]}"; } | tee headless-run.jsonl
+          echo "number=$PR" >> "$GITHUB_OUTPUT"
+      # A run killed or timed out leaves no execution file; the action still
+      # writes a row, with no cost and outcome "no result".
+      - name: Record the cost of the run
+        if: always() && steps.claude.outcome != 'skipped'
+        uses: mark-brannan/.github/.github/actions/headless-run-cost@main
+        with:
+          execution-file: ${{ steps.claude.outputs.execution_file }}
+          what: claude-issue-trial
+          pr: ${{ steps.trial-pr.outputs.number }}
+          fields: '{"issue":${{ env.ISSUE }}}'
+          summary: 'false'
       - if: always() && hashFiles('headless-run.jsonl') != ''
         uses: actions/upload-artifact@v7.0.2
         with:
