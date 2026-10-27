@@ -108,7 +108,8 @@ jobs:
 
             If a judgment call blocks you (a choice of product direction, a
             name of significance, a risky or irreversible step), do not
-            guess: comment the question on the issue and stop. Do not open a pull request in that case.
+            guess: comment the question on the issue and stop. Do not open
+            a pull request in that case.
 
             Pass every comment and pull request body on stdin, never as
             `--body "..."`: backticks inside double quotes are command
