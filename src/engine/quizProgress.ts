@@ -5,8 +5,8 @@
 // so a question stays reproducible from its seed in the URL.
 
 import { evaluateDisplayIn } from './evaluate';
-import { citeOf, makeForward, makeReverse, scenarioPoolFor } from './quiz';
-import type { QuizQuestion } from './quiz';
+import { QUIZ_DIFFICULTIES, citeOf, makeForward, makeReverse, scenarioPoolAt } from './quiz';
+import type { QuizDifficulty, QuizQuestion } from './quiz';
 
 export interface Tally {
   right: number;
@@ -99,8 +99,11 @@ export function questionFor(
   seed: number,
   reverse: boolean,
   jurisdiction: string,
+  difficulty: QuizDifficulty = 'hard',
 ): QuizQuestion {
-  return reverse ? makeReverse(seed, jurisdiction) : makeForward(seed, jurisdiction);
+  return reverse
+    ? makeReverse(seed, jurisdiction, difficulty)
+    : makeForward(seed, jurisdiction, difficulty);
 }
 
 /** "27(a)(i), 27(b)" -> ["27"] */
@@ -113,18 +116,36 @@ export function rulesOfCite(cite: string): string[] {
 }
 
 const poolRules = new Map<string, string[]>();
-/** Rule numbers a jurisdiction's scenarios exercise, for the per-rule set. */
-export function rulesInPool(jurisdiction: string): string[] {
-  const hit = poolRules.get(jurisdiction);
+/** Rule numbers a jurisdiction's scenarios exercise at one difficulty, for the per-rule set. */
+export function rulesInPool(
+  jurisdiction: string,
+  difficulty: QuizDifficulty = 'hard',
+): string[] {
+  const key = `${jurisdiction}|${difficulty}`;
+  const hit = poolRules.get(key);
   if (hit) return hit;
   const found = new Set<string>();
-  for (const c of scenarioPoolFor(jurisdiction)) {
+  for (const c of scenarioPoolAt(jurisdiction, difficulty)) {
     for (const d of evaluateDisplayIn(jurisdiction, c.facts).displays)
       for (const r of rulesOfCite(citeOf(jurisdiction, d))) found.add(r);
   }
   const list = [...found].sort((a, b) => Number(a) - Number(b));
-  poolRules.set(jurisdiction, list);
+  poolRules.set(key, list);
   return list;
+}
+
+/**
+ * The level a drill asks at: the chosen one, or the first harder one whose
+ * scenarios exercise the drilled rule, so a rule filter never runs dry.
+ */
+export function drillDifficulty(
+  jurisdiction: string,
+  rule: string,
+  difficulty: QuizDifficulty,
+): QuizDifficulty {
+  if (!rule) return difficulty;
+  const levels = QUIZ_DIFFICULTIES.slice(QUIZ_DIFFICULTIES.indexOf(difficulty));
+  return levels.find((d) => rulesInPool(jurisdiction, d).includes(rule)) ?? 'hard';
 }
 
 const CANDIDATES = 16;
@@ -142,12 +163,13 @@ export function nextDrillSeed(
   jurisdiction: string,
   progress: Progress,
   rule: string,
+  difficulty: QuizDifficulty = 'hard',
 ): number {
   const cands: { seed: number; w: number }[] = [];
   for (let s = after + 1; s <= after + MAX_SCAN && cands.length < CANDIDATES; s++) {
     let q: QuizQuestion;
     try {
-      q = questionFor(s, reverse, jurisdiction);
+      q = questionFor(s, reverse, jurisdiction, difficulty);
     } catch {
       continue;
     }

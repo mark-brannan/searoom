@@ -5,10 +5,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { describeFacts } from '../components/factLabel';
-import { citeOf } from '../engine/quiz';
-import type { QuizQuestion } from '../engine/quiz';
+import { QUIZ_DIFFICULTIES, citeOf } from '../engine/quiz';
+import type { QuizDifficulty, QuizQuestion } from '../engine/quiz';
 import { evaluateDisplayIn } from '../engine/evaluate';
 import {
+  drillDifficulty,
   exportProgress,
   loadProgress,
   mergeProgress,
@@ -195,7 +196,7 @@ export function Quiz() {
   const state = useAppState();
   const patch = usePatch();
   const intl = useIntl();
-  const { quizMode: mode, quizSeed, quizN, quizRule } = state;
+  const { quizMode: mode, quizSeed, quizN, quizRule, quizDifficulty } = state;
   const reverse = state.quizDirection === 'reverse';
   const quizIndex = quizN - 1;
   const [picked, setPicked] = useState<number | null>(null);
@@ -220,13 +221,18 @@ export function Quiz() {
 
   // a new question by any route (back/forward, an edited link, the
   // jurisdiction switcher) starts unanswered
-  useEffect(() => setPicked(null), [seed, reverse, state.jurisdiction]);
+  useEffect(() => setPicked(null), [seed, reverse, state.jurisdiction, quizDifficulty]);
 
   const rules = useMemo(() => rulesInPool(state.jurisdiction), [state.jurisdiction]);
 
+  // a drilled rule the chosen level never asks about widens to one that does
+  const askAt = (rule: string): QuizDifficulty =>
+    mode === 'drill' ? drillDifficulty(state.jurisdiction, rule, quizDifficulty) : quizDifficulty;
+  const level = askAt(quizRule);
+
   const question: QuizQuestion = useMemo(
-    () => questionFor(seed, reverse, state.jurisdiction),
-    [seed, reverse, state.jurisdiction],
+    () => questionFor(seed, reverse, state.jurisdiction, level),
+    [seed, reverse, state.jurisdiction, level],
   );
 
   const answer = (i: number) => {
@@ -244,7 +250,7 @@ export function Quiz() {
     setPicked(null);
     if (mode === 'drill')
       patch({
-        quizSeed: nextDrillSeed(seed, reverse, state.jurisdiction, progress, quizRule),
+        quizSeed: nextDrillSeed(seed, reverse, state.jurisdiction, progress, quizRule, level),
         quizN: 1,
       });
     else patch({ quizN: quizN + 1 });
@@ -264,6 +270,14 @@ export function Quiz() {
     setScore({ right: 0, total: 0 });
     patch({ quizMode: m, quizSeed: seed, quizN: 1 });
   };
+
+  const setDifficulty = (d: QuizDifficulty) => {
+    setPicked(null);
+    setExam(null);
+    setScore({ right: 0, total: 0 });
+    patch({ quizDifficulty: d, quizSeed: seed, quizN: 1 });
+  };
+  const difficultyName = intl.formatMessage({ id: `quiz.difficulty.${quizDifficulty}` });
 
   const optionClass = (i: number) => {
     if (picked === null) return 'quiz-option';
@@ -365,6 +379,7 @@ export function Quiz() {
                     state.jurisdiction,
                     progress,
                     e.target.value,
+                    askAt(e.target.value),
                   ),
                 });
               }}
@@ -377,6 +392,25 @@ export function Quiz() {
               ))}
             </select>
           )}
+        </div>
+        <div className="theta-control">
+          <label htmlFor="quiz-difficulty">
+            <FormattedMessage id="quiz.difficulty.label" />
+          </label>
+          <input
+            id="quiz-difficulty"
+            type="range"
+            min={0}
+            max={QUIZ_DIFFICULTIES.length - 1}
+            step={1}
+            value={QUIZ_DIFFICULTIES.indexOf(quizDifficulty)}
+            onChange={(e) => setDifficulty(QUIZ_DIFFICULTIES[Number(e.target.value)])}
+            aria-valuetext={difficultyName}
+          />
+          {/* a level name is short; the shared 11em would wrap it under the slider at phone width */}
+          <span className="theta-readout" style={{ minWidth: '6em' }}>
+            {difficultyName}
+          </span>
         </div>
 
         {mode === 'exam' && !exam && (
