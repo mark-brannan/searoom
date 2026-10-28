@@ -3,6 +3,7 @@
 // GitHub Pages happy. Deep-link shape for rules: #/rules/27(a)(i).
 
 import type { FactRecord, FactValue } from '../engine/types';
+import type { QuizDifficulty } from '../engine/quiz';
 import { BASE_JURISDICTION, isJurisdiction } from '../data/jurisdictions';
 import { PRESETS } from '../data/presets';
 import { DEFAULT_TILT, MAX_TILT } from 'nav-wright/benchy';
@@ -72,6 +73,8 @@ export interface AppState {
   quizMode: QuizMode;
   /** Quiz drill: only scenarios exercising this rule number; '' is all. */
   quizRule: string;
+  /** Quiz difficulty; a new run starts on easy. */
+  quizDifficulty: QuizDifficulty;
 }
 
 export type QuizMode = 'practice' | 'drill' | 'exam';
@@ -119,6 +122,7 @@ export const DEFAULT_STATE: AppState = {
   quizDirection: 'forward',
   quizMode: 'practice',
   quizRule: '',
+  quizDifficulty: 'easy',
 };
 
 const percent = (v: string | null): number | null => {
@@ -240,6 +244,7 @@ export function serialize(state: AppState): string {
     if (state.quizDirection !== 'forward') params.set('dir', state.quizDirection);
     if (state.quizMode !== 'practice') params.set('qm', state.quizMode);
     if (state.quizRule) params.set('qr', state.quizRule);
+    if (state.quizDifficulty !== 'easy') params.set('qd', state.quizDifficulty);
     if (state.quizSeed !== 1 || state.quizN !== 1)
       path = `/quiz/${state.quizSeed}/${state.quizN}`;
   } else if (state.mode === 'sandbox') {
@@ -344,5 +349,7 @@ export function deserialize(hash: string): AppState {
   if (qm === 'drill' || qm === 'exam') state.quizMode = qm;
   const qr = params.get('qr');
   if (qr && /^\d{1,2}$/.test(qr)) state.quizRule = qr;
+  const qd = params.get('qd');
+  if (qd === 'medium' || qd === 'hard') state.quizDifficulty = qd;
   return state;
 }

@@ -119,10 +119,27 @@ export function visibleLights(
   return placedVisibility(facts, display)(theta);
 }
 
+/** What a near miss changes; difficulty levels choose among these. */
+export type NearMissKind =
+  | 'length'
+  | 'making_way'
+  | 'activity'
+  | 'position'
+  | 'propulsion'
+  | 'tow_length';
+
 /** Near-miss perturbations of a fact record. */
 export function nearMisses(facts: FactRecord): FactRecord[] {
-  const out: FactRecord[] = [];
-  const push = (f: FactRecord) => out.push(f);
+  return taggedNearMisses(facts).map((m) => m.facts);
+}
+
+/** nearMisses, each with the kind of change that made it, in the same order. */
+export function taggedNearMisses(
+  facts: FactRecord,
+): { kind: NearMissKind; facts: FactRecord }[] {
+  const out: { kind: NearMissKind; facts: FactRecord }[] = [];
+  let kind: NearMissKind = 'length';
+  const push = (f: FactRecord) => out.push({ kind, facts: f });
 
   const len = facts['fact:length_m'];
   if (typeof len === 'number') {
@@ -139,6 +156,7 @@ export function nearMisses(facts: FactRecord): FactRecord[] {
       }
     }
   }
+  kind = 'making_way';
   if (typeof facts['fact:making_way'] === 'boolean') {
     push({ ...facts, 'fact:making_way': !facts['fact:making_way'] });
   }
@@ -158,18 +176,21 @@ export function nearMisses(facts: FactRecord): FactRecord[] {
     'activity:diving': ['activity:ram_underwater', 'activity:none'],
     'activity:being_towed': ['activity:none'],
   };
+  kind = 'activity';
   for (const a of swaps[String(activity)] ?? []) {
     // `a` is a plain string here (indexed out of `swaps`), not the literal
     // union FactRecord's `fact:activity` carries — but every value in
     // `swaps` above is itself a real activity: identifier.
     push({ ...facts, 'fact:activity': a } as FactRecord);
   }
+  kind = 'position';
   const position = facts['fact:position'];
   if (position === 'position:underway') {
     push({ ...facts, 'fact:position': 'position:anchored' });
   } else if (position === 'position:anchored') {
     push({ ...facts, 'fact:position': 'position:underway', 'fact:making_way': true });
   }
+  kind = 'propulsion';
   if (facts['fact:propulsion'] === 'propulsion:sail') {
     push({ ...facts, 'fact:propulsion': 'propulsion:power' });
   } else if (
@@ -178,6 +199,7 @@ export function nearMisses(facts: FactRecord): FactRecord[] {
   ) {
     push({ ...facts, 'fact:propulsion': 'propulsion:sail' });
   }
+  kind = 'tow_length';
   const tow = facts['fact:tow_length_m'];
   if (typeof tow === 'number') {
     push({
@@ -190,6 +212,8 @@ export function nearMisses(facts: FactRecord): FactRecord[] {
 
 export interface ForwardQuestion {
   kind: 'forward';
+  /** the level the question was made at: the asked one, or a harder one if that pool ran dry */
+  difficulty: QuizDifficulty;
   facts: FactRecord;
   fixtureName: string;
   /** the lawful option (one of the scenario's displays) */
@@ -205,6 +229,8 @@ export interface ForwardQuestion {
 
 export interface ReverseQuestion {
   kind: 'reverse';
+  /** as ForwardQuestion.difficulty */
+  difficulty: QuizDifficulty;
   facts: FactRecord;
   fixtureName: string;
   display: Display;
@@ -241,12 +267,124 @@ export function scenarioPoolFor(jurisdiction: string) {
   });
 }
 
+export type QuizDifficulty = 'easy' | 'medium' | 'hard';
+export const QUIZ_DIFFICULTIES: QuizDifficulty[] = ['easy', 'medium', 'hard'];
+
+const ALL_THETAS = [0, 20, 45, 90, 135, 180, 225, 270, 315, 340];
+
+/** Facts that make a vessel unusual; a scenario with any of them set is exotic. */
+const EXOTIC_FACTS = [
+  'fact:wig',
+  'fact:wig_near_surface',
+  'fact:seaplane',
+  'fact:non_displacement',
+  'fact:composite_unit',
+  'fact:partly_submerged',
+  'fact:full_display_impracticable',
+  'fact:tow_display_impracticable',
+  'fact:tow_restricts_deviation',
+  'fact:nearing_obscured_bend',
+  'fact:motorsailing',
+] as const;
+
+const isExotic = (f: FactRecord): boolean => {
+  const bag = f as Record<string, unknown>;
+  return EXOTIC_FACTS.some((k) => bag[k] === true);
+};
+
+/** Facts an everyday vessel's record may carry, beyond the exotic ones (which must be unset or false). */
+const EASY_KEYS = new Set<string>([
+  'fact:propulsion',
+  'fact:activity',
+  'fact:position',
+  'fact:making_way',
+  'fact:length_m',
+  'fact:tow_length_m',
+  ...EXOTIC_FACTS,
+]);
+
+/** Values of other facts that leave an everyday vessel everyday. */
+const EASY_BENIGN: Record<string, unknown> = {
+  'fact:tow_rigidity': 'tow_rigidity:line',
+  'fact:visibility': 'visibility:good',
+  'fact:manned': true,
+  'fact:near_channel': false,
+  'fact:obstruction_exists': false,
+  'fact:on_mooring_buoy': false,
+};
+
+interface Level {
+  scenario: (f: FactRecord) => boolean;
+  kinds: ReadonlySet<NearMissKind>;
+  maxDistractors: number;
+  thetas: number[];
+}
+
+export const DIFFICULTY_LEVELS: Record<QuizDifficulty, Level> = {
+  easy: {
+    scenario: (f) =>
+      ['propulsion:power', 'propulsion:sail'].includes(String(f['fact:propulsion'])) &&
+      ['activity:none', 'activity:fishing', 'activity:trawling', 'activity:towing'].includes(
+        String(f['fact:activity']),
+      ) &&
+      ['position:underway', 'position:anchored'].includes(String(f['fact:position'])) &&
+      !isExotic(f) &&
+      Object.entries(f).every(
+        ([k, v]) => EASY_KEYS.has(k) || (k in EASY_BENIGN && EASY_BENIGN[k] === v),
+      ),
+    kinds: new Set(['activity', 'propulsion', 'position']),
+    maxDistractors: 2,
+    thetas: [0, 90, 180, 270],
+  },
+  medium: {
+    scenario: (f) =>
+      !['activity:mine', 'activity:diving', 'activity:ram_underwater'].includes(
+        String(f['fact:activity']),
+      ) && !isExotic(f),
+    kinds: new Set(['length', 'activity', 'position', 'propulsion', 'tow_length']),
+    maxDistractors: 3,
+    thetas: ALL_THETAS,
+  },
+  hard: {
+    scenario: () => true,
+    kinds: new Set(['length', 'making_way', 'activity', 'position', 'propulsion', 'tow_length']),
+    maxDistractors: 3,
+    thetas: ALL_THETAS,
+  },
+};
+
+/** The scenario pool at one difficulty. */
+export function scenarioPoolAt(jurisdiction: string, difficulty: QuizDifficulty) {
+  const keep = DIFFICULTY_LEVELS[difficulty].scenario;
+  return scenarioPoolFor(jurisdiction).filter((c) => keep(c.facts));
+}
+
+/** This level, then each harder one: a pool that can't make a question widens. */
+function levelsFrom(difficulty: QuizDifficulty): QuizDifficulty[] {
+  return QUIZ_DIFFICULTIES.slice(QUIZ_DIFFICULTIES.indexOf(difficulty));
+}
+
 export function makeForward(
   seed: number,
   jurisdiction: string = BASE_JURISDICTION,
+  difficulty: QuizDifficulty = 'hard',
 ): ForwardQuestion {
+  for (const level of levelsFrom(difficulty)) {
+    const q = forwardAt(seed, jurisdiction, level);
+    if (q) return q;
+  }
+  throw new Error('could not generate a forward question');
+}
+
+function forwardAt(
+  seed: number,
+  jurisdiction: string,
+  difficulty: QuizDifficulty,
+): ForwardQuestion | null {
   const rng = mulberry32(seed);
-  const scenarioPool = scenarioPoolFor(jurisdiction);
+  const { kinds, maxDistractors } = DIFFICULTY_LEVELS[difficulty];
+  const scenarioPool = scenarioPoolAt(jurisdiction, difficulty);
+  if (scenarioPool.length === 0) return null;
   for (let attempt = 0; attempt < 40; attempt++) {
     const fixture =
       scenarioPool[Math.floor(rng() * scenarioPool.length)];
@@ -260,7 +398,8 @@ export function makeForward(
     );
     const distractors: { display: Display; facts: FactRecord }[] = [];
     const seen = new Set<string>();
-    for (const miss of nearMisses(fixture.facts)) {
+    for (const { kind, facts: miss } of taggedNearMisses(fixture.facts)) {
+      if (!kinds.has(kind)) continue;
       const missEval = evaluateDisplayIn(jurisdiction, miss);
       for (const d of missEval.displays) {
         if (d.lights.length === 0) continue;
@@ -270,7 +409,7 @@ export function makeForward(
         distractors.push({ display: d, facts: miss });
         break; // one display per near-miss keeps the spread wide
       }
-      if (distractors.length >= 3) break;
+      if (distractors.length >= maxDistractors) break;
     }
     if (distractors.length < 2) continue;
     const options = [{ display: correct, facts: fixture.facts }, ...distractors];
@@ -282,6 +421,7 @@ export function makeForward(
     const answerIndex = options.findIndex((o) => o.display === correct);
     return {
       kind: 'forward',
+      difficulty,
       facts: fixture.facts,
       fixtureName: fixture.name,
       correct,
@@ -292,17 +432,30 @@ export function makeForward(
       cite: citeOf(jurisdiction, correct),
     };
   }
-  throw new Error('could not generate a forward question');
+  return null;
 }
-
-const THETAS = [0, 20, 45, 90, 135, 180, 225, 270, 315, 340];
 
 export function makeReverse(
   seed: number,
   jurisdiction: string = BASE_JURISDICTION,
+  difficulty: QuizDifficulty = 'hard',
 ): ReverseQuestion {
+  for (const level of levelsFrom(difficulty)) {
+    const q = reverseAt(seed, jurisdiction, level);
+    if (q) return q;
+  }
+  throw new Error('could not generate a reverse question');
+}
+
+function reverseAt(
+  seed: number,
+  jurisdiction: string,
+  difficulty: QuizDifficulty,
+): ReverseQuestion | null {
   const rng = mulberry32(seed ^ 0x5eed);
-  const scenarioPool = scenarioPoolFor(jurisdiction);
+  const { kinds, maxDistractors, thetas } = DIFFICULTY_LEVELS[difficulty];
+  const scenarioPool = scenarioPoolAt(jurisdiction, difficulty);
+  if (scenarioPool.length === 0) return null;
   for (let attempt = 0; attempt < 60; attempt++) {
     const fixture =
       scenarioPool[Math.floor(rng() * scenarioPool.length)];
@@ -311,19 +464,20 @@ export function makeReverse(
     const display =
       evaln.displays[Math.floor(rng() * evaln.displays.length)];
     if (display.lights.length === 0) continue;
-    const theta = THETAS[Math.floor(rng() * THETAS.length)];
+    const theta = thetas[Math.floor(rng() * thetas.length)];
     const sceneSig = visibleSignature(fixture.facts, display, theta);
     if (sceneSig === '') continue;
 
     const options: { facts: FactRecord; theta: number }[] = [
       { facts: fixture.facts, theta },
     ];
-    for (const miss of nearMisses(fixture.facts)) {
-      if (options.length >= 4) break;
+    for (const { kind, facts: miss } of taggedNearMisses(fixture.facts)) {
+      if (options.length > maxDistractors) break;
+      if (!kinds.has(kind)) continue;
       const missEval = evaluateDisplayIn(jurisdiction, miss);
       if (missEval.displays.length === 0) continue;
       const d = missEval.displays[0];
-      const missTheta = THETAS[Math.floor(rng() * THETAS.length)];
+      const missTheta = thetas[Math.floor(rng() * thetas.length)];
       // a distractor must actually look different from the scene, or it
       // would also be a correct answer
       if (visibleSignature(miss, d, missTheta) === sceneSig) continue;
@@ -337,6 +491,7 @@ export function makeReverse(
     const answerIndex = options.findIndex((o) => o.facts === fixture.facts);
     return {
       kind: 'reverse',
+      difficulty,
       facts: fixture.facts,
       fixtureName: fixture.name,
       display,
@@ -346,5 +501,5 @@ export function makeReverse(
       cite: citeOf(jurisdiction, display),
     };
   }
-  throw new Error('could not generate a reverse question');
+  return null;
 }
