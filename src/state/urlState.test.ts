@@ -215,11 +215,16 @@ describe('URL state round-trip', () => {
 });
 
 describe('readable routes (#107)', () => {
-  it.each(['#/quiz', '#/quiz/7/3?dir=reverse'])('%s lands on the sandbox', (hash) => {
-    const s = deserialize(hash);
-    expect(s.mode).toBe('sandbox');
+  it('quiz seed, question and direction round-trip', () => {
+    const s = deserialize('#/quiz/7/3?dir=reverse');
+    expect([s.mode, s.quizSeed, s.quizN, s.quizDirection]).toEqual(['quiz', 7, 3, 'reverse']);
+    expect(serialize(s)).toMatch(/^#\/quiz\/7\/3\?.*dir=reverse/);
+    expect(deserialize(serialize(s))).toEqual(s);
+  });
+  it('bare #/quiz keeps working', () => {
+    const s = deserialize('#/quiz');
     expect([s.quizSeed, s.quizN]).toEqual([1, 1]);
-    expect(serialize(s)).toMatch(/^#\/sandbox/);
+    expect(serialize(s)).toMatch(/^#\/quiz\?/);
   });
   it('a preset alias loads the preset and a custom record stays in query fields', () => {
     const s = deserialize('#/sandbox/trawler?th=90');
