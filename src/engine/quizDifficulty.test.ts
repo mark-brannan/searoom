@@ -17,6 +17,20 @@ const changesEverydayFact = (a: FactRecord, b: FactRecord) =>
   CHANGED.some((k) => a[k] !== b[k]);
 const isEasy = DIFFICULTY_LEVELS.easy.scenario;
 
+it('easy scenarios are recreational: no fishing, towing or tow, and under 20 m', () => {
+  const base: FactRecord = {
+    'fact:propulsion': 'propulsion:power',
+    'fact:activity': 'activity:none',
+    'fact:position': 'position:underway',
+    'fact:length_m': 15,
+  };
+  expect(isEasy(base)).toBe(true);
+  expect(isEasy({ ...base, 'fact:activity': 'activity:fishing' })).toBe(false);
+  expect(isEasy({ ...base, 'fact:activity': 'activity:towing' })).toBe(false);
+  expect(isEasy({ ...base, 'fact:tow_length_m': 150 })).toBe(false);
+  expect(isEasy({ ...base, 'fact:length_m': 20 })).toBe(false);
+});
+
 describe.each(JURISDICTIONS.map((j) => j.id))('difficulty in %s', (j) => {
   it.each(QUIZ_DIFFICULTIES)('%s: both directions generate for seeds 1..60', (d) => {
     for (const s of SEEDS) {

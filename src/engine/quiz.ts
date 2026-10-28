@@ -299,13 +299,11 @@ const EASY_KEYS = new Set<string>([
   'fact:position',
   'fact:making_way',
   'fact:length_m',
-  'fact:tow_length_m',
   ...EXOTIC_FACTS,
 ]);
 
 /** Values of other facts that leave an everyday vessel everyday. */
 const EASY_BENIGN: Record<string, unknown> = {
-  'fact:tow_rigidity': 'tow_rigidity:line',
   'fact:visibility': 'visibility:good',
   'fact:manned': true,
   'fact:near_channel': false,
@@ -324,10 +322,9 @@ export const DIFFICULTY_LEVELS: Record<QuizDifficulty, Level> = {
   easy: {
     scenario: (f) =>
       ['propulsion:power', 'propulsion:sail'].includes(String(f['fact:propulsion'])) &&
-      ['activity:none', 'activity:fishing', 'activity:trawling', 'activity:towing'].includes(
-        String(f['fact:activity']),
-      ) &&
+      String(f['fact:activity']) === 'activity:none' &&
       ['position:underway', 'position:anchored'].includes(String(f['fact:position'])) &&
+      Number(f['fact:length_m'] ?? 0) < 20 &&
       !isExotic(f) &&
       Object.entries(f).every(
         ([k, v]) => EASY_KEYS.has(k) || (k in EASY_BENIGN && EASY_BENIGN[k] === v),
