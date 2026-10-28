@@ -242,3 +242,10 @@ describe('readable routes (#107)', () => {
     expect(s.facts['fact:activity']).toBe('activity:trawling');
   });
 });
+
+describe('flashcards mode', () => {
+  it('round-trips through the hash', () => {
+    expect(deserialize('#/flashcards').mode).toBe('flashcards');
+    expect(serialize({ ...DEFAULT_STATE, mode: 'flashcards' }).startsWith('#/flashcards')).toBe(true);
+  });
+});

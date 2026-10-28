@@ -18,7 +18,7 @@ export function pickJurisdiction(value: string): Patch {
     ? { signpost: value.slice(SIGNPOST_PREFIX.length) }
     : { jurisdiction: value };
 }
-const MODES: Mode[] = ['sandbox', 'identify', 'quiz', 'rules', 'sound', 'vessels'];
+const MODES: Mode[] = ['sandbox', 'identify', 'quiz', 'flashcards', 'rules', 'sound', 'vessels'];
 
 export function Header() {
   const state = useApp((s) => s.state);
