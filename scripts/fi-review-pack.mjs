@@ -54,7 +54,7 @@ const SIGNPOSTS = signpostContexts();
 /** First match wins; `undefined` hash means the key has no single screen. */
 const SCREENS = [
   [/^sound\./, 'Äänimerkit', '#/sound?loc=fi'],
-  [/^quiz\./, 'Visa', undefined], // the Quiz is unwired (refs #218)
+  [/^quiz\./, 'Visa', '#/quiz?loc=fi'],
   [/^identify\./, 'Tunnista', '#/identify?loc=fi'],
   [/^(color|light)\./, 'Tunnista — valot', '#/identify?loc=fi'],
   [/^(locale|sp\.(locale|jurisdictions|parts|corpora))\./, 'Kielivalitsin', '#/sandbox?sp=locale-picker&loc=fi'],

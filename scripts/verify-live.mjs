@@ -119,6 +119,12 @@ check(
   candidates >= 1 && fishing >= 1,
 );
 
+// 7. quiz: answer a question, get feedback with a citation
+await page.goto(`${base}#/quiz`, { waitUntil: 'networkidle' });
+await page.locator('.quiz-option').first().click();
+const feedback = await page.locator('.quiz-feedback').textContent();
+check('quiz feedback cites a rule', /\d/.test(feedback ?? ''));
+
 // 8. rules deep link highlights the paragraph
 await page.goto(`${base}#/rules/${encodeURIComponent('27(a)(i)')}`, {
   waitUntil: 'networkidle',

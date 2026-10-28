@@ -32,6 +32,7 @@ const shots = [
     '#/sandbox?p=power&a=towing&pos=underway&mw=1&len=30&tow=150',
   ],
   ['identify', '#/identify'],
+  ['quiz', '#/quiz'],
   ['flashcards', '#/flashcards'],
   ['rules', '#/rules/27(a)(i)'],
   ['sound-stub', '#/sound'],
