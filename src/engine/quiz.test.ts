@@ -3,7 +3,7 @@
 // (REQ-LANG-2 — the engine and generators never see a locale at all).
 
 import { describe, expect, it } from 'vitest';
-import { evaluateDisplay } from 'colregs-engine';
+import { evaluateSignals } from 'colregs-engine';
 import { displaySignature, makeForward, makeReverse, visibleSignature } from './quiz';
 import { identifyCandidates } from './identify';
 
@@ -11,7 +11,7 @@ describe('forward quiz generation', () => {
   for (let seed = 1; seed <= 25; seed++) {
     it(`seed ${seed}: correct option is lawful, distractors are not`, () => {
       const q = makeForward(seed);
-      const evaln = evaluateDisplay(q.facts);
+      const evaln = evaluateSignals(q.facts);
       const lawful = new Set(
         evaln.displays.map((d) => displaySignature(q.facts, d)),
       );
@@ -35,7 +35,7 @@ describe('reverse quiz generation', () => {
       expect(sceneSig).not.toBe('');
       let matches = 0;
       for (const o of q.options) {
-        const evaln = evaluateDisplay(o.facts);
+        const evaln = evaluateSignals(o.facts);
         const d = o.facts === q.facts ? q.display : evaln.displays[0];
         if (visibleSignature(o.facts, d, o.theta) === sceneSig) matches++;
       }
