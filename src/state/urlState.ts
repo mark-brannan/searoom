@@ -351,6 +351,6 @@ export function deserialize(hash: string): AppState {
   const qr = params.get('qr');
   if (qr && /^\d{1,2}$/.test(qr)) state.quizRule = qr;
   const qd = params.get('qd');
-  if (qd === 'medium' || qd === 'hard') state.quizDifficulty = qd;
+  if (qd === 'medium' || qd === 'hard' || qd === 'extreme') state.quizDifficulty = qd;
   return state;
 }

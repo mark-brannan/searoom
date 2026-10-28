@@ -154,6 +154,7 @@
   "quiz.difficulty.easy": "Easy",
   "quiz.difficulty.medium": "Medium",
   "quiz.difficulty.hard": "Hard",
+  "quiz.difficulty.extreme": "Extreme",
   "quiz.share": "Copy link to this question",
   "quiz.share.copied": "Link copied.",
   "quiz.exam.intro": "{count} questions in {minutes} minutes. Your score is shown at the end.",

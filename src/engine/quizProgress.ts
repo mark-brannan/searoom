@@ -99,7 +99,7 @@ export function questionFor(
   seed: number,
   reverse: boolean,
   jurisdiction: string,
-  difficulty: QuizDifficulty = 'hard',
+  difficulty: QuizDifficulty = 'extreme',
 ): QuizQuestion {
   return reverse
     ? makeReverse(seed, jurisdiction, difficulty)
@@ -119,7 +119,7 @@ const poolRules = new Map<string, string[]>();
 /** Rule numbers a jurisdiction's scenarios exercise at one difficulty, for the per-rule set. */
 export function rulesInPool(
   jurisdiction: string,
-  difficulty: QuizDifficulty = 'hard',
+  difficulty: QuizDifficulty = 'extreme',
 ): string[] {
   const key = `${jurisdiction}|${difficulty}`;
   const hit = poolRules.get(key);
@@ -145,7 +145,7 @@ export function drillDifficulty(
 ): QuizDifficulty {
   if (!rule) return difficulty;
   const levels = QUIZ_DIFFICULTIES.slice(QUIZ_DIFFICULTIES.indexOf(difficulty));
-  return levels.find((d) => rulesInPool(jurisdiction, d).includes(rule)) ?? 'hard';
+  return levels.find((d) => rulesInPool(jurisdiction, d).includes(rule)) ?? 'extreme';
 }
 
 const CANDIDATES = 16;
@@ -163,7 +163,7 @@ export function nextDrillSeed(
   jurisdiction: string,
   progress: Progress,
   rule: string,
-  difficulty: QuizDifficulty = 'hard',
+  difficulty: QuizDifficulty = 'extreme',
 ): number {
   const cands: { seed: number; w: number }[] = [];
   for (let s = after + 1; s <= after + MAX_SCAN && cands.length < CANDIDATES; s++) {

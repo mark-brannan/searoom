@@ -35,13 +35,28 @@ export function mulberry32(seed: number): () => number {
 }
 
 /**
+ * The hull every option of a forward question is drawn on: the asked
+ * vessel's. Each option drawn on its own hull would give the answer away by
+ * silhouette (a tug, a trawler, a yacht), so only the lights tell them apart.
+ */
+export function forwardHull(q: { facts: FactRecord }) {
+  return selectHull(q.facts);
+}
+
+/**
  * A display's visual identity, independent of hull scale: the
  * colour/character multiset plus the vertical order of the all-round
  * stack (so red-over-white and white-over-red stay distinct, but the
  * same lights on a bigger hull don't masquerade as a different answer).
+ * `hullFacts` picks the hull it is placed on, when that is not the
+ * display's own vessel.
  */
-export function displaySignature(facts: FactRecord, display: Display): string {
-  const hull = selectHull(facts);
+export function displaySignature(
+  facts: FactRecord,
+  display: Display,
+  hullFacts: FactRecord = facts,
+): string {
+  const hull = selectHull(hullFacts);
   const placed = placeLights(display.lights, hull.spec, facts, lights);
   const multiset = placed
     .map((l) => `${l.color}:${l.character}`)
@@ -267,10 +282,12 @@ export function scenarioPoolFor(jurisdiction: string) {
   });
 }
 
-export type QuizDifficulty = 'easy' | 'medium' | 'hard';
-export const QUIZ_DIFFICULTIES: QuizDifficulty[] = ['easy', 'medium', 'hard'];
+export type QuizDifficulty = 'easy' | 'medium' | 'hard' | 'extreme';
+export const QUIZ_DIFFICULTIES: QuizDifficulty[] = ['easy', 'medium', 'hard', 'extreme'];
 
 const ALL_THETAS = [0, 20, 45, 90, 135, 180, 225, 270, 315, 340];
+/** Ahead, astern, abeam and the quarters: no near-ahead bearings to squint at. */
+const EIGHT_THETAS = [0, 45, 90, 135, 180, 225, 270, 315];
 
 /** Facts that make a vessel unusual; a scenario with any of them set is exotic. */
 const EXOTIC_FACTS = [
@@ -299,8 +316,32 @@ const EASY_KEYS = new Set<string>([
   'fact:position',
   'fact:making_way',
   'fact:length_m',
+  'fact:max_speed_kn',
   ...EXOTIC_FACTS,
 ]);
+
+const RECREATIONAL_PROPULSION = ['propulsion:power', 'propulsion:sail', 'propulsion:oars'];
+
+/**
+ * A vessel going about recreational business: power, sail or oars, doing
+ * nothing special, underway or at anchor. Everything else (fishing, towing,
+ * aground, a seaplane) is an unusual or commercial case.
+ */
+export const isRecreational = (f: FactRecord): boolean =>
+  RECREATIONAL_PROPULSION.includes(String(f['fact:propulsion'])) &&
+  String(f['fact:activity']) === 'activity:none' &&
+  ['position:underway', 'position:anchored'].includes(String(f['fact:position'])) &&
+  !isExotic(f);
+
+/** Activities a skipper meets on an ordinary passage; medium asks about these. */
+const EVERYDAY_ACTIVITIES = [
+  'activity:none',
+  'activity:fishing',
+  'activity:trawling',
+  'activity:nuc',
+  'activity:pilot',
+  'activity:towing',
+];
 
 /** Values of other facts that leave an everyday vessel everyday. */
 const EASY_BENIGN: Record<string, unknown> = {
@@ -316,24 +357,47 @@ interface Level {
   kinds: ReadonlySet<NearMissKind>;
   maxDistractors: number;
   thetas: number[];
+  /**
+   * At most this many options in a question may be unusual or commercial
+   * (not isRecreational). A level that caps them also tries recreational
+   * near misses first, so an unusual one only fills a gap.
+   */
+  maxUnusual: number;
+  /**
+   * Try near misses in a seeded random order rather than the fixed one, so
+   * the kinds listed first (length) don't fill every question.
+   */
+  shuffleMisses: boolean;
 }
 
 export const DIFFICULTY_LEVELS: Record<QuizDifficulty, Level> = {
   easy: {
     scenario: (f) =>
-      ['propulsion:power', 'propulsion:sail'].includes(String(f['fact:propulsion'])) &&
-      String(f['fact:activity']) === 'activity:none' &&
-      ['position:underway', 'position:anchored'].includes(String(f['fact:position'])) &&
+      isRecreational(f) &&
       Number(f['fact:length_m'] ?? 0) < 20 &&
-      !isExotic(f) &&
       Object.entries(f).every(
         ([k, v]) => EASY_KEYS.has(k) || (k in EASY_BENIGN && EASY_BENIGN[k] === v),
       ),
-    kinds: new Set(['activity', 'propulsion', 'position']),
+    // length: a few yachts where size decides the lawful display
+    kinds: new Set(['length', 'propulsion', 'position', 'activity']),
     maxDistractors: 2,
     thetas: [0, 90, 180, 270],
+    maxUnusual: 1,
+    shuffleMisses: true,
   },
   medium: {
+    scenario: (f) =>
+      EVERYDAY_ACTIVITIES.includes(String(f['fact:activity'])) &&
+      ['position:underway', 'position:anchored'].includes(String(f['fact:position'])) &&
+      f['fact:visibility'] !== 'visibility:restricted' &&
+      !isExotic(f),
+    kinds: new Set(['length', 'activity', 'position', 'propulsion']),
+    maxDistractors: 3,
+    thetas: EIGHT_THETAS,
+    maxUnusual: Infinity,
+    shuffleMisses: true,
+  },
+  hard: {
     scenario: (f) =>
       !['activity:mine', 'activity:diving', 'activity:ram_underwater'].includes(
         String(f['fact:activity']),
@@ -341,14 +405,40 @@ export const DIFFICULTY_LEVELS: Record<QuizDifficulty, Level> = {
     kinds: new Set(['length', 'activity', 'position', 'propulsion', 'tow_length']),
     maxDistractors: 3,
     thetas: ALL_THETAS,
+    maxUnusual: Infinity,
+    shuffleMisses: false,
   },
-  hard: {
+  extreme: {
     scenario: () => true,
     kinds: new Set(['length', 'making_way', 'activity', 'position', 'propulsion', 'tow_length']),
     maxDistractors: 3,
     thetas: ALL_THETAS,
+    maxUnusual: Infinity,
+    shuffleMisses: false,
   },
 };
+
+/** The near misses a level draws distractors from, in the order it tries them. */
+function missesAt(
+  facts: FactRecord,
+  level: Level,
+  rng: () => number,
+): { kind: NearMissKind; facts: FactRecord }[] {
+  const out = taggedNearMisses(facts).filter((m) => level.kinds.has(m.kind));
+  if (level.shuffleMisses) {
+    for (let i = out.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [out[i], out[j]] = [out[j], out[i]];
+    }
+  }
+  if (Number.isFinite(level.maxUnusual)) {
+    return [
+      ...out.filter((m) => isRecreational(m.facts)),
+      ...out.filter((m) => !isRecreational(m.facts)),
+    ];
+  }
+  return out;
+}
 
 /** The scenario pool at one difficulty. */
 export function scenarioPoolAt(jurisdiction: string, difficulty: QuizDifficulty) {
@@ -364,7 +454,7 @@ function levelsFrom(difficulty: QuizDifficulty): QuizDifficulty[] {
 export function makeForward(
   seed: number,
   jurisdiction: string = BASE_JURISDICTION,
-  difficulty: QuizDifficulty = 'hard',
+  difficulty: QuizDifficulty = 'extreme',
 ): ForwardQuestion {
   for (const level of levelsFrom(difficulty)) {
     const q = forwardAt(seed, jurisdiction, level);
@@ -379,7 +469,8 @@ function forwardAt(
   difficulty: QuizDifficulty,
 ): ForwardQuestion | null {
   const rng = mulberry32(seed);
-  const { kinds, maxDistractors } = DIFFICULTY_LEVELS[difficulty];
+  const level = DIFFICULTY_LEVELS[difficulty];
+  const { maxDistractors } = level;
   const scenarioPool = scenarioPoolAt(jurisdiction, difficulty);
   if (scenarioPool.length === 0) return null;
   for (let attempt = 0; attempt < 40; attempt++) {
@@ -395,15 +486,20 @@ function forwardAt(
     );
     const distractors: { display: Display; facts: FactRecord }[] = [];
     const seen = new Set<string>();
-    for (const { kind, facts: miss } of taggedNearMisses(fixture.facts)) {
-      if (!kinds.has(kind)) continue;
+    let unusual = isRecreational(fixture.facts) ? 0 : 1;
+    for (const { facts: miss } of missesAt(fixture.facts, level, rng)) {
+      const missUnusual = isRecreational(miss) ? 0 : 1;
+      if (unusual + missUnusual > level.maxUnusual) continue;
       const missEval = evaluateDisplayIn(jurisdiction, miss);
       for (const d of missEval.displays) {
         if (d.lights.length === 0) continue;
-        const sig = displaySignature(miss, d);
+        // every option is drawn on the asked vessel's hull (forwardHull), so
+        // two options must differ there, not only on their own hulls
+        const sig = displaySignature(miss, d, fixture.facts);
         if (lawfulSignatures.has(sig) || seen.has(sig)) continue;
         seen.add(sig);
         distractors.push({ display: d, facts: miss });
+        unusual += missUnusual;
         break; // one display per near-miss keeps the spread wide
       }
       if (distractors.length >= maxDistractors) break;
@@ -435,7 +531,7 @@ function forwardAt(
 export function makeReverse(
   seed: number,
   jurisdiction: string = BASE_JURISDICTION,
-  difficulty: QuizDifficulty = 'hard',
+  difficulty: QuizDifficulty = 'extreme',
 ): ReverseQuestion {
   for (const level of levelsFrom(difficulty)) {
     const q = reverseAt(seed, jurisdiction, level);
@@ -450,7 +546,8 @@ function reverseAt(
   difficulty: QuizDifficulty,
 ): ReverseQuestion | null {
   const rng = mulberry32(seed ^ 0x5eed);
-  const { kinds, maxDistractors, thetas } = DIFFICULTY_LEVELS[difficulty];
+  const level = DIFFICULTY_LEVELS[difficulty];
+  const { maxDistractors, thetas } = level;
   const scenarioPool = scenarioPoolAt(jurisdiction, difficulty);
   if (scenarioPool.length === 0) return null;
   for (let attempt = 0; attempt < 60; attempt++) {
@@ -468,9 +565,11 @@ function reverseAt(
     const options: { facts: FactRecord; theta: number }[] = [
       { facts: fixture.facts, theta },
     ];
-    for (const { kind, facts: miss } of taggedNearMisses(fixture.facts)) {
+    let unusual = isRecreational(fixture.facts) ? 0 : 1;
+    for (const { facts: miss } of missesAt(fixture.facts, level, rng)) {
       if (options.length > maxDistractors) break;
-      if (!kinds.has(kind)) continue;
+      const missUnusual = isRecreational(miss) ? 0 : 1;
+      if (unusual + missUnusual > level.maxUnusual) continue;
       const missEval = evaluateDisplayIn(jurisdiction, miss);
       if (missEval.displays.length === 0) continue;
       const d = missEval.displays[0];
@@ -479,6 +578,7 @@ function reverseAt(
       // would also be a correct answer
       if (visibleSignature(miss, d, missTheta) === sceneSig) continue;
       options.push({ facts: miss, theta: missTheta });
+      unusual += missUnusual;
     }
     if (options.length < 3) continue;
     for (let i = options.length - 1; i > 0; i--) {

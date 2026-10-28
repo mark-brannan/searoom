@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { MiniProfile } from '../components/MiniProfile';
 import { describeFacts } from '../components/factLabel';
-import { QUIZ_DIFFICULTIES, citeOf } from '../engine/quiz';
+import { QUIZ_DIFFICULTIES, citeOf, forwardHull } from '../engine/quiz';
 import type { QuizDifficulty, QuizQuestion } from '../engine/quiz';
 import { evaluateDisplayIn } from '../engine/evaluate';
 import {
@@ -448,7 +448,8 @@ export function Quiz() {
                   aria-pressed={picked === i}
                   aria-label={describeFacts(intl, o.facts)}
                 >
-                  <MiniProfile facts={o.facts} display={o.display} />
+                  {/* one hull for every option: only the lights tell them apart */}
+                  <MiniProfile facts={o.facts} display={o.display} hull={forwardHull(question)} />
                 </button>
               ))}
             </div>
