@@ -4,7 +4,7 @@ name: Claude Issue Trial
 # issue `agent-trial` and a Sonnet worker branches `agent-trial/<n>`, makes
 # the change, runs the tests, opens a pull request that closes the issue and
 # links it back. A judgment call it cannot make goes back to the issue as a
-# question under `needs-ruling`, and the run stops.
+# question, and the run stops.
 #
 # Only someone with triage access or more can add a label, so only they can
 # dispatch a run; the issue body itself may come from anyone, so read it
@@ -108,10 +108,8 @@ jobs:
 
             If a judgment call blocks you (a choice of product direction, a
             name of significance, a risky or irreversible step), do not
-            guess: comment the question on the issue, add the label
-            `needs-ruling` with
-            `gh issue edit ${{ env.ISSUE }} --add-label needs-ruling`,
-            and stop. Do not open a pull request in that case.
+            guess: comment the question on the issue and stop. Do not open
+            a pull request in that case.
 
             Pass every comment and pull request body on stdin, never as
             `--body "..."`: backticks inside double quotes are command
@@ -135,7 +133,7 @@ jobs:
           claude_args: |
             --model sonnet
             --max-turns 60
-            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(npm ci),Bash(npm install),Bash(npm run:*),Bash(npm test:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git checkout:*),Bash(git switch:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent-trial/${{ env.ISSUE }}),Bash(git push -u origin agent-trial/${{ env.ISSUE }}),Bash(gh issue view ${{ env.ISSUE }}),Bash(gh issue comment ${{ env.ISSUE }} --body:*),Bash(gh issue comment ${{ env.ISSUE }} --body-file:*),Bash(gh issue edit ${{ env.ISSUE }} --add-label needs-ruling),Bash(gh pr create:*),Bash(gh pr view:*)"
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(npm ci),Bash(npm install),Bash(npm run:*),Bash(npm test:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git checkout:*),Bash(git switch:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent-trial/${{ env.ISSUE }}),Bash(git push -u origin agent-trial/${{ env.ISSUE }}),Bash(gh issue view ${{ env.ISSUE }}),Bash(gh issue comment ${{ env.ISSUE }} --body:*),Bash(gh issue comment ${{ env.ISSUE }} --body-file:*),Bash(gh pr create:*),Bash(gh pr view:*)"
 
       # The log's result block counts permission denials but does not name
       # them, and the execution file stays on the runner. Print what was
@@ -149,3 +147,33 @@ jobs:
             | "denials: \(.permission_denials // [] | length)",
               (.permission_denials[]? | "  \(.tool_name): \(.tool_input | tojson)"),
               "result: \(.result // "")"' "$EXECUTION_FILE"
+
+      # The run's cost (mark-brannan/claude#219): the execution file ends in
+      # the CLI's `result` message, which carries total_cost_usd and usage.
+      # One JSON line in the `headless-run` artifact, the shape the shared
+      # claude-review leaves, so metrics-db collects it with the reviews'.
+      # The PR the trial opened, if any, is where spend puts the cost.
+      - name: Find the trial's PR
+        id: trial-pr
+        if: always() && steps.claude.outcome != 'skipped'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "agent-trial/$ISSUE" --state all --json number --jq '.[0].number // empty' || true)
+          echo "number=$PR" >> "$GITHUB_OUTPUT"
+      # A run killed or timed out leaves no execution file; the action still
+      # writes a row, with no cost and outcome "no result".
+      - name: Record the cost of the run
+        if: always() && steps.claude.outcome != 'skipped'
+        uses: mark-brannan/.github/.github/actions/headless-run-cost@main
+        with:
+          execution-file: ${{ steps.claude.outputs.execution_file }}
+          what: claude-issue-trial
+          pr: ${{ steps.trial-pr.outputs.number }}
+          fields: '{"issue":${{ env.ISSUE }}}'
+          summary: 'false'
+      - if: always() && hashFiles('headless-run.jsonl') != ''
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: headless-run
+          path: headless-run.jsonl

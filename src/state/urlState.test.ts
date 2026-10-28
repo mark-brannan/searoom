@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { evaluateDisplay } from 'colregs-engine';
+import { evaluateSignals } from 'colregs-engine';
 import {
   DEFAULT_FACTS,
   DEFAULT_STATE,
@@ -174,7 +174,7 @@ describe('URL state round-trip', () => {
     // nothing upstream (Sandbox.tsx's useMemo) catches it.
     const state = deserialize('#/sandbox?p=bogus&pos=underway');
     expect(state.facts['fact:propulsion']).toBe(DEFAULT_FACTS['fact:propulsion']);
-    expect(() => evaluateDisplay(state.facts)).not.toThrow();
+    expect(() => evaluateSignals(state.facts)).not.toThrow();
   });
   it('round-trips the jurisdiction, and omits it at the default', () => {
     expect(serialize(DEFAULT_STATE)).not.toContain('j=');
