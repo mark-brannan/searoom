@@ -11,7 +11,7 @@ import {
 } from './jurisdictions';
 import { factsForEntry, jurisdictionForEntry, paragraphsForCite } from './cites';
 
-// `evaluateDisplay` answers the one-vessel lights-and-shapes category only
+// `evaluateSignals` answers the one-vessel lights-and-shapes category only
 // (colregs ADR 0005). The two-vessel categories — which vessel gives way —
 // read a Situation, not a FactRecord; colregs ships situation fixtures for
 // them but colregs-engine has no Situation entry point yet, so they are not
@@ -20,7 +20,7 @@ import { factsForEntry, jurisdictionForEntry, paragraphsForCite } from './cites'
 const DISPLAY_CATEGORIES = new Set([undefined, 'category:display']);
 
 // Entries whose `when` reads a pair: or self:act: key (the 34(a)-(d) sound
-// signals) need a Situation, not a FactRecord, so evaluateDisplay cannot fire them.
+// signals) need a Situation, not a FactRecord, so evaluateSignals cannot fire them.
 const readsSituation = (when: Record<string, unknown> | undefined) =>
   Object.keys(when ?? {}).some((k) => k.startsWith('pair:') || k.startsWith('self:act:'));
 

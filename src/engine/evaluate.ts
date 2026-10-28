@@ -4,7 +4,7 @@
 // through `EvaluateOptions.jurisdiction`, so every evaluation in the app
 // goes through here and searoom never hands it a pre-filtered entry list.
 
-import { evaluateDisplay as engineEvaluateDisplay } from 'colregs-engine';
+import { evaluateSignals as engineEvaluateSignals } from 'colregs-engine';
 import { applicability, colregsVersion } from '../data/colregs';
 import type { DisplayEvaluation, FactRecord } from './types';
 
@@ -13,13 +13,13 @@ export function evaluateDisplayIn(
   jurisdiction: string,
   facts: FactRecord,
 ): DisplayEvaluation {
-  return engineEvaluateDisplay(facts, {
+  return engineEvaluateSignals(facts, {
     // colregs-engine exports `ApplicabilityData` from its generated schema
     // but types `EvaluateOptions.data` against its own internal narrowing of
     // the same shape, and the two aren't mutually assignable. One cast, here,
     // rather than at every call site.
     data: applicability as Parameters<
-      typeof engineEvaluateDisplay
+      typeof engineEvaluateSignals
     >[1] extends { data?: infer D }
       ? D
       : never,

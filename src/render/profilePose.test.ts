@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { evaluateDisplay } from 'colregs-engine';
+import { evaluateSignals } from 'colregs-engine';
 import type { FactRecord } from '../engine/types';
 import { PX, PZ, selectHull } from 'nav-wright';
 import { placeLights } from './navWright';
@@ -122,7 +122,7 @@ describe('3D pose vs. 2D profile at theta=90, tilt=0 (searoom#22 facet 4)', () =
       : `${id} on ${mesh}: 3D pose agrees with the 2D profile within ${POSE_TOLERANCE} of the canvas`;
 
     run(title, async () => {
-      const evaln = evaluateDisplay(FACTS);
+      const evaln = evaluateSignals(FACTS);
       const display = evaln.displays[0];
       const placed = placeLights(display.lights, hull.spec, FACTS, lights);
       expect(placed.length).toBeGreaterThan(0);
