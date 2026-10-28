@@ -22,6 +22,9 @@ const Identify = lazy(() =>
 const Quiz = lazy(() =>
   import('./modes/Quiz').then((m) => ({ default: m.Quiz })),
 );
+const Flashcards = lazy(() =>
+  import('./modes/Flashcards').then((m) => ({ default: m.Flashcards })),
+);
 const Rules = lazy(() =>
   import('./modes/Rules').then((m) => ({ default: m.Rules })),
 );
@@ -50,6 +53,8 @@ export function App() {
         return <Identify />;
       case 'quiz':
         return <Quiz />;
+      case 'flashcards':
+        return <Flashcards />;
       case 'rules':
         return <Rules />;
       case 'sound':

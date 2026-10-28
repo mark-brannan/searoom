@@ -55,6 +55,7 @@ for (const [name, hash, probe] of [
   ['Sandbox', '#/sandbox', '.sandbox-grid'],
   ['Identify', '#/identify', '.color-btn'],
   ['Quiz', '#/quiz', '.quiz-option'],
+  ['Flashcards', '#/flashcards', '.flashcard'],
   ['Rules', '#/rules', '[id^="rule-"]'],
   ['Sound', '#/sound', '.panel'],
 ]) {

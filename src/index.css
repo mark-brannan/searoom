@@ -1687,3 +1687,7 @@ nav details > summary {
 .vessel-card h2 {
   margin: 0 0 0.25rem;
 }
+.flashcard { display: grid; gap: 0.75rem; justify-items: start; }
+.flashcard .scene-svg { max-width: 440px; width: 100%; }
+.flashcard-cite { font-size: 1.6rem; margin: 0.5rem 0; }
+.flashcard-box { margin-right: 0.9rem; }
