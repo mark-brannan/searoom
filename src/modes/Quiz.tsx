@@ -11,6 +11,7 @@ import type { QuizDifficulty, QuizQuestion } from '../engine/quiz';
 import { evaluateDisplayIn } from '../engine/evaluate';
 import {
   drillDifficulty,
+  drillSeedAt,
   exportProgress,
   loadProgress,
   mergeProgress,
@@ -248,7 +249,19 @@ export function Quiz() {
     setPicked(null);
     setExam(null);
     setScore({ right: 0, total: 0 });
-    patch({ quizDifficulty: d, quizSeed: seed, quizN: 1 });
+    // a drill seed picked for the old level can ask about another rule at this one
+    const nextSeed =
+      mode === 'drill'
+        ? drillSeedAt(
+            seed,
+            reverse,
+            state.jurisdiction,
+            progress,
+            quizRule,
+            drillDifficulty(state.jurisdiction, quizRule, d),
+          )
+        : seed;
+    patch({ quizDifficulty: d, quizSeed: nextSeed, quizN: 1 });
   };
   const difficultyName = intl.formatMessage({ id: `quiz.difficulty.${quizDifficulty}` });
 
@@ -380,10 +393,7 @@ export function Quiz() {
             onChange={(e) => setDifficulty(QUIZ_DIFFICULTIES[Number(e.target.value)])}
             aria-valuetext={difficultyName}
           />
-          {/* a level name is short; the shared 11em would wrap it under the slider at phone width */}
-          <span className="theta-readout" style={{ minWidth: '6em' }}>
-            {difficultyName}
-          </span>
+          <span className="theta-readout theta-readout-short">{difficultyName}</span>
         </div>
 
         {mode === 'exam' && !exam && (

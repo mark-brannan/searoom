@@ -186,3 +186,27 @@ export function nextDrillSeed(
   }
   return cands[cands.length - 1].seed;
 }
+
+/**
+ * The seed a drill keeps when its level changes: the current one if its
+ * question at the new level still asks about the drilled rule, else the next
+ * drill seed from it. A seed picked for one level can ask about another rule
+ * at the next.
+ */
+export function drillSeedAt(
+  seed: number,
+  reverse: boolean,
+  jurisdiction: string,
+  progress: Progress,
+  rule: string,
+  difficulty: QuizDifficulty,
+): number {
+  if (!rule) return seed;
+  try {
+    if (rulesOfCite(questionFor(seed, reverse, jurisdiction, difficulty).cite).includes(rule))
+      return seed;
+  } catch {
+    // no question at this seed: pick another
+  }
+  return nextDrillSeed(seed, reverse, jurisdiction, progress, rule, difficulty);
+}

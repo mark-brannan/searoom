@@ -8,7 +8,7 @@ import {
   scenarioPoolAt,
 } from './quiz';
 import type { FactRecord } from './types';
-import { drillDifficulty, nextDrillSeed, questionFor, rulesInPool, rulesOfCite } from './quizProgress';
+import { drillDifficulty, drillSeedAt, nextDrillSeed, questionFor, rulesInPool, rulesOfCite } from './quizProgress';
 import { deserialize, serialize } from '../state/urlState';
 
 const SEEDS = Array.from({ length: 60 }, (_, i) => i + 1);
@@ -87,6 +87,34 @@ describe('difficulty pools', () => {
     expect(level).not.toBe('easy');
     const s = nextDrillSeed(1, false, 'intl', {}, hardOnly!, level);
     expect(rulesOfCite(questionFor(s, false, 'intl', level).cite)).toContain(hardOnly);
+  });
+});
+
+describe('a drill changing level', () => {
+  const asks = (s: number, level: (typeof QUIZ_DIFFICULTIES)[number]) =>
+    rulesOfCite(questionFor(s, false, 'intl', level).cite);
+
+  it('re-picks a seed whose question at the new level asks about the drilled rule', () => {
+    // find a hard drill seed whose easy-level question is about another rule
+    let found: { rule: string; seed: number } | undefined;
+    for (const rule of rulesInPool('intl', 'easy')) {
+      for (let after = 0; after < 40 && !found; after++) {
+        const seed = nextDrillSeed(after, false, 'intl', {}, rule, 'hard');
+        if (!asks(seed, 'easy').includes(rule)) found = { rule, seed };
+      }
+      if (found) break;
+    }
+    expect(found).toBeTruthy();
+    const { rule, seed } = found!;
+    const level = drillDifficulty('intl', rule, 'easy');
+    expect(asks(drillSeedAt(seed, false, 'intl', {}, rule, level), level)).toContain(rule);
+  });
+
+  it('keeps the seed when it still fits, or when no rule is drilled', () => {
+    const rule = rulesInPool('intl', 'easy')[0];
+    const seed = nextDrillSeed(0, false, 'intl', {}, rule, 'easy');
+    expect(drillSeedAt(seed, false, 'intl', {}, rule, 'easy')).toBe(seed);
+    expect(drillSeedAt(seed, false, 'intl', {}, '', 'easy')).toBe(seed);
   });
 });
 
