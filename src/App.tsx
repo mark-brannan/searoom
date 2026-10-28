@@ -19,6 +19,9 @@ const Sandbox = lazy(() =>
 const Identify = lazy(() =>
   import('./modes/Identify').then((m) => ({ default: m.Identify })),
 );
+const Flashcards = lazy(() =>
+  import('./modes/Flashcards').then((m) => ({ default: m.Flashcards })),
+);
 const Rules = lazy(() =>
   import('./modes/Rules').then((m) => ({ default: m.Rules })),
 );
@@ -47,6 +50,8 @@ export function App() {
         return <Sandbox />;
       case 'identify':
         return <Identify />;
+      case 'flashcards':
+        return <Flashcards />;
       case 'rules':
         return <Rules />;
       case 'sound':

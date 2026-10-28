@@ -24,6 +24,7 @@ export type Mode =
   | 'sandbox'
   | 'identify'
   | 'quiz'
+  | 'flashcards'
   | 'rules'
   | 'sound'
   | 'vessels';
@@ -267,7 +268,7 @@ export function deserialize(hash: string): AppState {
   const query = qIndex === -1 ? '' : h.slice(qIndex + 1);
   const segments = path.split('/').filter(Boolean);
   // the Quiz is unwired (refs #218): #/quiz lands on the sandbox
-  const modes: Mode[] = ['sandbox', 'identify', 'rules', 'sound', 'vessels'];
+  const modes: Mode[] = ['sandbox', 'identify', 'flashcards', 'rules', 'sound', 'vessels'];
   if (segments[0] && (modes as string[]).includes(segments[0])) {
     state.mode = segments[0] as Mode;
   }
