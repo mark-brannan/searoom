@@ -100,6 +100,7 @@ jobs:
       # Per-URL previews are impossible on Pages with hash routes: the
       # fragment never reaches the server, so one og.png serves every link.
       - run: npx playwright install --with-deps chromium
+        continue-on-error: true
       # Non-fatal: a failed render must not stop main deploying; dist then
       # keeps the committed og.png and apple-touch-icon.png vite copied.
       - name: Render brand images
