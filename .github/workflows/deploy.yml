@@ -95,6 +95,22 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      # Re-render the brand images from the built app so og.png tracks the
+      # scene, then drop them into dist (vite copied the committed ones).
+      # Per-URL previews are impossible on Pages with hash routes: the
+      # fragment never reaches the server, so one og.png serves every link.
+      - run: npx playwright install --with-deps chromium
+      - name: Render brand images
+        run: |
+          npx vite preview --port 4173 &
+          pid=$!
+          for _ in $(seq 30); do
+            curl -sf http://localhost:4173/searoom/ >/dev/null && break
+            sleep 1
+          done
+          node scripts/brand-images.mjs
+          cp public/og.png public/apple-touch-icon.png dist/
+          kill $pid
       - uses: actions/upload-artifact@v4
         with:
           name: site-main
