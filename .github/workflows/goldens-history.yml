@@ -40,5 +40,5 @@ jobs:
       - name: Walk the goldens' history
         env: { N: '${{ inputs.n }}' }
         run: node scripts/goldens-history.mjs "$N" | tee -a "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v7.0.2
+      - uses: actions/upload-artifact@v7
         with: { name: goldens-history, path: out/goldens-history, retention-days: 30 }
