@@ -1,5 +1,5 @@
 import { FormattedMessage, useIntl } from 'react-intl';
-import { useApp } from '../state/store';
+import { useApp, useJurisdiction, useMode, usePrefs } from '../state/store';
 import type { Patch } from '../state/store';
 import { JURISDICTIONS } from '../data/jurisdictions';
 import type { Mode } from '../state/urlState';
@@ -21,7 +21,9 @@ export function pickJurisdiction(value: string): Patch {
 const MODES: Mode[] = ['sandbox', 'identify', 'quiz', 'flashcards', 'rules', 'sound', 'vessels'];
 
 export function Header() {
-  const state = useApp((s) => s.state);
+  const jurisdiction = useJurisdiction();
+  const mode = useMode();
+  const { locale } = usePrefs();
   const patch = useApp((s) => s.patch);
   const setMode = useApp((s) => s.setMode);
   const intl = useIntl();
@@ -46,7 +48,7 @@ export function Header() {
               <FormattedMessage id="jurisdiction.label" />
             </span>
             <select
-              value={state.jurisdiction}
+              value={jurisdiction}
               onChange={(e) => patch(pickJurisdiction(e.target.value))}
               aria-label={intl.formatMessage({ id: 'jurisdiction.label' })}
             >
@@ -80,7 +82,7 @@ export function Header() {
               <FormattedMessage id="locale.title" />
               {': '}
             </span>
-            {state.locale === 'fi' ? 'FI' : 'EN'}
+            {locale === 'fi' ? 'FI' : 'EN'}
             <span className="loc-long">
               {' · '}
               <FormattedMessage id="header.text" values={{ language: corpus.language }} />
@@ -95,8 +97,8 @@ export function Header() {
         {MODES.map((m) => (
           <button
             key={m}
-            className={`mode-tab${state.mode === m ? ' active' : ''}`}
-            aria-current={state.mode === m ? 'page' : undefined}
+            className={`mode-tab${mode === m ? ' active' : ''}`}
+            aria-current={mode === m ? 'page' : undefined}
             onClick={() => setMode(m)}
           >
             <FormattedMessage id={`mode.${m}`} />

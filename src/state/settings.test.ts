@@ -80,20 +80,20 @@ describe('opening mesh (searoom#174)', async () => {
 
   it('draws from the class: first and last index, by name', () => {
     expect(variants.length).toBeGreaterThan(1);
-    expect(stateFromHash(hash, {}, () => 0).mesh).toBe(variants[0].name);
-    expect(stateFromHash(hash, {}, () => 0.999).mesh).toBe(
+    expect(stateFromHash(hash, {}, () => 0).sandbox.mesh).toBe(variants[0].name);
+    expect(stateFromHash(hash, {}, () => 0.999).sandbox.mesh).toBe(
       variants[variants.length - 1].name,
     );
   });
 
   it('lets an explicit ms win', () => {
     const last = variants[variants.length - 1].name;
-    expect(stateFromHash(`${hash}&ms=${last}`, {}, () => 0).mesh).toBe(last);
+    expect(stateFromHash(`${hash}&ms=${last}`, {}, () => 0).sandbox.mesh).toBe(last);
   });
 
   it('carries the pick in the URL so a reload keeps it', () => {
     const picked = stateFromHash(hash, {}, () => 0.999);
     const reloaded = stateFromHash(serialize(picked), {}, () => 0);
-    expect(reloaded.mesh).toBe(picked.mesh);
+    expect(reloaded.sandbox.mesh).toBe(picked.sandbox.mesh);
   });
 });

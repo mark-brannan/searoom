@@ -3,10 +3,10 @@ import { FormattedMessage, IntlProvider } from 'react-intl';
 import fi from './i18n/fi.json';
 import { catalogs } from './i18n';
 import { DEFAULT_STATE } from './state/urlState';
-import { startSync, useAppState, usePatch } from './state/store';
+import { startSync, useMode, usePrefs, useJurisdiction } from './state/store';
 import { Header } from './components/Header';
 import { FirstRunIntro } from './components/FirstRunIntro';
-import { SignpostPanel } from './components/SignpostPanel';
+import { OpenSignpost } from './components/SignpostPanel';
 import { colregsVersion } from './data/colregs';
 import { corpusIn } from './data/corpusText';
 import { CorpusContext } from './state/corpusContext';
@@ -37,16 +37,17 @@ const Vessels = lazy(() =>
 );
 
 export function App() {
-  const state = useAppState();
-  const patch = usePatch();
+  const mode = useMode();
+  const { locale: uiLocale, corpus, signpost } = usePrefs();
+  const jurisdiction = useJurisdiction();
   const layout = useVariant('layout');
   useEffect(() => startSync(), []);
 
-  const locale = state.locale === 'fi' ? 'fi' : 'en';
+  const locale = uiLocale === 'fi' ? 'fi' : 'en';
   const messages = catalogs[locale];
 
   const body = useMemo(() => {
-    switch (state.mode) {
+    switch (mode) {
       case 'sandbox':
         return <Sandbox />;
       case 'identify':
@@ -62,12 +63,12 @@ export function App() {
       case 'vessels':
         return <Vessels />;
     }
-  }, [state.mode]);
+  }, [mode]);
 
   return (
     <IntlProvider locale={locale} messages={messages} defaultLocale="en">
       <CorpusContext.Provider
-        value={corpusIn(state.jurisdiction, state.corpus).id}
+        value={corpusIn(jurisdiction, corpus).id}
       >
         <div className="app">
           <Header />
@@ -94,13 +95,13 @@ export function App() {
                 id="app.poweredBy"
                 values={{
                   version: colregsVersion,
-                  jurisdiction: state.jurisdiction,
+                  jurisdiction: jurisdiction,
                 }}
               />
             </span>
             <a href="https://github.com/mark-brannan/colregs">colregs</a>
             <a href="https://github.com/mark-brannan/searoom">searoom</a>
-            {state.mode === 'sandbox' && (
+            {mode === 'sandbox' && (
               <span
                 className="layout-switch"
                 role="group"
@@ -122,19 +123,8 @@ export function App() {
               </span>
             )}
           </footer>
-          {state.mode === 'sandbox' && !state.signpost && <FirstRunIntro />}
-          {state.signpost && (
-            <SignpostPanel
-              id={state.signpost}
-              onClose={() => patch({ signpost: null })}
-              locale={state.locale}
-              onLocale={(l) => patch({ locale: l })}
-              jurisdiction={state.jurisdiction}
-              corpus={state.corpus}
-              onCorpus={(c) => patch({ corpus: c })}
-              onOpen={(id) => patch({ signpost: id })}
-            />
-          )}
+          {mode === 'sandbox' && !signpost && <FirstRunIntro />}
+          <OpenSignpost />
         </div>
       </CorpusContext.Provider>
     </IntlProvider>

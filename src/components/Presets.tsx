@@ -4,15 +4,15 @@
 
 import { useIntl } from 'react-intl';
 import type { Patch } from '../state/store';
-import { useAppState, usePatch } from '../state/store';
+import { usePatch, useSituation } from '../state/store';
 import { PRESETS, presetFor } from '../data/presets';
 import { meshOnChange } from '../render/hullModels';
 
 export function Presets() {
-  const state = useAppState();
+  const { facts } = useSituation();
   const patch = usePatch();
   const intl = useIntl();
-  const current = presetFor(state.facts)?.id;
+  const current = presetFor(facts)?.id;
   return (
     <div
       className="presets"
@@ -28,11 +28,10 @@ export function Presets() {
           onClick={() => {
             const change: Patch = {
               facts: { ...p.facts },
-              displayIndex: 0,
-              additionsOn: [],
+              sandbox: { displayIndex: 0, additionsOn: [] },
             };
-            const mesh = meshOnChange(state.facts, p.facts);
-            if (mesh !== undefined) change.mesh = mesh;
+            const mesh = meshOnChange(facts, p.facts);
+            if (mesh !== undefined) change.sandbox = { ...change.sandbox, mesh };
             patch(change);
           }}
         >

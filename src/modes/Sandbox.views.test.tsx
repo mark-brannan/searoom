@@ -7,14 +7,14 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { IntlProvider } from 'react-intl';
 import { Sandbox } from './Sandbox';
 import { catalogs } from '../i18n';
-import { DEFAULT_STATE } from '../state/urlState';
+import { DEFAULT_STATE, stateWith } from '../state/urlState';
 import { useApp } from '../state/store';
-import type { AppState, View } from '../state/urlState';
+import type { SandboxView, View } from '../state/urlState';
 
-function render(view: View, extra: Partial<AppState> = {}): string {
+function render(view: View, extra: Partial<SandboxView> = {}): string {
   // server rendering reads the store's initial snapshot, not its live one
   Object.assign(useApp.getInitialState(), {
-    state: { ...DEFAULT_STATE, view, ...extra },
+    state: stateWith({ sandbox: { view, ...extra } }),
   });
   return renderToStaticMarkup(
     <IntlProvider locale="en" messages={catalogs.en} defaultLocale="en">
@@ -40,8 +40,8 @@ describe('Sandbox views', () => {
     new RegExp(`disabled=""[^>]*id="${id}"`).test(html);
 
   it('opens on the 3D view, its camera tilt live', () => {
-    expect(DEFAULT_STATE.view).toBe('model');
-    const html = render(DEFAULT_STATE.view);
+    expect(DEFAULT_STATE.sandbox.view).toBe('model');
+    const html = render(DEFAULT_STATE.sandbox.view);
     expect(html).not.toContain('data-side=');
     expect(disabled(html, 'tilt')).toBe(false);
     expect(disabled(html, 'benchy')).toBe(false);
