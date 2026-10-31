@@ -83,15 +83,6 @@ button {
   padding: 0 16px 48px;
 }
 
-/* header */
-.header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 10px 18px;
-  padding: 14px 0 6px;
-}
-
 .brand {
   font-size: 24px;
   font-weight: 700;
@@ -103,18 +94,6 @@ button {
   letter-spacing: 0.1em;
   font-size: 14px;
   vertical-align: middle;
-}
-
-.tagline {
-  color: var(--dim);
-  font-size: 14px;
-}
-
-.header-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 8px;
-  align-items: center;
 }
 
 .disclaimer {
@@ -163,29 +142,6 @@ button {
 .mode-tab:hover {
   color: var(--text);
   border-color: var(--dim);
-}
-
-/* Jurisdiction picker: same pill as a mode tab, since it selects which rule
-   set every mode below is answering from. */
-.jurisdiction-picker select {
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: transparent;
-  color: var(--dim);
-  font: inherit;
-  max-width: 100%;
-}
-
-.jurisdiction-picker select:hover,
-.jurisdiction-picker select:focus-visible {
-  color: var(--text);
-  border-color: var(--dim);
-}
-
-.jurisdiction-picker select option {
-  background: var(--bg);
-  color: var(--text);
 }
 
 .mode-tab.active:hover {
@@ -1314,43 +1270,6 @@ table.corpora th {
     padding: 0 12px 32px;
   }
 
-  .header {
-    gap: 4px 12px;
-    padding-top: 10px;
-  }
-
-  .tagline {
-    display: none;
-  }
-
-  /* mark on the left, language button beside it, jurisdiction below */
-  .header {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-  }
-
-  .header-actions {
-    display: contents;
-  }
-
-  .loc-long {
-    display: none;
-  }
-
-  .header-actions .jurisdiction-picker {
-    grid-row: 2;
-    grid-column: 1 / -1;
-    min-width: 0;
-  }
-
-  .header-actions > .mode-tab {
-    grid-row: 1;
-    grid-column: 2;
-    min-width: 44px;
-    padding: 6px 12px;
-  }
-
   .disclaimer {
     font-size: 12px;
     margin: 0 0 8px;
@@ -1359,10 +1278,6 @@ table.corpora th {
   .mode-nav {
     margin-bottom: 8px;
     padding-bottom: 8px;
-  }
-
-  .header-actions .jurisdiction-picker select {
-    width: 100%;
   }
 
   /* one row of tabs, scrolled inside itself rather than wrapped */
@@ -1375,7 +1290,6 @@ table.corpora th {
   .mode-tab,
   .chip,
   .view-tab,
-  .jurisdiction-picker select,
   select,
   input[type='number'] {
     min-height: 44px;
@@ -1772,5 +1686,144 @@ nav details > summary {
     flex: 0 0 92px;
     min-height: 44px;
     font-size: 11.5px;
+  }
+}
+
+/* settings sheet and the one-row header (#105) */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* a whole-pixel height keeps the scene canvas on the pixel grid */
+  box-sizing: border-box;
+  height: 60px;
+  padding: 12px 0 10px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 16px;
+}
+
+.topbar .brand {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* the tabs scroll inside their own row rather than wrap the header */
+.topbar .mode-nav {
+  flex: 1;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.topbar .mode-tab {
+  flex: none;
+}
+
+.settings-button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.settings-button [aria-hidden='true'] {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.settings-section {
+  margin-top: 18px;
+}
+
+.settings-section h3 {
+  margin: 0 0 8px;
+}
+
+.settings-saved {
+  border-top: 0;
+  margin-top: 4px;
+  padding-top: 0;
+}
+
+.settings-more {
+  margin-top: 6px;
+  color: var(--dim);
+  font-size: 14px;
+  padding: 6px 0;
+}
+
+.settings-more:hover {
+  color: var(--text);
+}
+
+.settings-select select {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+
+.settings-select select option {
+  background: var(--bg);
+  color: var(--text);
+}
+
+@media (max-width: 520px) {
+  .topbar {
+    gap: 8px;
+    height: 64px;
+    padding-top: 8px;
+    margin-bottom: 8px;
+  }
+
+  /* on a phone the mark is the three lights; the word stays for readers */
+  .topbar .brand-word {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .settings-button {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    padding: 6px 10px;
+  }
+
+  .settings-button-label {
+    display: none;
+  }
+
+  .settings-sheet .segmented label,
+  .settings-more,
+  .settings-select select {
+    min-height: 44px;
+  }
+}
+
+/* the motion override: settings sets data-motion on the root, resolved
+   against the OS preference */
+:root[data-motion='reduce'] *,
+:root[data-motion='reduce'] *::before,
+:root[data-motion='reduce'] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-motion='full'] .light-flash {
+    animation: light-flash 0.5s steps(1) infinite;
   }
 }

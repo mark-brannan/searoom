@@ -108,8 +108,17 @@ export function startSync(): () => void {
   });
   // preferences that outlive the visit
   const saveIfChanged = (s: AppState, prev?: AppState) => {
-    if (!prev || s.locale !== prev.locale || s.jurisdiction !== prev.jurisdiction)
-      saveSettings({ locale: s.locale, jurisdiction: s.jurisdiction });
+    if (
+      !prev ||
+      s.locale !== prev.locale ||
+      s.jurisdiction !== prev.jurisdiction ||
+      s.corpus !== prev.corpus
+    )
+      saveSettings({
+        locale: s.locale,
+        jurisdiction: s.jurisdiction,
+        corpus: s.corpus,
+      });
   };
   const unsubSettings = useApp.subscribe((s, prev) =>
     saveIfChanged(s.state, prev.state),

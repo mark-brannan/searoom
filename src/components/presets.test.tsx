@@ -75,11 +75,11 @@ describe('fact controls', () => {
     }
   });
 
-  it('carries no jurisdiction row (the header picks it); day/night stays', () => {
+  it('carries no jurisdiction or day/night row (settings owns both)', () => {
     const markup = html(<FactControls />);
     expect(markup).not.toContain(
       `<span class="fact-label">${catalogs.en['sandbox.jurisdiction.label']}</span>`,
     );
-    expect(markup).toContain('name="daynight"');
+    expect(markup).not.toContain('name="daynight"');
   });
 });

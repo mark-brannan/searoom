@@ -1,93 +1,32 @@
 import { FormattedMessage, useIntl } from 'react-intl';
 import { useApp } from '../state/store';
-import type { Patch } from '../state/store';
-import { JURISDICTIONS } from '../data/jurisdictions';
 import type { Mode } from '../state/urlState';
-import { jurisdictions as signposted } from '../data/signposts';
-import { useCorpus } from '../state/corpusContext';
 
-const SIGNPOST_PREFIX = 'sp:';
+const MODES: Mode[] = [
+  'sandbox',
+  'identify',
+  'quiz',
+  'flashcards',
+  'rules',
+  'sound',
+  'vessels',
+];
 
-/**
- * What picking a picker row does. A signposted row has no data to select,
- * so it opens that jurisdiction's signpost panel instead; the controlled
- * select keeps showing the jurisdiction in view.
- */
-export function pickJurisdiction(value: string): Patch {
-  return value.startsWith(SIGNPOST_PREFIX)
-    ? { signpost: value.slice(SIGNPOST_PREFIX.length) }
-    : { jurisdiction: value };
-}
-const MODES: Mode[] = ['sandbox', 'identify', 'quiz', 'flashcards', 'rules', 'sound', 'vessels'];
-
-export function Header() {
-  const state = useApp((s) => s.state);
-  const patch = useApp((s) => s.patch);
+/** One row: the mark, the mode tabs, the settings button (#105). */
+export function Header({ onSettings }: { onSettings: () => void }) {
+  const mode = useApp((s) => s.state.mode);
   const setMode = useApp((s) => s.setMode);
   const intl = useIntl();
-  const corpus = useCorpus();
   return (
-    <header className="header-wrap">
-      <div className="header">
-        <h1 className="brand">
-          Searoom{' '}
-          <span className="lights" aria-hidden="true">
-            <span style={{ color: 'var(--red)' }}>●</span>
-            <span style={{ color: 'var(--white-light)' }}>●</span>
-            <span style={{ color: 'var(--green)' }}>●</span>
-          </span>
-        </h1>
-        <span className="tagline">
-          <FormattedMessage id="app.tagline" />
+    <header className="topbar">
+      <h1 className="brand">
+        <span className="brand-word">Searoom</span>
+        <span className="lights" aria-hidden="true">
+          <span style={{ color: 'var(--red)' }}>●</span>
+          <span style={{ color: 'var(--white-light)' }}>●</span>
+          <span style={{ color: 'var(--green)' }}>●</span>
         </span>
-        <div className="header-actions">
-          <label className="jurisdiction-picker">
-            <span className="sr-only">
-              <FormattedMessage id="jurisdiction.label" />
-            </span>
-            <select
-              value={state.jurisdiction}
-              onChange={(e) => patch(pickJurisdiction(e.target.value))}
-              aria-label={intl.formatMessage({ id: 'jurisdiction.label' })}
-            >
-              {JURISDICTIONS.map((j) => (
-                <option key={j.id} value={j.id}>
-                  {intl.formatMessage({
-                    id: j.labelKey,
-                    defaultMessage: j.id,
-                  })}
-                </option>
-              ))}
-              <optgroup
-                label={intl.formatMessage({ id: 'jurisdiction.signposted' })}
-              >
-                {signposted
-                  .filter((s) => s.status !== 'live')
-                  .map((s) => (
-                    <option key={s.id} value={SIGNPOST_PREFIX + s.id}>
-                      {s.label ?? intl.formatMessage({ id: s.labelKey! })}
-                    </option>
-                  ))}
-              </optgroup>
-            </select>
-          </label>
-          <button
-            className="mode-tab"
-            onClick={() => patch({ signpost: 'locale-picker' })}
-            aria-haspopup="dialog"
-          >
-            <span className="loc-long">
-              <FormattedMessage id="locale.title" />
-              {': '}
-            </span>
-            {state.locale === 'fi' ? 'FI' : 'EN'}
-            <span className="loc-long">
-              {' · '}
-              <FormattedMessage id="header.text" values={{ language: corpus.language }} />
-            </span>
-          </button>
-        </div>
-      </div>
+      </h1>
       <nav
         className="mode-nav"
         aria-label={intl.formatMessage({ id: 'mode.nav.label' })}
@@ -95,14 +34,26 @@ export function Header() {
         {MODES.map((m) => (
           <button
             key={m}
-            className={`mode-tab${state.mode === m ? ' active' : ''}`}
-            aria-current={state.mode === m ? 'page' : undefined}
+            className={`mode-tab${mode === m ? ' active' : ''}`}
+            aria-current={mode === m ? 'page' : undefined}
             onClick={() => setMode(m)}
           >
             <FormattedMessage id={`mode.${m}`} />
           </button>
         ))}
       </nav>
+      <button
+        type="button"
+        className="mode-tab settings-button"
+        onClick={onSettings}
+        aria-haspopup="dialog"
+        aria-label={intl.formatMessage({ id: 'settings.open' })}
+      >
+        <span aria-hidden="true">⚙</span>
+        <span className="settings-button-label">
+          <FormattedMessage id="settings.open" />
+        </span>
+      </button>
     </header>
   );
 }
