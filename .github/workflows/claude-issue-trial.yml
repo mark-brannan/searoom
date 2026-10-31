@@ -173,7 +173,7 @@ jobs:
           fields: '{"issue":${{ env.ISSUE }}}'
           summary: 'false'
       - if: always() && hashFiles('headless-run.jsonl') != ''
-        uses: actions/upload-artifact@v7.0.2
+        uses: actions/upload-artifact@v7
         with:
           name: headless-run
           path: headless-run.jsonl
