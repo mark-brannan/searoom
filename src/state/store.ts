@@ -1,19 +1,22 @@
-// The one app state store. Holds the AppState record (facts, per-mode view
-// state, preferences); the URL codec in urlState.ts serializes it. Modes read
-// what they use from here, so App passes nothing down.
+// The one app state store. Holds the AppState record (the situation, one
+// view-state slice per mode, preferences); the URL codec in urlState.ts
+// serializes it. Modes subscribe to the slice they use, so App passes nothing
+// down.
 import { create } from 'zustand';
-import type { AppState, Mode } from './urlState';
-import { defaultCorpusFor, deserialize, serialize } from './urlState';
+import { useShallow } from 'zustand/react/shallow';
+import type { AppState, Mode, SliceKey, StatePatch } from './urlState';
+import { SLICES, defaultCorpusFor, deserialize, serialize, slicesIn } from './urlState';
 import { saveSettings, stateFromHash } from './settings';
 
-export type Patch = Partial<AppState>;
+/** A change to the state; a slice in it is merged into that slice. */
+export type Patch = StatePatch;
 
 const UNDO_DEPTH = 200;
 
 interface AppStore {
   state: AppState;
   /** Previous fact records, newest last, each with the mesh it was shown on. */
-  undoStack: Pick<AppState, 'facts' | 'mesh'>[];
+  undoStack: { facts: AppState['facts']; mesh: string }[];
   patch: (p: Patch) => void;
   setMode: (mode: Mode) => void;
   /** Step the fact record back one change. */
@@ -22,54 +25,97 @@ interface AppStore {
   replace: (s: AppState) => void;
 }
 
-export const useApp = create<AppStore>((set, get) => ({
+export function applyPatch(s: AppState, p: Patch): AppState {
+  const next: AppState = {
+    ...s,
+    ...p,
+    sandbox: p.sandbox ? { ...s.sandbox, ...p.sandbox } : s.sandbox,
+    quiz: p.quiz ? { ...s.quiz, ...p.quiz } : s.quiz,
+    rules: p.rules ? { ...s.rules, ...p.rules } : s.rules,
+  };
+  // the corpus belongs to the jurisdiction in view: switching jurisdiction
+  // re-picks that jurisdiction's reference corpus unless the patch names one
+  if (
+    p.jurisdiction !== undefined &&
+    p.jurisdiction !== s.jurisdiction &&
+    p.corpus === undefined
+  ) {
+    next.corpus = defaultCorpusFor(p.jurisdiction);
+  }
+  return next;
+}
+
+/**
+ * The state a hash names, over the current one. A hash carries only its own
+ * mode's view state, so stepping back into one mode leaves the others' as
+ * they were.
+ */
+export function fromHash(current: AppState, hash: string): AppState {
+  const s = deserialize(hash);
+  const own = slicesIn(s.mode);
+  const kept = Object.fromEntries(
+    SLICES.filter((k) => !own.includes(k)).map((k) => [k, current[k]]),
+  );
+  return { ...s, ...kept };
+}
+
+export const useApp = create<AppStore>((set) => ({
   state: stateFromHash(
     typeof window === 'undefined' ? '' : window.location.hash,
   ),
   undoStack: [],
   patch: (p) =>
     set(({ state: s, undoStack }) => {
-      const next = { ...s, ...p };
-      // the corpus belongs to the jurisdiction in view: switching jurisdiction
-      // re-picks that jurisdiction's reference corpus unless the patch names one
-      if (
-        p.jurisdiction !== undefined &&
-        p.jurisdiction !== s.jurisdiction &&
-        p.corpus === undefined
-      ) {
-        next.corpus = defaultCorpusFor(p.jurisdiction);
-      }
       const factsChanged =
         p.facts !== undefined &&
         JSON.stringify(p.facts) !== JSON.stringify(s.facts);
       return {
-        state: next,
+        state: applyPatch(s, p),
         undoStack: factsChanged
-          ? [...undoStack, { facts: s.facts, mesh: s.mesh }].slice(-UNDO_DEPTH)
+          ? [...undoStack, { facts: s.facts, mesh: s.sandbox.mesh }].slice(-UNDO_DEPTH)
           : undoStack,
       };
     }),
-  setMode: (mode) => {
-    // mode switches get a history entry so back works between modes
-    const next = { ...get().state, mode };
-    history.pushState(null, '', serialize(next));
-    set({ state: next });
-  },
+  // the history entry for a mode switch is startSync's: every mode change pushes
+  setMode: (mode) => set(({ state }) => ({ state: { ...state, mode } })),
   undo: () =>
     set(({ state, undoStack }) => {
       const prev = undoStack[undoStack.length - 1];
       if (!prev) return {};
       // the mesh goes back with the hull it was picked for
       return {
-        state: { ...state, ...prev },
+        state: {
+          ...state,
+          facts: prev.facts,
+          sandbox: { ...state.sandbox, mesh: prev.mesh },
+        },
         undoStack: undoStack.slice(0, -1),
       };
     }),
   replace: (s) => set({ state: s }),
 }));
 
-export const useAppState = (): AppState => useApp((s) => s.state);
 export const usePatch = (): AppStore['patch'] => useApp((s) => s.patch);
+/** One mode's view state; re-renders only when that slice changes. */
+export function useSlice<K extends SliceKey>(k: K): AppState[K] {
+  return useApp((s) => s.state[k]);
+}
+/** The situation: the jurisdiction and the fact record. */
+export const useSituation = (): Pick<AppState, 'jurisdiction' | 'facts'> =>
+  useApp(
+    useShallow((s) => ({ jurisdiction: s.state.jurisdiction, facts: s.state.facts })),
+  );
+/** Preferences and the open signpost. */
+export const usePrefs = (): Pick<AppState, 'locale' | 'corpus' | 'signpost'> =>
+  useApp(
+    useShallow((s) => ({
+      locale: s.state.locale,
+      corpus: s.state.corpus,
+      signpost: s.state.signpost,
+    })),
+  );
+export const useMode = (): Mode => useApp((s) => s.state.mode);
+export const useJurisdiction = (): string => useApp((s) => s.state.jurisdiction);
 
 /** Inputs with their own text undo keep ctrl/cmd+Z; a slider, box or select has none. */
 const OWN_UNDO = /^(text|search|number|email|url|tel|password)$/;
@@ -85,24 +131,28 @@ export function editsText(t: EventTarget | null): boolean {
  * edit), state -> hash, and ctrl/cmd+Z for the fact record. Returns a cleanup.
  */
 export function startSync(): () => void {
-  const onHash = () => {
-    const s = deserialize(window.location.hash);
-    if (serialize(s) !== serialize(useApp.getState().state))
-      useApp.getState().replace(s);
-  };
-  window.addEventListener('hashchange', onHash);
-
-  let lastQuizN = useApp.getState().state.quizN;
+  // History: a mode switch pushes an entry, so back steps between modes;
+  // every other change replaces the entry it is on.
+  let last = useApp.getState().state;
   const write = (state: AppState) => {
     const target = serialize(state);
     if (window.location.hash !== target) {
-      // each quiz question is a history entry, so back reopens the last one
-      const step = state.mode === 'quiz' && state.quizN !== lastQuizN;
-      if (step) history.pushState(null, '', target);
+      if (state.mode !== last.mode) history.pushState(null, '', target);
       else history.replaceState(null, '', target);
     }
-    lastQuizN = state.quizN;
+    last = state;
   };
+
+  const onHash = () => {
+    const current = useApp.getState().state;
+    const s = fromHash(current, window.location.hash);
+    if (serialize(s) === serialize(current)) return;
+    // a state that came from the hash is where history already is, never a
+    // step: write only canonicalises the entry in place
+    last = s;
+    useApp.getState().replace(s);
+  };
+  window.addEventListener('hashchange', onHash);
   const unsub = useApp.subscribe((s, prev) => {
     if (s.state !== prev.state) write(s.state);
   });

@@ -39,16 +39,16 @@ import {
   stepMesh,
 } from '../render/hullModels';
 import {
-  DEFAULT_STATE,
+  DEFAULT_SANDBOX,
   MAX_TILT,
   RANGE_MAX_NM,
   RANGE_MIN_NM,
   RANGE_STEP_NM,
 } from '../state/urlState';
-import type { AppState, View } from '../state/urlState';
+import type { SandboxView, View } from '../state/urlState';
 
 export type SceneSettings = Pick<
-  AppState,
+  SandboxView,
   'view' | 'theta' | 'tilt' | 'hullHint' | 'range' | 'sky' | 'mesh' | 'benchy'
 >;
 
@@ -305,7 +305,7 @@ export function Scene(props: SceneProps) {
     <FullScene
       facts={facts}
       lights={lights}
-      settings={{ ...DEFAULT_STATE, ...settings }}
+      settings={{ ...DEFAULT_SANDBOX, ...settings }}
       onChange={onChange ?? (() => {})}
       views={views}
     />

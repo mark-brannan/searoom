@@ -12,6 +12,7 @@ import { corpusById, corporaFor, expectedTextCount } from '../data/corpusText';
 import { BASE_JURISDICTION } from '../data/jurisdictions';
 import { CorpusRow } from './CorpusSwitcher';
 import { CorpusLine } from './RuleParagraphs';
+import { usePatch, usePrefs, useJurisdiction } from '../state/store';
 
 // A generated row with no app narrative yet carries a resolved literal
 // `label` (built from colregs' own corpus/jurisdiction metadata) instead of
@@ -323,5 +324,25 @@ export function SignpostPanel({
         {body}
       </div>
     </div>
+  );
+}
+
+/** The open signpost, wired to the store: App renders it with nothing to pass. */
+export function OpenSignpost() {
+  const { locale, corpus, signpost } = usePrefs();
+  const jurisdiction = useJurisdiction();
+  const patch = usePatch();
+  if (!signpost) return null;
+  return (
+    <SignpostPanel
+      id={signpost}
+      onClose={() => patch({ signpost: null })}
+      locale={locale}
+      onLocale={(l) => patch({ locale: l })}
+      jurisdiction={jurisdiction}
+      corpus={corpus}
+      onCorpus={(c) => patch({ corpus: c })}
+      onOpen={(id) => patch({ signpost: id })}
+    />
   );
 }

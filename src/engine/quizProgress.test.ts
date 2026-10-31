@@ -83,26 +83,19 @@ describe('parseProgress with a hostile key', () => {
 
 describe('quiz state in the URL', () => {
   it('round-trips seed, direction, mode, index and rule', () => {
-    const s = {
-      ...deserialize('#/quiz'),
-      quizSeed: 4242,
-      quizDirection: 'reverse' as const,
-      quizMode: 'exam' as const,
-      quizN: 4,
-      quizRule: '27',
+    const quiz = {
+      seed: 4242,
+      direction: 'reverse' as const,
+      mode: 'exam' as const,
+      n: 4,
+      rule: '27',
     };
-    const back = deserialize(serialize(s));
-    expect(back).toMatchObject({
-      quizSeed: 4242,
-      quizDirection: 'reverse',
-      quizMode: 'exam',
-      quizN: 4,
-      quizRule: '27',
-    });
+    const back = deserialize(serialize({ ...deserialize('#/quiz'), quiz }));
+    expect(back.quiz).toEqual(quiz);
   });
 
   it('ignores junk in a hand-edited link', () => {
     const s = deserialize('#/quiz/-3/x?qm=cheat&qr=abc');
-    expect(s).toMatchObject({ quizSeed: 1, quizMode: 'practice', quizN: 1, quizRule: '' });
+    expect(s.quiz).toMatchObject({ seed: 1, mode: 'practice', n: 1, rule: '' });
   });
 });

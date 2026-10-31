@@ -17,12 +17,12 @@ import {
   today,
 } from '../state/leitner';
 import type { Boxes } from '../state/leitner';
-import { useAppState } from '../state/store';
+import { useJurisdiction } from '../state/store';
 
 const SESSION_CAP = 20;
 
 export function Flashcards() {
-  const state = useAppState();
+  const jurisdiction = useJurisdiction();
   const intl = useIntl();
   const [boxes, setBoxes] = useState<Boxes>(() => loadBoxes());
   const [rule, setRule] = useState('');
@@ -32,7 +32,7 @@ export function Flashcards() {
   const [session, setSession] = useState(0);
   const day = today();
 
-  const deck = useMemo(() => buildDeck(state.jurisdiction), [state.jurisdiction]);
+  const deck = useMemo(() => buildDeck(jurisdiction), [jurisdiction]);
   const rules = useMemo(
     () =>
       [...new Set(deck.map((c) => c.rule))]

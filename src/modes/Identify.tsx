@@ -4,18 +4,18 @@
 
 import { useMemo, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
-import { useAppState, usePatch } from '../state/store';
+import { usePatch, useJurisdiction } from '../state/store';
 import { describeFacts } from '../components/factLabel';
 import { identifyCandidates } from '../engine/identify';
 import type { Arrangement, SeenLight } from '../engine/identify';
 import { bearingLabel, lightFill } from 'nav-wright';
 import { Scene } from '../components/Scene';
-import { DEFAULT_STATE, serialize } from '../state/urlState';
+import { serialize, stateWith } from '../state/urlState';
 
 const COLORS: SeenLight['color'][] = ['white', 'red', 'green', 'yellow'];
 
 export function Identify() {
-  const state = useAppState();
+  const jurisdiction = useJurisdiction();
   const patch = usePatch();
   const intl = useIntl();
   const [seen, setSeen] = useState<SeenLight[]>([]);
@@ -24,8 +24,8 @@ export function Identify() {
   const [arrangement, setArrangement] = useState<Arrangement>('free');
 
   const candidates = useMemo(
-    () => identifyCandidates(seen, state.jurisdiction, arrangement),
-    [seen, state.jurisdiction, arrangement],
+    () => identifyCandidates(seen, jurisdiction, arrangement),
+    [seen, jurisdiction, arrangement],
   );
 
   const aspectsOf = (thetas: number[]): string => {
@@ -191,22 +191,20 @@ export function Identify() {
                 }}
               />{' '}
               <a
-                href={serialize({
-                  ...DEFAULT_STATE,
-                  mode: 'sandbox',
-                  facts: c.facts,
-                  view: 'model',
-                  theta: c.thetas[0],
-                })}
+                href={serialize(
+                  stateWith({ mode: 'sandbox', facts: c.facts, sandbox: { theta: c.thetas[0] } }),
+                )}
                 onClick={(ev) => {
                   ev.preventDefault();
                   patch({
                     mode: 'sandbox',
                     facts: c.facts,
-                    view: 'model',
-                    theta: c.thetas[0],
-                    displayIndex: 0,
-                    additionsOn: [],
+                    sandbox: {
+                      view: 'model',
+                      theta: c.thetas[0],
+                      displayIndex: 0,
+                      additionsOn: [],
+                    },
                   });
                 }}
               >

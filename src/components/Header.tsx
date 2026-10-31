@@ -1,5 +1,5 @@
 import { FormattedMessage, useIntl } from 'react-intl';
-import { useApp } from '../state/store';
+import { useApp, useMode } from '../state/store';
 import type { Mode } from '../state/urlState';
 
 const MODES: Mode[] = [
@@ -14,7 +14,7 @@ const MODES: Mode[] = [
 
 /** One row: the mark, the mode tabs, the settings button (#105). */
 export function Header({ onSettings }: { onSettings: () => void }) {
-  const mode = useApp((s) => s.state.mode);
+  const mode = useMode();
   const setMode = useApp((s) => s.setMode);
   const intl = useIntl();
   return (

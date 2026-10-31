@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../state/store';
-import { useAppState, usePatch } from '../state/store';
+import { usePatch, useSituation } from '../state/store';
 import type { FactRecord, FactValue } from '../engine/types';
 import { meshOnChange } from '../render/hullModels';
 
@@ -114,10 +114,9 @@ function Check({
 }
 
 export function FactControls() {
-  const state = useAppState();
+  const { facts } = useSituation();
   const patch = usePatch();
   const intl = useIntl();
-  const facts = state.facts;
   const setFacts = (updates: FactPatch, remove: string[] = []) => {
     const next: FactPatch = { ...facts, ...updates };
     for (const k of remove) delete next[k];
@@ -128,11 +127,10 @@ export function FactControls() {
     // app-side pick needed.
     const change: Patch = {
       facts: nextFacts,
-      displayIndex: 0,
-      additionsOn: [],
+      sandbox: { displayIndex: 0, additionsOn: [] },
     };
     const mesh = meshOnChange(facts, nextFacts);
-    if (mesh !== undefined) change.mesh = mesh;
+    if (mesh !== undefined) change.sandbox = { ...change.sandbox, mesh };
     patch(change);
   };
 

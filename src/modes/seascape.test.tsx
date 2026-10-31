@@ -57,9 +57,9 @@ describe('seascape', () => {
   });
 
   it('the hull hint shows at the near end of the range and is gone at the far end', () => {
-    const hint = DEFAULT_STATE.hullHint / 100;
+    const hint = DEFAULT_STATE.sandbox.hullHint / 100;
     expect(bearingHullOpacity(hint, RANGE_MIN_NM)).toBeGreaterThan(0);
-    expect(bearingHullOpacity(hint, DEFAULT_STATE.range)).toBeGreaterThan(0);
+    expect(bearingHullOpacity(hint, DEFAULT_STATE.sandbox.range)).toBeGreaterThan(0);
     expect(bearingHullOpacity(hint, RANGE_MAX_NM)).toBe(0);
   });
 });

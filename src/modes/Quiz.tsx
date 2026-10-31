@@ -23,9 +23,9 @@ import {
 import type { Progress } from '../engine/quizProgress';
 import { RuleParagraphs } from '../components/RuleParagraphs';
 import { QUIZ_MODES } from '../state/urlState';
-import { useAppState, usePatch } from '../state/store';
+import { usePatch, useJurisdiction, useSlice } from '../state/store';
 import { bearingLabel } from 'nav-wright';
-import type { AppState } from '../state/urlState';
+import type { QuizView } from '../state/urlState';
 import type { FactRecord } from '../engine/types';
 
 export const EXAM_COUNT = 10;
@@ -128,11 +128,13 @@ function ProgressPanel({
 }
 
 export function Quiz() {
-  const state = useAppState();
-  const patch = usePatch();
+  const jurisdiction = useJurisdiction();
+  const quiz = useSlice('quiz');
+  const patchApp = usePatch();
+  const patch = (p: Partial<QuizView>) => patchApp({ quiz: p });
   const intl = useIntl();
-  const { quizMode: mode, quizSeed, quizN, quizRule } = state;
-  const reverse = state.quizDirection === 'reverse';
+  const { mode, seed: quizSeed, n: quizN, rule: quizRule } = quiz;
+  const reverse = quiz.direction === 'reverse';
   const quizIndex = quizN - 1;
   const [picked, setPicked] = useState<number | null>(null);
   const [score, setScore] = useState({ right: 0, total: 0 });
@@ -156,13 +158,13 @@ export function Quiz() {
 
   // a new question by any route (back/forward, an edited link, the
   // jurisdiction switcher) starts unanswered
-  useEffect(() => setPicked(null), [seed, reverse, state.jurisdiction]);
+  useEffect(() => setPicked(null), [seed, reverse, jurisdiction]);
 
-  const rules = useMemo(() => rulesInPool(state.jurisdiction), [state.jurisdiction]);
+  const rules = useMemo(() => rulesInPool(jurisdiction), [jurisdiction]);
 
   const question: QuizQuestion = useMemo(
-    () => questionFor(seed, reverse, state.jurisdiction),
-    [seed, reverse, state.jurisdiction],
+    () => questionFor(seed, reverse, jurisdiction),
+    [seed, reverse, jurisdiction],
   );
 
   const answer = (i: number) => {
@@ -180,10 +182,10 @@ export function Quiz() {
     setPicked(null);
     if (mode === 'drill')
       patch({
-        quizSeed: nextDrillSeed(seed, reverse, state.jurisdiction, progress, quizRule),
-        quizN: 1,
+        seed: nextDrillSeed(seed, reverse, jurisdiction, progress, quizRule),
+        n: 1,
       });
-    else patch({ quizN: quizN + 1 });
+    else patch({ n: quizN + 1 });
   };
 
   const startExam = () => {
@@ -191,14 +193,14 @@ export function Quiz() {
     setNow(Date.now());
     setScore({ right: 0, total: 0 });
     setExam({ deadline: Date.now() + EXAM_SECONDS * 1000, log: [] });
-    patch({ quizSeed: Math.floor(Math.random() * 1_000_000) + 1, quizN: 1 });
+    patch({ seed: Math.floor(Math.random() * 1_000_000) + 1, n: 1 });
   };
 
-  const setMode = (m: AppState['quizMode']) => {
+  const setMode = (m: QuizView['mode']) => {
     setPicked(null);
     setExam(null);
     setScore({ right: 0, total: 0 });
-    patch({ quizMode: m, quizSeed: seed, quizN: 1 });
+    patch({ mode: m, seed: seed, n: 1 });
   };
 
   const optionClass = (i: number) => {
@@ -216,8 +218,8 @@ export function Quiz() {
     picked === null
       ? ''
       : question.kind === 'forward'
-        ? citeOf(state.jurisdiction, question.options[picked].display)
-        : reverseOptionCite(state.jurisdiction, question.options[picked].facts);
+        ? citeOf(jurisdiction, question.options[picked].display)
+        : reverseOptionCite(jurisdiction, question.options[picked].facts);
 
   const secondsLeft = exam ? Math.max(0, Math.ceil((exam.deadline - now) / 1000)) : EXAM_SECONDS;
   const clock = `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, '0')}`;
@@ -255,7 +257,7 @@ export function Quiz() {
               aria-checked={reverse === r}
               onClick={() => {
                 setPicked(null);
-                patch({ quizDirection: r ? 'reverse' : 'forward' });
+                patch({ direction: r ? 'reverse' : 'forward' });
               }}
             >
               <FormattedMessage id={r ? 'quiz.reverse.name' : 'quiz.forward.name'} />
@@ -293,12 +295,12 @@ export function Quiz() {
               onChange={(e) => {
                 setPicked(null);
                 patch({
-                  quizRule: e.target.value,
-                  quizN: 1,
-                  quizSeed: nextDrillSeed(
+                  rule: e.target.value,
+                  n: 1,
+                  seed: nextDrillSeed(
                     seed,
                     reverse,
-                    state.jurisdiction,
+                    jurisdiction,
                     progress,
                     e.target.value,
                   ),
@@ -436,13 +438,13 @@ export function Quiz() {
               <h3>
                 <FormattedMessage id="quiz.why.right" values={{ cite: rightCite }} />
               </h3>
-              <CitePanel cite={rightCite} jurisdiction={state.jurisdiction} />
+              <CitePanel cite={rightCite} jurisdiction={jurisdiction} />
             </div>
             <div>
               <h3>
                 <FormattedMessage id="quiz.why.chosen" values={{ cite: chosenCite }} />
               </h3>
-              <CitePanel cite={chosenCite} jurisdiction={state.jurisdiction} />
+              <CitePanel cite={chosenCite} jurisdiction={jurisdiction} />
             </div>
           </div>
         )}
