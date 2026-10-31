@@ -3,7 +3,7 @@
 
 import { useMemo, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
-import { MiniProfile } from '../components/MiniProfile';
+import { Scene } from '../components/Scene';
 import { describeFacts } from '../components/factLabel';
 import { buildDeck, filterDeck } from '../engine/flashcards';
 import type { Card } from '../engine/flashcards';
@@ -86,7 +86,14 @@ export function Flashcards() {
     restart();
   };
 
-  const scene = card && <MiniProfile facts={card.facts} display={card.display} />;
+  const scene = card && (
+    <Scene
+      presentation="mini"
+      facts={card.facts}
+      lights={card.display.lights}
+      settings={{ view: 'profile', theta: 90 }}
+    />
+  );
   const cite = card && <p className="flashcard-cite">{card.cite}</p>;
   const situation = card && <p>{describeFacts(intl, card.facts)}</p>;
 

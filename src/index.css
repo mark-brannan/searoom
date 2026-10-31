@@ -1606,6 +1606,10 @@ nav details > summary {
 .flashcard-cite { font-size: 1.6rem; margin: 0.5rem 0; }
 .flashcard-box { margin-right: 0.9rem; }
 
+/* Flashcards draw through Scene's mini card (searoom#112): its profile sits
+   in a .profile-stage, which the start-aligned grid would shrink to nothing. */
+.flashcard .profile-stage { max-width: 440px; width: 100%; }
+
 /* presets gallery cards and the activity disclosure (searoom#103). Cards wrap
    into one row on wide screens; on phones they are a single strip scrolled
    sideways, so the scene stays above the fold under the fact sheet. */
