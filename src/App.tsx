@@ -1,10 +1,19 @@
-import { Suspense, lazy, useEffect, useMemo } from 'react';
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { FormattedMessage, IntlProvider } from 'react-intl';
 import fi from './i18n/fi.json';
 import { catalogs } from './i18n';
 import { DEFAULT_STATE } from './state/urlState';
 import { startSync, useMode, usePrefs, useJurisdiction } from './state/store';
 import { Header } from './components/Header';
+import { SettingsSheet } from './components/SettingsSheet';
+import { reducesMotion, useSettings } from './state/settings';
 import { FirstRunIntro } from './components/FirstRunIntro';
 import { OpenSignpost } from './components/SignpostPanel';
 import { colregsVersion } from './data/colregs';
@@ -42,6 +51,9 @@ export function App() {
   const jurisdiction = useJurisdiction();
   const layout = useVariant('layout');
   useEffect(() => startSync(), []);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+  useMotionPreference(useSettings().motion);
 
   const locale = uiLocale === 'fi' ? 'fi' : 'en';
   const messages = catalogs[locale];
@@ -71,7 +83,7 @@ export function App() {
         value={corpusIn(jurisdiction, corpus).id}
       >
         <div className="app">
-          <Header />
+          <Header onSettings={() => setSettingsOpen(true)} />
           {locale === 'fi' && (
             <p className="draft-banner">
               {(fi as Record<string, string>)['app.draftBanner']}
@@ -123,7 +135,10 @@ export function App() {
               </span>
             )}
           </footer>
-          {mode === 'sandbox' && !signpost && <FirstRunIntro />}
+          {mode === 'sandbox' && !signpost && !settingsOpen && <FirstRunIntro />}
+          {settingsOpen && (
+            <SettingsSheet onClose={closeSettings} covered={!!signpost} />
+          )}
           <OpenSignpost />
         </div>
       </CorpusContext.Provider>
@@ -132,3 +147,24 @@ export function App() {
 }
 
 export const defaultState = DEFAULT_STATE;
+
+/**
+ * Resolve the motion preference against the OS setting onto the root as
+ * `data-motion="reduce" | "full"`; the stylesheet reads it.
+ */
+function useMotionPreference(pref: Parameters<typeof reducesMotion>[0]) {
+  useEffect(() => {
+    const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const apply = () => {
+      document.documentElement.dataset.motion = reducesMotion(
+        pref,
+        !!mq?.matches,
+      )
+        ? 'reduce'
+        : 'full';
+    };
+    apply();
+    mq?.addEventListener('change', apply);
+    return () => mq?.removeEventListener('change', apply);
+  }, [pref]);
+}
