@@ -25,9 +25,9 @@ jobs:
       - name: Bundle budget
         run: node scripts/bundle-budget.mjs
 
-  # Click-through of every mode and one threshold crossing on the built site
-  # (scripts/e2e.mjs), chromium only. A measurement of the site, not a gate,
-  # so it stays out of ci-gate's needs until it has a track record.
+  # Click-through on the built site (scripts/e2e.mjs), chromium only: every
+  # mode renders and four interactions change the page, at 360 and 1280 px,
+  # with loose assertions. A gate: listed in ci-gate's needs (#116).
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -136,7 +136,7 @@ jobs:
   # evaluate when a dependency failed or was skipped, so it reports an explicit
   # pass or fail of its own rather than inheriting the skip.
   ci-gate:
-    needs: [check, nonempty, pr-title]
+    needs: [check, e2e, nonempty, pr-title]
     if: always()
     # It reads nothing and writes nothing; the results go in as an input.
     permissions: {}
