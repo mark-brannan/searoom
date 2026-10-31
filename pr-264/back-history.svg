@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="300" viewBox="0 0 720 300" font-family="system-ui, sans-serif" font-size="14">
+<rect width="720" height="300" fill="#ffffff"/>
+<text x="20" y="28" font-size="16" font-weight="600" fill="#1b1f24">Back onto an old link: the tab's history stack</text>
+<text x="20" y="62" fill="#57606a">before the fix</text>
+<text x="380" y="62" fill="#57606a">after the fix</text>
+<g>
+<rect x="20" y="76" width="320" height="34" rx="4" fill="#f6f8fa" stroke="#d0d7de"/><text x="32" y="98" fill="#1b1f24">1  #/sandbox?view=profile  (old link)</text>
+<rect x="20" y="116" width="320" height="34" rx="4" fill="#ddf4ff" stroke="#54aeff"/><text x="32" y="138" fill="#1b1f24">2  #/quiz/…  ← back from here</text>
+<text x="32" y="180" fill="#cf222e">back → write pushes #/sandbox… over entry 2</text>
+<rect x="20" y="192" width="320" height="34" rx="4" fill="#f6f8fa" stroke="#d0d7de"/><text x="32" y="214" fill="#1b1f24">1  #/sandbox?view=profile</text>
+<rect x="20" y="232" width="320" height="34" rx="4" fill="#ffebe9" stroke="#ff8182"/><text x="32" y="254" fill="#1b1f24">2  #/sandbox?p=sail…  (quiz lost)</text>
+<text x="32" y="290" fill="#cf222e">forward does nothing</text>
+</g>
+<g>
+<rect x="380" y="76" width="320" height="34" rx="4" fill="#f6f8fa" stroke="#d0d7de"/><text x="392" y="98" fill="#1b1f24">1  #/sandbox?view=profile  (old link)</text>
+<rect x="380" y="116" width="320" height="34" rx="4" fill="#ddf4ff" stroke="#54aeff"/><text x="392" y="138" fill="#1b1f24">2  #/quiz/…  ← back from here</text>
+<text x="392" y="180" fill="#1a7f37">back → entry 1 rewritten in place</text>
+<rect x="380" y="192" width="320" height="34" rx="4" fill="#dafbe1" stroke="#4ac26b"/><text x="392" y="214" fill="#1b1f24">1  #/sandbox?p=sail…  (canonical)</text>
+<rect x="380" y="232" width="320" height="34" rx="4" fill="#ddf4ff" stroke="#54aeff"/><text x="392" y="254" fill="#1b1f24">2  #/quiz/…</text>
+<text x="392" y="290" fill="#1a7f37">forward returns to the quiz</text>
+</g>
+</svg>
