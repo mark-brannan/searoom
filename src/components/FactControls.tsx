@@ -3,6 +3,7 @@
 // them meaningful — showing 30(e)'s channel question to a vessel underway
 // would be noise, not caution.
 
+import { useEffect, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import type { Patch } from '../state/store';
 import { useAppState, usePatch } from '../state/store';
@@ -21,15 +22,20 @@ const THRESHOLDS = [7, 12, 20, 50, 100];
 const LEN_MAX = 120;
 
 const PROPULSIONS = ['propulsion:power', 'propulsion:sail', 'propulsion:oars'];
-const ACTIVITIES = [
+// Progressive disclosure (searoom#103): the activities a learner meets first
+// stay in view; the rest open under "More activities", and open by themselves
+// when the vessel's activity is one of them.
+const ACTIVITIES_FIRST = [
   'activity:none',
   'activity:fishing',
   'activity:trawling',
   'activity:towing',
-  'activity:pushing',
-  'activity:being_towed',
   'activity:nuc',
   'activity:ram',
+];
+const ACTIVITIES_MORE = [
+  'activity:pushing',
+  'activity:being_towed',
   'activity:ram_underwater',
   'activity:cbd',
   'activity:mine',
@@ -48,18 +54,21 @@ function Segmented({
   values,
   current,
   onChange,
+  labelId = `fact.${name}`,
 }: {
   name: string;
   values: string[];
   current: FactValue | undefined;
   onChange: (v: string) => void;
+  /** i18n id of the group's accessible name; `fact.<name>` by default */
+  labelId?: string;
 }) {
   const intl = useIntl();
   return (
     <div
       className="segmented"
       role="radiogroup"
-      aria-label={intl.formatMessage({ id: `fact.${name}` })}
+      aria-label={intl.formatMessage({ id: labelId })}
     >
       {values.map((v) => {
         const suffix = v.slice(v.indexOf(':') + 1);
@@ -130,6 +139,28 @@ export function FactControls() {
   const activity = facts['fact:activity'];
   const position = facts['fact:position'];
   const propulsion = facts['fact:propulsion'];
+  const setActivity = (v: string) => {
+    const updates: FactPatch = { 'fact:activity': v };
+    const remove: string[] = [];
+    if (v !== 'activity:towing') remove.push('fact:tow_length_m');
+    else if (facts['fact:tow_length_m'] === undefined)
+      updates['fact:tow_length_m'] = 150;
+    if (v !== 'activity:fishing') remove.push('fact:gear_extent_m');
+    if (v !== 'activity:pushing') remove.push('fact:composite_unit');
+    else if (facts['fact:composite_unit'] === undefined)
+      updates['fact:composite_unit'] = false;
+    if (v !== 'activity:ram_underwater') {
+      remove.push('fact:obstruction_exists', 'fact:obstruction_side');
+    }
+    setFacts(updates, remove);
+  };
+  // a preset or a shared URL can name an activity under "More": open it
+  const activityIsMore = ACTIVITIES_MORE.includes(String(activity));
+  const [moreOpen, setMoreOpen] = useState(activityIsMore);
+  useEffect(() => {
+    if (activityIsMore) setMoreOpen(true);
+  }, [activityIsMore]);
+
   const length =
     typeof facts['fact:length_m'] === 'number'
       ? (facts['fact:length_m'] as number)
@@ -159,24 +190,26 @@ export function FactControls() {
         </span>
         <Segmented
           name="activity"
-          values={ACTIVITIES}
+          values={ACTIVITIES_FIRST}
           current={activity}
-          onChange={(v) => {
-            const updates: FactPatch = { 'fact:activity': v };
-            const remove: string[] = [];
-            if (v !== 'activity:towing') remove.push('fact:tow_length_m');
-            else if (facts['fact:tow_length_m'] === undefined)
-              updates['fact:tow_length_m'] = 150;
-            if (v !== 'activity:fishing') remove.push('fact:gear_extent_m');
-            if (v !== 'activity:pushing') remove.push('fact:composite_unit');
-            else if (facts['fact:composite_unit'] === undefined)
-              updates['fact:composite_unit'] = false;
-            if (v !== 'activity:ram_underwater') {
-              remove.push('fact:obstruction_exists', 'fact:obstruction_side');
-            }
-            setFacts(updates, remove);
-          }}
+          onChange={setActivity}
         />
+        <details
+          className="more-activities"
+          open={moreOpen}
+          onToggle={(e) => setMoreOpen(e.currentTarget.open)}
+        >
+          <summary>
+            <FormattedMessage id="fact.activity.more" />
+          </summary>
+          <Segmented
+            name="activity-more"
+            labelId="fact.activity.more"
+            values={ACTIVITIES_MORE}
+            current={activity}
+            onChange={setActivity}
+          />
+        </details>
       </div>
 
       <div className="fact-group">
@@ -420,28 +453,9 @@ export function FactControls() {
         )}
       </details>
 
+      {/* Day/night stays here until the settings sheet lands: it is the only
+          opener of the day-shapes signpost. */}
       <div className="fact-group" style={{ marginTop: 12 }}>
-        <span className="fact-label">
-          <FormattedMessage id="sandbox.jurisdiction.label" />
-        </span>
-        <button
-          className="picker-row"
-          onClick={() => patch({ signpost: 'jurisdiction-picker' })}
-          aria-haspopup="dialog"
-        >
-          <span className="grow label">
-            <FormattedMessage
-              id={`jurisdiction.${state.jurisdiction}`}
-              defaultMessage={state.jurisdiction}
-            />
-          </span>
-          <span className="status-chip status-live" style={{ margin: 0 }}>
-            <FormattedMessage id="signpost.status.live" />
-          </span>
-        </button>
-      </div>
-
-      <div className="fact-group">
         <span className="fact-label">
           <FormattedMessage id="sandbox.dayNight.label" />
         </span>
