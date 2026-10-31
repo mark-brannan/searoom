@@ -27,6 +27,7 @@
   "view.label": "Näkymä",
   "fact.propulsion": "Kulkutapa",
   "fact.activity": "Toiminta",
+  "fact.activity.more": "Muut toiminnat",
   "fact.position": "Tila",
   "fact.makingWay": "Liikkuu veden halki",
   "fact.length": "Suurin pituus",
