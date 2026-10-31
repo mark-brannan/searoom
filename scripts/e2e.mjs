@@ -1,8 +1,9 @@
 // CI end-to-end, a gate: the default Sandbox draws a dim 3D vessel; at 360
 // and 1280 px every mode opens from the header nav and four interactions
 // (length slider across 50 m, a display chip, an identify light, a quiz
-// answer) each change the page. Chromium only, software WebGL so the 3D canvas draws headless;
-// colorScheme is set to dark explicitly (the night theme is the app's identity).
+// answer) each change the page. Chromium only, software WebGL so the 3D
+// canvas draws headless; colorScheme is set to dark explicitly (the night
+// theme is the app's identity).
 // Usage: node scripts/e2e.mjs [baseUrl]   (serve the built dist first)
 
 import { chromium } from 'playwright';
@@ -75,10 +76,12 @@ const settled = async (fn) => {
   }
   return prev;
 };
-// waits for fn() to differ from before; true once it does
+// waits for fn() to differ from before; true once it does. A null read is an
+// error (failed screenshot), never a change.
 const changes = async (fn, before) => {
   for (let i = 0; i < 20; i++) {
-    if ((await fn()) !== before) return true;
+    const now = await fn();
+    if (now !== null && now !== before) return true;
     await page.waitForTimeout(250);
   }
   return false;
@@ -105,8 +108,9 @@ for (const width of [360, 1280]) {
 
   // the length slider across 50 m changes the lawful displays shown
   await page.goto(`${base}#/sandbox?p=power&a=none&pos=underway&mw=1&len=49`, { waitUntil: 'networkidle' });
-  await page.locator('.sandbox-rest').first().waitFor({ timeout: 5000 }).catch(() => {});
-  const displays = () => text('.sandbox-rest');
+  // the chips panel renders in every Sandbox layout
+  await page.locator('.chips').first().waitFor({ timeout: 5000 }).catch(() => {});
+  const displays = () => text('.chips');
   const beforeLen = await settled(displays);
   await page.locator('#length').fill('55');
   check(`${width}px length slider across 50 m changes the displays`, beforeLen !== '' && (await changes(displays, beforeLen)));
@@ -116,10 +120,10 @@ for (const width of [360, 1280]) {
   const chip = page.locator('.chips [role=radio][aria-checked=false]').first();
   const hasChip = await chip.waitFor({ timeout: 5000 }).then(() => true, () => false);
   const scene = page.locator('.scene-main canvas').first();
-  const pixels = () => scene.screenshot().then((b) => b.toString('base64'), () => '');
+  const pixels = () => scene.screenshot().then((b) => b.toString('base64'), () => null);
   const beforeChip = await settled(pixels);
   if (hasChip) await chip.click();
-  check(`${width}px display chip changes the scene`, hasChip && beforeChip !== '' && (await changes(pixels, beforeChip)));
+  check(`${width}px display chip changes the scene`, hasChip && beforeChip !== null && (await changes(pixels, beforeChip)));
 
   // adding a seen light in Identify changes the page
   await page.goto(`${base}#/identify`, { waitUntil: 'networkidle' });
