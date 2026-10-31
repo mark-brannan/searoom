@@ -1,4 +1,5 @@
 import { Glow, PX, PZ, selectHull } from 'nav-wright';
+import type { Hull } from 'nav-wright';
 import { placeLights } from '../render/navWright';
 import { lights } from '../data/colregs';
 import type { Display, FactRecord } from '../engine/types';
@@ -6,11 +7,13 @@ import type { Display, FactRecord } from '../engine/types';
 export function MiniProfile({
   facts,
   display,
+  hull = selectHull(facts),
 }: {
   facts: FactRecord;
   display: Display;
+  /** draw on this hull rather than the one `facts` selects (a quiz question's shared hull) */
+  hull?: Hull;
 }) {
-  const hull = selectHull(facts);
   const placed = placeLights(display.lights, hull.spec, facts, lights);
   return (
     <svg viewBox="0 0 440 240" className="scene-svg" aria-hidden="true">

@@ -679,6 +679,12 @@ select {
   min-width: 11em;
 }
 
+/* A one-word readout (the quiz level): the shared 11em would wrap it under
+   its slider at phone width. */
+.theta-readout-short {
+  min-width: 6em;
+}
+
 /* ThetaControl's dial: the native input is visually hidden, so its focus
    ring is drawn on the dial. */
 .theta-dial-input:focus-visible + .theta-dial .theta-dial-ring {
