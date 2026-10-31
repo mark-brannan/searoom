@@ -1,6 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { JURISDICTION_IDS } from '../data/jurisdictions';
-import { SETTINGS_KEY, loadSettings, saveSettings, stateFromHash } from './settings';
+import {
+  SETTINGS_KEY,
+  loadSettings,
+  reducesMotion,
+  saveSettings,
+  stateFromHash,
+} from './settings';
+import { corporaFor } from '../data/corpusText';
+import { defaultCorpusFor } from './urlState';
 
 const other = JURISDICTION_IDS.find((j) => j !== 'intl') ?? 'intl';
 
@@ -54,8 +62,64 @@ describe('settings persistence', () => {
     expect(s.jurisdiction).toBe('intl');
   });
 
+  it('round-trips all six and merges partial saves', () => {
+    const corpus = corporaFor(other)[0].id;
+    saveSettings({
+      locale: 'fi',
+      corpus,
+      jurisdiction: other,
+      dayNight: 'day',
+      presentation: 'lights',
+      motion: 'reduce',
+    });
+    // the store saves only locale and jurisdiction; the rest must survive it
+    saveSettings({ locale: 'en', jurisdiction: other });
+    expect(loadSettings()).toEqual({
+      locale: 'en',
+      corpus,
+      jurisdiction: other,
+      dayNight: 'day',
+      presentation: 'lights',
+      motion: 'reduce',
+    });
+  });
+
+  it('restores a stored corpus with its jurisdiction on a bare visit', () => {
+    const list = corporaFor(other);
+    const corpus = list[list.length - 1].id;
+    saveSettings({ jurisdiction: other, corpus });
+    expect(stateFromHash('').corpus).toBe(corpus);
+  });
+
+  it('drops a stored corpus of another jurisdiction', () => {
+    const intlCorpus = corporaFor('intl')[0].id;
+    saveSettings({ jurisdiction: other, corpus: intlCorpus });
+    const s = stateFromHash('');
+    expect(s.jurisdiction).toBe(other);
+    expect(s.corpus).not.toBe(intlCorpus);
+  });
+
+  it('lets a link without cp mean the reference corpus, not the stored one', () => {
+    const ref = defaultCorpusFor('intl');
+    const alt = corporaFor('intl').find((c) => c.id !== ref);
+    expect(alt).toBeDefined();
+    saveSettings({ jurisdiction: 'intl', corpus: alt!.id });
+    expect(stateFromHash('').corpus).toBe(alt!.id);
+    expect(stateFromHash('#/sandbox?j=intl').corpus).toBe(ref);
+  });
+
+  it('resolves the motion override against the OS', () => {
+    expect(reducesMotion(undefined, true)).toBe(true);
+    expect(reducesMotion('system', false)).toBe(false);
+    expect(reducesMotion('reduce', false)).toBe(true);
+    expect(reducesMotion('full', true)).toBe(false);
+  });
+
   it('ignores junk and unknown values', () => {
-    window.localStorage.setItem(SETTINGS_KEY, '{"locale":"xx","jurisdiction":"nowhere"}');
+    window.localStorage.setItem(
+      SETTINGS_KEY,
+      '{"locale":"xx","jurisdiction":"nowhere","corpus":"no.such","dayNight":"dusk","presentation":3,"motion":"fast"}',
+    );
     expect(loadSettings()).toEqual({});
     window.localStorage.setItem(SETTINGS_KEY, 'not json');
     expect(loadSettings()).toEqual({});
@@ -68,7 +132,9 @@ describe('settings persistence', () => {
       },
     });
     expect(loadSettings()).toEqual({});
-    expect(() => saveSettings({ locale: 'fi', jurisdiction: 'intl' })).not.toThrow();
+    expect(() =>
+      saveSettings({ locale: 'fi', jurisdiction: 'intl' }),
+    ).not.toThrow();
   });
 });
 
@@ -76,7 +142,9 @@ describe('opening mesh (searoom#174)', async () => {
   const { modelVariants } = await import('../render/hullModels');
   const { serialize, deserialize } = await import('./urlState');
   const hash = '#/sandbox?p=power&a=none&pos=underway&len=30';
-  const variants = modelVariants(deserialize(hash).facts).filter((v) => v.inClass);
+  const variants = modelVariants(deserialize(hash).facts).filter(
+    (v) => v.inClass,
+  );
 
   it('draws from the class: first and last index, by name', () => {
     expect(variants.length).toBeGreaterThan(1);

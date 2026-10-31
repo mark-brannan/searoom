@@ -1,10 +1,19 @@
-import { Suspense, lazy, useEffect, useMemo } from 'react';
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { FormattedMessage, IntlProvider } from 'react-intl';
 import fi from './i18n/fi.json';
 import { catalogs } from './i18n';
 import { DEFAULT_STATE } from './state/urlState';
 import { startSync, useAppState, usePatch } from './state/store';
 import { Header } from './components/Header';
+import { SettingsSheet } from './components/SettingsSheet';
+import { reducesMotion, saveSettings, useSettings } from './state/settings';
 import { FirstRunIntro } from './components/FirstRunIntro';
 import { SignpostPanel } from './components/SignpostPanel';
 import { colregsVersion } from './data/colregs';
@@ -41,6 +50,12 @@ export function App() {
   const patch = usePatch();
   const layout = useVariant('layout');
   useEffect(() => startSync(), []);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+  // the store keeps locale and jurisdiction; the corpus is kept here, from
+  // wherever it was picked (sheet, locale panel, rules)
+  useEffect(() => saveSettings({ corpus: state.corpus }), [state.corpus]);
+  useMotionPreference(useSettings().motion);
 
   const locale = state.locale === 'fi' ? 'fi' : 'en';
   const messages = catalogs[locale];
@@ -70,7 +85,7 @@ export function App() {
         value={corpusIn(state.jurisdiction, state.corpus).id}
       >
         <div className="app">
-          <Header />
+          <Header onSettings={() => setSettingsOpen(true)} />
           {locale === 'fi' && (
             <p className="draft-banner">
               {(fi as Record<string, string>)['app.draftBanner']}
@@ -122,7 +137,12 @@ export function App() {
               </span>
             )}
           </footer>
-          {state.mode === 'sandbox' && !state.signpost && <FirstRunIntro />}
+          {state.mode === 'sandbox' && !state.signpost && !settingsOpen && (
+            <FirstRunIntro />
+          )}
+          {settingsOpen && (
+            <SettingsSheet onClose={closeSettings} covered={!!state.signpost} />
+          )}
           {state.signpost && (
             <SignpostPanel
               id={state.signpost}
@@ -142,3 +162,24 @@ export function App() {
 }
 
 export const defaultState = DEFAULT_STATE;
+
+/**
+ * Resolve the motion preference against the OS setting onto the root as
+ * `data-motion="reduce" | "full"`; the stylesheet reads it.
+ */
+function useMotionPreference(pref: Parameters<typeof reducesMotion>[0]) {
+  useEffect(() => {
+    const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const apply = () => {
+      document.documentElement.dataset.motion = reducesMotion(
+        pref,
+        !!mq?.matches,
+      )
+        ? 'reduce'
+        : 'full';
+    };
+    apply();
+    mq?.addEventListener('change', apply);
+    return () => mq?.removeEventListener('change', apply);
+  }, [pref]);
+}
