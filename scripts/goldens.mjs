@@ -20,6 +20,7 @@ const states = [
   ['sandbox', '#/sandbox'],
   ['identify', '#/identify'],
   ['quiz', '#/quiz'],
+  ['quiz-reverse', '#/quiz?dir=reverse'],
   ['rules', '#/rules'],
   ['sound', '#/sound'],
   ['sandbox-power-60m', '#/sandbox?p=power&a=none&pos=underway&mw=1&len=60'],

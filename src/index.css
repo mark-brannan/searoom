@@ -1691,3 +1691,7 @@ nav details > summary {
 .flashcard .scene-svg { max-width: 440px; width: 100%; }
 .flashcard-cite { font-size: 1.6rem; margin: 0.5rem 0; }
 .flashcard-box { margin-right: 0.9rem; }
+
+/* Flashcards draw through Scene's mini card (searoom#112): its profile sits
+   in a .profile-stage, which the start-aligned grid would shrink to nothing. */
+.flashcard .profile-stage { max-width: 440px; width: 100%; }

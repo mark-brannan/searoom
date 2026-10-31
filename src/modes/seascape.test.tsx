@@ -4,15 +4,15 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { bearingHullOpacity } from 'nav-wright/benchy';
-import { SeenField } from './Identify';
-import { MiniBearing } from './Quiz';
+import { Scene } from '../components/Scene';
 import { evaluateDisplayIn } from '../engine/evaluate';
 import { DEFAULT_STATE, RANGE_MAX_NM, RANGE_MIN_NM } from '../state/urlState';
 
 describe('seascape', () => {
   it("Identify's field draws the sea and the horizon under the picked lights", () => {
     const html = renderToStaticMarkup(
-      <SeenField
+      <Scene
+        presentation="seen"
         seen={[
           { color: 'white', flashing: false },
           { color: 'red', flashing: false },
@@ -30,7 +30,7 @@ describe('seascape', () => {
       flashing: false,
     }));
     const html = renderToStaticMarkup(
-      <SeenField seen={seen} arrangement="vertical" />,
+      <Scene presentation="seen" seen={seen} arrangement="vertical" />,
     );
     const horizon = Number(
       /class="bearing-horizon"[^>]*y1="([\d.]+)"/.exec(html)![1],
@@ -44,7 +44,12 @@ describe('seascape', () => {
     const { facts, jurisdiction } = DEFAULT_STATE;
     const display = evaluateDisplayIn(jurisdiction, facts).displays[0]!;
     const html = renderToStaticMarkup(
-      <MiniBearing facts={facts} display={display} theta={0} />,
+      <Scene
+        presentation="mini"
+        facts={facts}
+        lights={display.lights}
+        settings={{ view: 'model', theta: 0 }}
+      />,
     );
     expect(html).toContain('scene-svg-black');
     expect(html).not.toContain('bearing-sea');
