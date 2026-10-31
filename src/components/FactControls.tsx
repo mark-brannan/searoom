@@ -203,7 +203,7 @@ export function FactControls() {
             <FormattedMessage id="fact.activity.more" />
           </summary>
           <Segmented
-            name="activity"
+            name="activity-more"
             labelId="fact.activity.more"
             values={ACTIVITIES_MORE}
             current={activity}
@@ -452,6 +452,29 @@ export function FactControls() {
           </>
         )}
       </details>
+
+      {/* Day/night stays here until the settings sheet lands: it is the only
+          opener of the day-shapes signpost. */}
+      <div className="fact-group" style={{ marginTop: 12 }}>
+        <span className="fact-label">
+          <FormattedMessage id="sandbox.dayNight.label" />
+        </span>
+        <div className="segmented" role="group">
+          <label>
+            <input type="radio" name="daynight" checked readOnly />
+            <FormattedMessage id="sandbox.night" />
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="daynight"
+              checked={false}
+              onChange={() => patch({ signpost: 'day-shapes' })}
+            />
+            <FormattedMessage id="sandbox.day" />
+          </label>
+        </div>
+      </div>
     </div>
   );
 }

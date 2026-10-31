@@ -12,6 +12,7 @@ import { evaluateDisplayIn } from '../engine/evaluate';
 import { selectHull } from 'nav-wright';
 import { placeLights } from '../render/navWright';
 import { lights } from '../data/colregs';
+import { useApp } from '../state/store';
 
 const html = (n: ReactNode) =>
   renderToStaticMarkup(
@@ -55,9 +56,30 @@ describe('fact controls', () => {
     expect(markup).toMatch(/<details class="more-activities"(?![^>]*open)/);
   });
 
-  it('carries no jurisdiction or day/night row: those are settings', () => {
+  it('opens "More activities" by itself for one of the rarer activities', () => {
+    // server rendering reads the store's initial snapshot, not its live one
+    const snapshot = useApp.getInitialState();
+    const before = snapshot.state;
+    Object.assign(snapshot, {
+      state: {
+        ...before,
+        facts: { ...before.facts, 'fact:activity': 'activity:pushing' },
+      },
+    });
+    try {
+      const markup = html(<FactControls />);
+      expect(markup).toMatch(/<details class="more-activities"[^>]*open/);
+      expect(markup).toContain('name="activity-more"');
+    } finally {
+      Object.assign(snapshot, { state: before });
+    }
+  });
+
+  it('carries no jurisdiction row (the header picks it); day/night stays', () => {
     const markup = html(<FactControls />);
-    expect(markup).not.toContain('name="daynight"');
-    expect(markup).not.toContain('Jurisdiction');
+    expect(markup).not.toContain(
+      `<span class="fact-label">${catalogs.en['sandbox.jurisdiction.label']}</span>`,
+    );
+    expect(markup).toContain('name="daynight"');
   });
 });
