@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
-import { MiniProfile } from '../components/MiniProfile';
+import { Scene } from '../components/Scene';
 import { describeFacts } from '../components/factLabel';
 import { citeOf } from '../engine/quiz';
 import type { QuizQuestion } from '../engine/quiz';
@@ -24,46 +24,9 @@ import type { Progress } from '../engine/quizProgress';
 import { RuleParagraphs } from '../components/RuleParagraphs';
 import { QUIZ_MODES } from '../state/urlState';
 import { usePatch, useJurisdiction, useSlice } from '../state/store';
-import { Glow, bearingInArc, bearingLabel, selectHull } from 'nav-wright';
-import { placeLights } from '../render/navWright';
-import { lights } from '../data/colregs';
+import { bearingLabel } from 'nav-wright';
 import type { QuizView } from '../state/urlState';
-import type { Display, FactRecord } from '../engine/types';
-
-/** A reverse question's card: lights only on black, the strict exam view. */
-export function MiniBearing({
-  facts,
-  display,
-  theta,
-}: {
-  facts: FactRecord;
-  display: Display;
-  theta: number;
-}) {
-  const hull = selectHull(facts);
-  const placed = placeLights(display.lights, hull.spec, facts, lights);
-  const rad = (theta * Math.PI) / 180;
-  return (
-    <svg viewBox="0 0 440 240" className="scene-svg scene-svg-black" aria-hidden="true">
-      <rect width="440" height="240" fill="#000" />
-      {placed
-        .filter(
-          (l) =>
-            bearingInArc(theta, l.arc) && l.lightId !== 'light:deck_lights',
-        )
-        .map((l) => (
-          <Glow
-            key={l.key}
-            x={220 + (l.fx * Math.sin(rad) - l.py * Math.cos(rad)) * 150}
-            y={150 - l.z * 95}
-            color={l.color}
-            flashing={l.character === 'flashing'}
-            r={5.5}
-          />
-        ))}
-    </svg>
-  );
-}
+import type { FactRecord } from '../engine/types';
 
 export const EXAM_COUNT = 10;
 export const EXAM_SECONDS = 600;
@@ -406,7 +369,12 @@ export function Quiz() {
                   aria-pressed={picked === i}
                   aria-label={describeFacts(intl, o.facts)}
                 >
-                  <MiniProfile facts={o.facts} display={o.display} />
+                  <Scene
+                    presentation="mini"
+                    facts={o.facts}
+                    lights={o.display.lights}
+                    settings={{ view: 'profile', theta: 90 }}
+                  />
                 </button>
               ))}
             </div>
@@ -424,10 +392,11 @@ export function Quiz() {
                 }}
               />
             </p>
-            <MiniBearing
+            <Scene
+              presentation="mini"
               facts={question.facts}
-              display={question.display}
-              theta={question.theta}
+              lights={question.display.lights}
+              settings={{ view: 'model', theta: question.theta }}
             />
             <div className="quiz-options">
               {question.options.map((o, i) => (

@@ -1,6 +1,9 @@
 // The scene: the 3D view (and the arcs, when offered as a tab) over one
-// display, with its θ, range and presentation settings. Every placed display is drawn through this component;
-// the 'mini' presentation is the tab-less card the Quiz uses.
+// display, with its θ, range and presentation settings. Every scene a mode
+// draws comes through this component: 'full' is the Sandbox's tabbed panel,
+// 'mini' the tab-less card of one display at θ (Quiz, Flashcards), 'seen'
+// the lights a learner says they saw, on the night sea, with no vessel under
+// them yet (Identify).
 
 import { useMemo } from 'react';
 import type { CSSProperties, HTMLAttributes, ReactNode } from 'react';
@@ -8,6 +11,8 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import { rovingKeyDown } from './roving';
 import { lights as lightCatalog } from '../data/colregs';
 import type { DisplayLight, FactRecord } from '../engine/types';
+import type { Arrangement, SeenLight } from '../engine/identify';
+import { Seascape } from '../render/Seascape';
 import {
   Glow,
   PX,
@@ -221,25 +226,76 @@ function MiniBearing({
   );
 }
 
-export function Scene({
-  facts,
-  lights,
-  settings,
-  onChange,
-  presentation = 'full',
-  views = ALL_VIEWS,
+// Field size, in viewBox units, for the 'seen' presentation.
+const FIELD_W = 440;
+const FIELD_H = 120;
+const FIELD_HORIZON = 100;
+// A vertical line of lights runs from FIELD_TOP down to FIELD_LOWEST at most:
+// they are on her, so they stay above the waterline the horizon draws.
+const FIELD_TOP = 20;
+const FIELD_LOWEST = FIELD_HORIZON - 14;
+const FIELD_STEP = 22;
+
+/** The lights picked so far, on the bearing view's night sea, so the learner
+ *  builds what they saw against the sea the Sandbox shows. */
+function MiniSeen({
+  seen,
+  arrangement,
 }: {
-  facts: FactRecord;
-  /** the lights to draw: a display's, plus any optional additions switched on */
-  lights: DisplayLight[];
-  /** 'mini' needs only view and theta */
-  settings: Pick<SceneSettings, 'view' | 'theta'> & Partial<SceneSettings>;
-  onChange?: (patch: Partial<SceneSettings>) => void;
-  presentation?: 'full' | 'mini';
-  /** the view tabs offered; a view outside them shows the first */
-  views?: View[];
+  seen: SeenLight[];
+  arrangement: Arrangement;
 }) {
-  if (presentation === 'mini')
+  const step =
+    seen.length > 1
+      ? Math.min(FIELD_STEP, (FIELD_LOWEST - FIELD_TOP) / (seen.length - 1))
+      : FIELD_STEP;
+  return (
+    <svg
+      viewBox={`0 0 ${FIELD_W} ${FIELD_H}`}
+      className="scene-svg scene-svg-black"
+      aria-hidden="true"
+    >
+      <rect width={FIELD_W} height={FIELD_H} fill={skyColor(0)} />
+      <Seascape width={FIELD_W} height={FIELD_H} horizon={FIELD_HORIZON} />
+      {seen.map((l, i) => (
+        <Glow
+          key={i}
+          x={arrangement === 'vertical' ? 220 : 60 + i * 50}
+          y={arrangement === 'vertical' ? FIELD_TOP + i * step : 60}
+          color={l.color}
+          flashing={l.flashing}
+          r={6}
+        />
+      ))}
+    </svg>
+  );
+}
+
+export type SceneProps =
+  | {
+      facts: FactRecord;
+      /** the lights to draw: a display's, plus any optional additions switched on */
+      lights: DisplayLight[];
+      /** 'mini' needs only view and theta: 'model' draws her lights alone
+       * from θ (the exam view), any other view her profile from θ's side */
+      settings: Pick<SceneSettings, 'view' | 'theta'> & Partial<SceneSettings>;
+      onChange?: (patch: Partial<SceneSettings>) => void;
+      presentation?: 'full' | 'mini';
+      /** the view tabs offered; a view outside them shows the first */
+      views?: View[];
+    }
+  | {
+      /** lights as a learner saw them, before any vessel explains them */
+      presentation: 'seen';
+      seen: SeenLight[];
+      arrangement: Arrangement;
+    };
+
+export function Scene(props: SceneProps) {
+  if (props.presentation === 'seen')
+    return <MiniSeen seen={props.seen} arrangement={props.arrangement} />;
+  const { facts, lights, settings, onChange, views = ALL_VIEWS } = props;
+  if (props.presentation === 'mini')
     return settings.view === 'model' ? (
       <MiniBearing facts={facts} lights={lights} theta={settings.theta} />
     ) : (
