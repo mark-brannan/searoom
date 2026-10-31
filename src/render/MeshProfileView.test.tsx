@@ -93,14 +93,17 @@ describe('MeshProfileView render branches', () => {
     return setLoaded;
   }
 
-  it('keeps the hand-drawn profile and clears the mesh when the load fails', async () => {
+  it('clears the loaded mesh when the load fails', async () => {
     vi.mocked(GLTFLoader).mockImplementation(function () {
       return { loadAsync: () => Promise.reject(new Error('404')) };
     } as never);
-    const setLoaded = drive(null);
-    const html = render('/models/gone.glb');
-    await vi.waitFor(() => expect(setLoaded).toHaveBeenCalledWith(null));
-    expect(html).not.toContain('data-profile-source="mesh"');
+    // Start from a loaded mesh so the clear is something the test observes;
+    // the cleared (null) state then draws the hand-drawn profile, which the
+    // first test in this block already covers.
+    const setLoaded = drive({ url: '/models/gone.glb', scene: boxScene() });
+    render('/models/gone.glb');
+    await vi.waitFor(() => expect(setLoaded).toHaveBeenCalledTimes(1));
+    expect(setLoaded).toHaveBeenCalledWith(null);
   });
 
   it('draws the mesh profile when its seats are lawful', () => {
