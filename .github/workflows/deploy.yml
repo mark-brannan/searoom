@@ -141,11 +141,11 @@ jobs:
     if: ${{ !cancelled() && needs.build.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: site-main
           path: site
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: site-preview-*
           path: previews
@@ -175,7 +175,7 @@ jobs:
         env:
           PREVIEWS: ${{ needs.plan.outputs.previews }}
           BASE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site
 
