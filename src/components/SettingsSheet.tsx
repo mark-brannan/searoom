@@ -12,6 +12,7 @@ import type { Patch } from '../state/store';
 import { JURISDICTIONS } from '../data/jurisdictions';
 import { jurisdictions as signposted } from '../data/signposts';
 import { CorpusSwitcher } from './CorpusSwitcher';
+import { catalogs } from '../i18n';
 import {
   DAY_NIGHT,
   MOTION_PREFS,
@@ -33,11 +34,6 @@ export function pickJurisdiction(value: string): Patch {
     : { jurisdiction: value };
 }
 
-const LANGUAGES = [
-  { id: 'en', label: 'English' },
-  { id: 'fi', label: 'Suomi' },
-];
-
 function Segmented<T extends string>({
   name,
   labelId,
@@ -56,12 +52,12 @@ function Segmented<T extends string>({
   const intl = useIntl();
   return (
     <div
-      className="settings-segmented"
+      className="segmented"
       role="radiogroup"
       aria-label={intl.formatMessage({ id: labelId })}
     >
       {values.map((v) => (
-        <label key={v} className={v === value ? 'on' : undefined}>
+        <label key={v}>
           <input
             type="radio"
             name={name}
@@ -115,9 +111,10 @@ export function SettingsSheet({
   const intl = useIntl();
   const ref = useRef<HTMLDivElement>(null);
 
+  // focus the sheet on open and again when a panel over it closes
   useEffect(() => {
-    ref.current?.querySelector<HTMLElement>('button')?.focus();
-  }, []);
+    if (!covered) ref.current?.querySelector<HTMLElement>('button')?.focus();
+  }, [covered]);
   useEffect(() => {
     if (covered) return;
     const onKey = (e: KeyboardEvent) => {
@@ -156,15 +153,17 @@ export function SettingsSheet({
 
         <Section titleId="settings.language">
           <div className="picker-list">
-            {LANGUAGES.map((l) => (
+            {Object.keys(catalogs).map((id) => (
               <button
-                key={l.id}
-                className={`picker-row${state.locale === l.id ? ' current' : ''}`}
-                aria-pressed={state.locale === l.id}
-                lang={l.id}
-                onClick={() => patch({ locale: l.id })}
+                key={id}
+                className={`picker-row${state.locale === id ? ' current' : ''}`}
+                aria-pressed={state.locale === id}
+                lang={id}
+                onClick={() => patch({ locale: id })}
               >
-                <span className="grow label">{l.label}</span>
+                <span className="grow label">
+                  <FormattedMessage id={`locale.${id}`} />
+                </span>
               </button>
             ))}
           </div>

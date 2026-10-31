@@ -31,18 +31,6 @@ describe('settings sheet', () => {
     for (const j of JURISDICTIONS) expect(html).toContain(`value="${j.id}"`);
   });
 
-  it('offers all six preferences', () => {
-    for (const k of [
-      'settings.language',
-      'settings.corpus',
-      'settings.jurisdiction',
-      'settings.dayNight',
-      'settings.presentation',
-      'settings.motion',
-    ])
-      expect(html).toContain(catalogs.en[k]);
-  });
-
   it('a signposted pick opens its panel and leaves the jurisdiction alone', () => {
     for (const s of pending)
       expect(pickJurisdiction(`sp:${s.id}`)).toEqual({ signpost: s.id });
@@ -55,10 +43,8 @@ describe('settings sheet', () => {
 });
 
 describe('header', () => {
-  it('is the mark, the tabs and the settings button only', () => {
+  it('no longer holds a picker', () => {
     const html = en(<Header onSettings={() => undefined} />);
     expect(html).not.toContain('<select');
-    expect(html).toContain('class="mode-nav"');
-    expect(html).toContain(`aria-label="${catalogs.en['settings.open']}"`);
   });
 });

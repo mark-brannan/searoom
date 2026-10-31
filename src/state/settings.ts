@@ -63,11 +63,13 @@ const listeners = new Set<() => void>();
 let snapshot: Settings | null = null;
 
 /**
- * Merge `s` into what is stored: a caller saving two fields leaves the
- * other four as they were. Undefined fields are left alone.
+ * Merge `s` into the current preferences: a caller saving two fields leaves
+ * the other four as they were. Undefined fields are left alone. The base is
+ * the in-memory snapshot, so without storage a preference still lasts the
+ * visit rather than until the next save of another field.
  */
 export function saveSettings(s: Settings): void {
-  const next: Settings = { ...loadSettings() };
+  const next: Settings = { ...(snapshot ?? loadSettings()) };
   for (const [k, v] of Object.entries(s))
     if (v !== undefined) (next as Record<string, unknown>)[k] = v;
   try {

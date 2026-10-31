@@ -13,7 +13,7 @@ import { DEFAULT_STATE } from './state/urlState';
 import { startSync, useAppState, usePatch } from './state/store';
 import { Header } from './components/Header';
 import { SettingsSheet } from './components/SettingsSheet';
-import { reducesMotion, saveSettings, useSettings } from './state/settings';
+import { reducesMotion, useSettings } from './state/settings';
 import { FirstRunIntro } from './components/FirstRunIntro';
 import { SignpostPanel } from './components/SignpostPanel';
 import { colregsVersion } from './data/colregs';
@@ -52,9 +52,6 @@ export function App() {
   useEffect(() => startSync(), []);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
-  // the store keeps locale and jurisdiction; the corpus is kept here, from
-  // wherever it was picked (sheet, locale panel, rules)
-  useEffect(() => saveSettings({ corpus: state.corpus }), [state.corpus]);
   useMotionPreference(useSettings().motion);
 
   const locale = state.locale === 'fi' ? 'fi' : 'en';

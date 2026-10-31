@@ -136,6 +136,26 @@ describe('settings persistence', () => {
       saveSettings({ locale: 'fi', jurisdiction: 'intl' }),
     ).not.toThrow();
   });
+
+  it('keeps every preference for the visit when storage throws', async () => {
+    vi.resetModules();
+    const fresh = await import('./settings');
+    vi.stubGlobal('window', {
+      get localStorage(): Storage {
+        throw new Error('blocked');
+      },
+    });
+    fresh.saveSettings({ motion: 'reduce' });
+    fresh.saveSettings({ dayNight: 'day' });
+    // storage comes back: the next save writes what the visit held, not just itself
+    vi.stubGlobal('window', { localStorage: fakeStorage() });
+    fresh.saveSettings({ presentation: 'lights' });
+    expect(fresh.loadSettings()).toEqual({
+      motion: 'reduce',
+      dayNight: 'day',
+      presentation: 'lights',
+    });
+  });
 });
 
 describe('opening mesh (searoom#174)', async () => {

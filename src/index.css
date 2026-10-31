@@ -1694,38 +1694,6 @@ nav details > summary {
   color: var(--text);
 }
 
-.settings-segmented {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.settings-segmented label {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.settings-segmented label.on {
-  border-color: var(--green);
-  color: var(--text);
-}
-
-.settings-segmented input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.settings-segmented label:has(input:focus-visible) {
-  outline: 2px solid var(--white-light);
-  outline-offset: 2px;
-}
-
 @media (max-width: 520px) {
   .topbar {
     gap: 8px;
@@ -1755,7 +1723,7 @@ nav details > summary {
     display: none;
   }
 
-  .settings-segmented label,
+  .settings-sheet .segmented label,
   .settings-more,
   .settings-select select {
     min-height: 44px;
