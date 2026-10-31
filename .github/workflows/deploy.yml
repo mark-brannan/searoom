@@ -120,7 +120,7 @@ jobs:
           fi
           node scripts/brand-images.mjs
           cp public/og.png public/apple-touch-icon.png dist/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: site-main
           path: dist
@@ -155,7 +155,7 @@ jobs:
         env:
           REPO_NAME: ${{ github.event.repository.name }}
           SLUG: ${{ matrix.slug }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: site-preview-${{ matrix.slug }}
           path: dist
