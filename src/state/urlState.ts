@@ -100,6 +100,11 @@ export interface AppState {
 export type SliceKey = 'sandbox' | 'quiz' | 'rules';
 export const SLICES: SliceKey[] = ['sandbox', 'quiz', 'rules'];
 
+/** A change to the state; a slice in it is merged into that slice. */
+export type StatePatch = Partial<Omit<AppState, SliceKey>> & {
+  [K in SliceKey]?: Partial<AppState[K]>;
+};
+
 export type QuizMode = 'practice' | 'drill' | 'exam';
 export const QUIZ_MODES: QuizMode[] = ['practice', 'drill', 'exam'];
 
@@ -158,11 +163,7 @@ export const DEFAULT_STATE: AppState = {
 };
 
 /** A state with the defaults in place of anything left out, slices merged one deep. */
-export function stateWith(p: Partial<Omit<AppState, SliceKey>> & {
-  sandbox?: Partial<SandboxView>;
-  quiz?: Partial<QuizView>;
-  rules?: Partial<RulesView>;
-} = {}): AppState {
+export function stateWith(p: StatePatch = {}): AppState {
   return {
     ...DEFAULT_STATE,
     ...p,

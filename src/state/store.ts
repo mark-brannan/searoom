@@ -4,23 +4,12 @@
 // down.
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
-import type {
-  AppState,
-  Mode,
-  QuizView,
-  RulesView,
-  SandboxView,
-  SliceKey,
-} from './urlState';
+import type { AppState, Mode, SliceKey, StatePatch } from './urlState';
 import { SLICES, defaultCorpusFor, deserialize, serialize, slicesIn } from './urlState';
 import { saveSettings, stateFromHash } from './settings';
 
 /** A change to the state; a slice in it is merged into that slice. */
-export type Patch = Partial<Omit<AppState, SliceKey>> & {
-  sandbox?: Partial<SandboxView>;
-  quiz?: Partial<QuizView>;
-  rules?: Partial<RulesView>;
-};
+export type Patch = StatePatch;
 
 const UNDO_DEPTH = 200;
 
@@ -142,28 +131,28 @@ export function editsText(t: EventTarget | null): boolean {
  * edit), state -> hash, and ctrl/cmd+Z for the fact record. Returns a cleanup.
  */
 export function startSync(): () => void {
-  const onHash = () => {
-    const current = useApp.getState().state;
-    const s = fromHash(current, window.location.hash);
-    if (serialize(s) !== serialize(current)) useApp.getState().replace(s);
-  };
-  window.addEventListener('hashchange', onHash);
-
-  // History: a mode switch and a new quiz question each push an entry, so
-  // back steps between modes and back through the questions; every other
-  // change replaces the entry it is on.
+  // History: a mode switch pushes an entry, so back steps between modes;
+  // every other change replaces the entry it is on.
   let last = useApp.getState().state;
   const write = (state: AppState) => {
     const target = serialize(state);
     if (window.location.hash !== target) {
-      const step =
-        state.mode !== last.mode ||
-        (state.mode === 'quiz' && state.quiz.n !== last.quiz.n);
-      if (step) history.pushState(null, '', target);
+      if (state.mode !== last.mode) history.pushState(null, '', target);
       else history.replaceState(null, '', target);
     }
     last = state;
   };
+
+  const onHash = () => {
+    const current = useApp.getState().state;
+    const s = fromHash(current, window.location.hash);
+    if (serialize(s) === serialize(current)) return;
+    // a state that came from the hash is where history already is, never a
+    // step: write only canonicalises the entry in place
+    last = s;
+    useApp.getState().replace(s);
+  };
+  window.addEventListener('hashchange', onHash);
   const unsub = useApp.subscribe((s, prev) => {
     if (s.state !== prev.state) write(s.state);
   });

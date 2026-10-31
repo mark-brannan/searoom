@@ -10,7 +10,7 @@ import { identifyCandidates } from '../engine/identify';
 import type { Arrangement, SeenLight } from '../engine/identify';
 import { Glow, bearingLabel, lightFill, skyColor } from 'nav-wright';
 import { Seascape } from '../render/Seascape';
-import { DEFAULT_STATE, serialize } from '../state/urlState';
+import { serialize, stateWith } from '../state/urlState';
 
 const COLORS: SeenLight['color'][] = ['white', 'red', 'green', 'yellow'];
 
@@ -236,12 +236,9 @@ export function Identify() {
                 }}
               />{' '}
               <a
-                href={serialize({
-                  ...DEFAULT_STATE,
-                  mode: 'sandbox',
-                  facts: c.facts,
-                  sandbox: { ...DEFAULT_STATE.sandbox, view: 'model', theta: c.thetas[0] },
-                })}
+                href={serialize(
+                  stateWith({ mode: 'sandbox', facts: c.facts, sandbox: { theta: c.thetas[0] } }),
+                )}
                 onClick={(ev) => {
                   ev.preventDefault();
                   patch({

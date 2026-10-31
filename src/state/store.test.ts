@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { editsText, fromHash, startSync, useApp } from './store';
-import { deserialize, stateWith } from './urlState';
+import { deserialize, serialize, stateWith } from './urlState';
 import { PRESETS } from '../data/presets';
 import { meshOnChange } from '../render/hullModels';
 
@@ -96,7 +96,7 @@ describe('back and forward per mode (#107)', () => {
     expect(fromHash(current, '#/quiz/1/9').sandbox).toBe(current.sandbox);
   });
 
-  it('a mode switch and a quiz question push; everything else replaces', () => {
+  it('a mode switch pushes; everything else replaces', () => {
     const tab = fakeTab('#/sandbox');
     const app = useApp.getState();
     app.replace(deserialize('#/sandbox'));
@@ -105,32 +105,28 @@ describe('back and forward per mode (#107)', () => {
       app.patch({ sandbox: { theta: 90 } }); // replaces
       expect(tab.entries).toHaveLength(1);
       app.setMode('quiz'); // pushes
-      app.patch({ quiz: { n: 2 } }); // pushes
+      app.patch({ quiz: { n: 2 } }); // a new question replaces
       app.patch({ quiz: { direction: 'reverse' } }); // replaces
-      expect(tab.entries).toHaveLength(3);
+      expect(tab.entries).toHaveLength(2);
       app.setMode('rules'); // pushes
       app.patch({ rules: { path: '27(a)(i)' } }); // replaces
       app.patch({ locale: 'fi' }); // replaces
       expect(tab.entries.map((h) => h.split('?')[0])).toEqual([
         '#/sandbox',
-        '#/quiz',
         '#/quiz/1/2',
         '#/rules/27(a)(i)',
       ]);
 
       const now = () => useApp.getState().state;
-      tab.back(); // the second question, reversed
+      tab.back(); // the quiz as it was left
       expect([now().mode, now().quiz.n, now().quiz.direction]).toEqual(['quiz', 2, 'reverse']);
-      tab.back(); // the first question
-      expect([now().mode, now().quiz.n]).toEqual(['quiz', 1]);
       tab.back(); // the Sandbox as it was left
       expect([now().mode, now().sandbox.theta]).toEqual(['sandbox', 90]);
       // stepping back through the other modes lost neither's view state
       expect(now().rules.path).toBe('27(a)(i)');
-      expect(now().quiz.n).toBe(1);
-      expect(tab.entries).toHaveLength(4); // back pushes nothing
+      expect(now().quiz.n).toBe(2);
+      expect(tab.entries).toHaveLength(3); // back pushes nothing
 
-      tab.forward();
       tab.forward();
       tab.forward();
       expect([now().mode, now().rules.path, now().sandbox.theta]).toEqual([
@@ -139,6 +135,26 @@ describe('back and forward per mode (#107)', () => {
         90,
       ]);
       expect(now().quiz).toMatchObject({ n: 2, direction: 'reverse' });
+    } finally {
+      stop();
+    }
+  });
+
+  it('back into a non-canonical hash of another mode replaces it in place', () => {
+    // an older link sits behind the entry the app loaded on
+    const tab = fakeTab('#/sandbox?view=profile');
+    history.pushState(null, '', '#/quiz');
+    const app = useApp.getState();
+    app.replace(deserialize('#/quiz'));
+    const stop = startSync();
+    try {
+      expect(tab.entries).toHaveLength(2);
+      tab.back(); // lands on the old link: canonicalised in place, not pushed
+      expect(useApp.getState().state.mode).toBe('sandbox');
+      expect(tab.entries).toHaveLength(2);
+      expect(tab.entries[0]).toBe(serialize(useApp.getState().state));
+      tab.forward(); // the quiz entry survived
+      expect(useApp.getState().state.mode).toBe('quiz');
     } finally {
       stop();
     }
