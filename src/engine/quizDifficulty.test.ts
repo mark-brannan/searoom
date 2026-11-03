@@ -12,6 +12,7 @@ import {
   scenarioPoolAt,
   scenarioPoolFor,
 } from './quiz';
+import type { QuizDifficulty } from './quiz';
 import type { FactRecord } from './types';
 import { drillDifficulty, drillSeedAt, nextDrillSeed, questionFor, rulesInPool, rulesOfCite } from './quizProgress';
 import { deserialize, serialize } from '../state/urlState';
@@ -246,15 +247,19 @@ describe('extreme is the quiz as it was', () => {
 });
 
 describe('difficulty in the URL', () => {
+  const at = (difficulty: QuizDifficulty) => {
+    const s = deserialize('#/quiz');
+    return { ...s, quiz: { ...s.quiz, difficulty } };
+  };
+
   it.each(['medium', 'hard', 'extreme'] as const)('%s round-trips', (d) => {
-    const s = { ...deserialize('#/quiz'), quizDifficulty: d };
-    expect(deserialize(serialize(s)).quizDifficulty).toBe(d);
+    expect(deserialize(serialize(at(d))).quiz.difficulty).toBe(d);
   });
 
   it('a new run starts on easy and junk falls back to easy', () => {
-    expect(deserialize('#/quiz').quizDifficulty).toBe('easy');
-    expect(deserialize('#/quiz?qd=cheat').quizDifficulty).toBe('easy');
-    expect(deserialize('#/quiz?qd=').quizDifficulty).toBe('easy');
-    expect(serialize({ ...deserialize('#/quiz'), quizDifficulty: 'easy' })).not.toContain('qd=');
+    expect(deserialize('#/quiz').quiz.difficulty).toBe('easy');
+    expect(deserialize('#/quiz?qd=cheat').quiz.difficulty).toBe('easy');
+    expect(deserialize('#/quiz?qd=').quiz.difficulty).toBe('easy');
+    expect(serialize(at('easy'))).not.toContain('qd=');
   });
 });

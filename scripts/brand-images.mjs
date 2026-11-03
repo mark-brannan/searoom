@@ -6,6 +6,8 @@
 //                        Open Graph and Twitter card.
 //   apple-touch-icon.png 180x180, rendered from public/favicon.svg.
 // Usage: node scripts/brand-images.mjs [baseUrl]   (default: vite preview)
+// `ms=` (empty) pins the best-fit hull: with no ms the app draws a random
+// mesh (#174), so og.png would change on every deploy.
 // colorScheme is dark: the night theme is the identity (docs/identity.md).
 
 import { chromium } from 'playwright';
@@ -13,9 +15,10 @@ import { readFileSync } from 'node:fs';
 
 const base = process.argv[2] ?? 'http://localhost:4173/searoom/';
 const hash =
-  '#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12&view=model&th=0&d=1';
+  '#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12&view=model&th=0&d=1&ms=';
 
-const browser = await chromium.launch();
+// swiftshader: headless CI has no GPU; e2e.mjs and lit-canvas.mjs use the same flag.
+const browser = await chromium.launch({ args: ['--use-gl=swiftshader'] });
 const context = await browser.newContext({
   colorScheme: 'dark',
   viewport: { width: 1200, height: 900 },

@@ -13,7 +13,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
-import { useAppState, usePatch } from '../state/store';
+import { applyPatch, useApp, usePatch, useJurisdiction, useSlice } from '../state/store';
 import { CorpusSwitcher } from '../components/CorpusSwitcher';
 import { CorpusLine, MixedNote, Paragraph } from '../components/RuleParagraphs';
 import {
@@ -69,12 +69,15 @@ function sandboxLink(entryId: string, jurisdiction: string): string | undefined 
 }
 
 export function Rules() {
-  const state = useAppState();
+  const jurisdiction = useJurisdiction();
+  const { path: rulePath } = useSlice('rules');
   const patch = usePatch();
+  // a paragraph's own link: this state, on that paragraph
+  const pathHref = (p: string) =>
+    serialize(applyPatch(useApp.getState().state, { mode: 'rules', rules: { path: p } }));
   const intl = useIntl();
   const containerRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState('');
-  const { jurisdiction } = state;
   const meta = jurisdictionMeta(jurisdiction);
   const corpus = useCorpus();
   const edition = editionOf(corpus);
@@ -179,7 +182,7 @@ export function Rules() {
 
   const goTo = (p: string) => (ev: React.MouseEvent) => {
     ev.preventDefault();
-    patch({ rulePath: p });
+    patch({ rules: { path: p } });
   };
 
   const sandboxChip = (e: { id: string }) => {
@@ -221,13 +224,13 @@ export function Rules() {
   };
 
   useEffect(() => {
-    if (state.rulePath && containerRef.current) {
+    if (rulePath && containerRef.current) {
       const el = containerRef.current.querySelector(
-        `[data-path="${CSS.escape(state.rulePath)}"]`,
+        `[data-path="${CSS.escape(rulePath)}"]`,
       );
       el?.scrollIntoView({ block: 'center' });
     }
-  }, [state.rulePath, jurisdiction]);
+  }, [rulePath, jurisdiction]);
 
   return (
     <div ref={containerRef}>
@@ -291,7 +294,7 @@ export function Rules() {
                   footer={entriesFooter(p)}
                   label={
                     <a
-                      href={serialize({ ...state, mode: 'rules', rulePath: p })}
+                      href={pathHref(p)}
                       onClick={goTo(p)}
                       style={{ textDecoration: 'none' }}
                     >
@@ -307,7 +310,7 @@ export function Rules() {
             {tree.map(([part, rules]) => (
               <details
                 key={part}
-                open={rules.some(([r]) => r === ruleOf(state.rulePath ?? ''))}
+                open={rules.some(([r]) => r === ruleOf(rulePath ?? ''))}
               >
                 <summary>
                   <FormattedMessage id={`rules.part.${part}`} />
@@ -316,15 +319,11 @@ export function Rules() {
                   <details
                     key={rule}
                     className="rules-tree-rule"
-                    open={rule === ruleOf(state.rulePath ?? '')}
+                    open={rule === ruleOf(rulePath ?? '')}
                   >
                     <summary>
                       <a
-                        href={serialize({
-                          ...state,
-                          mode: 'rules',
-                          rulePath: paths[0],
-                        })}
+                        href={pathHref(paths[0])}
                         onClick={goTo(paths[0])}
                       >
                         Rule {rule}
@@ -340,12 +339,8 @@ export function Rules() {
                       {paths.map((p) => (
                         <a
                           key={p}
-                          className={`chip${state.rulePath === p ? ' active' : ''}`}
-                          href={serialize({
-                            ...state,
-                            mode: 'rules',
-                            rulePath: p,
-                          })}
+                          className={`chip${rulePath === p ? ' active' : ''}`}
+                          href={pathHref(p)}
                           onClick={goTo(p)}
                         >
                           {p}
@@ -424,10 +419,10 @@ export function Rules() {
                 <a
                   key={p}
                   className="chip"
-                  href={serialize({ ...state, mode: 'rules', rulePath: p })}
+                  href={pathHref(p)}
                   onClick={(ev) => {
                     ev.preventDefault();
-                    patch({ rulePath: p });
+                    patch({ rules: { path: p } });
                   }}
                 >
                   {p}
@@ -544,7 +539,7 @@ export function Rules() {
                   </div>
                 );
               }
-              const selected = state.rulePath === p;
+              const selected = rulePath === p;
               return (
                 <div
                   key={p}
@@ -562,14 +557,10 @@ export function Rules() {
                     label={
                       <>
                         <a
-                          href={serialize({
-                            ...state,
-                            mode: 'rules',
-                            rulePath: p,
-                          })}
+                          href={pathHref(p)}
                           onClick={(ev) => {
                             ev.preventDefault();
-                            patch({ rulePath: p });
+                            patch({ rules: { path: p } });
                           }}
                           style={{ textDecoration: 'none' }}
                         >

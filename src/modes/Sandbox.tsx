@@ -4,10 +4,10 @@
 // A puts the facts in a rail and the arcs in a side panel, C puts the scene
 // first with the arcs inset on it.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
-import { useAppState, usePatch } from '../state/store';
+import { usePatch, useSituation, useSlice } from '../state/store';
 import { useVariant } from '../state/experiments';
 import { Presets } from '../components/Presets';
 import { FactControls } from '../components/FactControls';
@@ -16,7 +16,7 @@ import { DisplayChips } from '../components/DisplayChips';
 import { RulesPanel } from '../components/RulesPanel';
 import { DataDrawer } from '../components/DataDrawer';
 import { evaluateDisplayIn } from '../engine/evaluate';
-import type { View } from '../state/urlState';
+import type { SandboxView, View } from '../state/urlState';
 
 const ARCS_KEY = 'searoom.arcs';
 
@@ -61,29 +61,34 @@ function ArcsToggle({
 }
 
 export function Sandbox() {
-  const state = useAppState();
-  const patch = usePatch();
+  const { jurisdiction, facts } = useSituation();
+  const sb = useSlice('sandbox');
+  const patchApp = usePatch();
+  const patch = useCallback(
+    (p: Partial<SandboxView>) => patchApp({ sandbox: p }),
+    [patchApp],
+  );
   const layout = useVariant('layout');
   const evaln = useMemo(
-    () => evaluateDisplayIn(state.jurisdiction, state.facts),
-    [state.jurisdiction, state.facts],
+    () => evaluateDisplayIn(jurisdiction, facts),
+    [jurisdiction, facts],
   );
   const current = Math.max(
     0,
-    Math.min(state.displayIndex, evaln.displays.length - 1),
+    Math.min(sb.displayIndex, evaln.displays.length - 1),
   );
   useEffect(() => {
-    if (state.displayIndex !== current) patch({ displayIndex: current });
-  }, [state.displayIndex, current, patch]);
+    if (sb.displayIndex !== current) patch({ displayIndex: current });
+  }, [sb.displayIndex, current, patch]);
 
   const display = evaln.displays[current];
   const lights = useMemo(() => {
     if (!display) return [];
     const additionLights = evaln.optionalAdditions
-      .filter((a) => state.additionsOn.includes(a.id))
+      .filter((a) => sb.additionsOn.includes(a.id))
       .flatMap((a) => a.lights);
     return [...display.lights, ...additionLights];
-  }, [display, evaln, state.additionsOn]);
+  }, [display, evaln, sb.additionsOn]);
 
   const [arcsShown, setArcsShown] = useArcsShown();
   // the arcs leave the tabs while they are on screen beside the scene
@@ -93,42 +98,42 @@ export function Sandbox() {
   // ...so the store never names a tab that is not offered: the scene would
   // draw the 3D view while the state and the URL still said plan
   useEffect(() => {
-    if (arcsShown && state.view === 'plan') patch({ view: 'model' });
-  }, [arcsShown, state.view, patch]);
+    if (arcsShown && sb.view === 'plan') patch({ view: 'model' });
+  }, [arcsShown, sb.view, patch]);
 
   const scene = (
     <Scene
-      facts={state.facts}
+      facts={facts}
       lights={lights}
-      settings={state}
+      settings={sb}
       onChange={patch}
       views={views}
     />
   );
   const arcs = (
     <Arcs
-      facts={state.facts}
+      facts={facts}
       lights={lights}
-      theta={state.theta}
+      theta={sb.theta}
       onTheta={(theta) => patch({ theta })}
     />
   );
   const chips = (
     <DisplayChips
       evaln={evaln}
-      displayIndex={state.displayIndex}
+      displayIndex={sb.displayIndex}
       onDisplayIndex={(i) => patch({ displayIndex: i })}
-      additionsOn={state.additionsOn}
+      additionsOn={sb.additionsOn}
       onAdditionsOn={(ids) => patch({ additionsOn: ids })}
     />
   );
-  const rules = <RulesPanel evaln={evaln} jurisdiction={state.jurisdiction} />;
+  const rules = <RulesPanel evaln={evaln} jurisdiction={jurisdiction} />;
   const drawer = (
     <DataDrawer
       evaln={evaln}
-      facts={state.facts}
-      jurisdiction={state.jurisdiction}
-      open={state.drawer}
+      facts={facts}
+      jurisdiction={jurisdiction}
+      open={sb.drawer}
       onOpen={(drawer) => patch({ drawer })}
     />
   );
@@ -142,17 +147,17 @@ export function Sandbox() {
           <FormattedMessage id="scene.aside.title" />
         </h2>
         <ArcsToggle
-          shown={state.bearingAside}
+          shown={sb.bearingAside}
           onShown={(bearingAside) => patch({ bearingAside })}
         />
       </div>
-      {state.bearingAside && (
+      {sb.bearingAside && (
         <BearingAside
-          facts={state.facts}
+          facts={facts}
           lights={lights}
-          theta={state.theta}
+          theta={sb.theta}
           onTheta={(theta) => patch({ theta })}
-          sky={state.sky}
+          sky={sb.sky}
         />
       )}
     </section>
@@ -174,7 +179,7 @@ export function Sandbox() {
     <LayoutA
       scene={scene}
       bearing={bearing}
-      bearingShown={state.bearingAside}
+      bearingShown={sb.bearingAside}
       arcs={arcs}
       arcsShown={arcsShown}
       toggle={toggle}

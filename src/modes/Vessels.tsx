@@ -14,7 +14,7 @@ import type { FactRecord } from '../engine/types';
 import { placeLights } from '../render/navWright';
 import { shippedModelUrl } from '../render/hullModels';
 import { useSceneLabels } from '../components/Scene';
-import { useAppState } from '../state/store';
+import { useJurisdiction } from '../state/store';
 
 /** A traced record, with the dimensions a traced vessel always has. */
 export type TracedVessel = MeshRecord & {
@@ -39,7 +39,7 @@ export const vesselsByLength = meshCatalog
 
 function Vessel({ vessel }: { vessel: TracedVessel }) {
   const intl = useIntl();
-  const { jurisdiction } = useAppState();
+  const jurisdiction = useJurisdiction();
   const labels = useSceneLabels();
   const [theta, setTheta] = useState(300);
   const [tilt, setTilt] = useState(12);

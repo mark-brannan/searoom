@@ -1,18 +1,19 @@
 // Presets gallery (searoom#103): a boat first, the facts second. Each preset
-// is a fact record; picking one patches state exactly as editing the fact
-// controls would, so the URL carries it.
+// is a fact record shown as her thumbnail; picking one patches state exactly
+// as editing the fact controls would, so the URL carries it.
 
 import { useIntl } from 'react-intl';
 import type { Patch } from '../state/store';
-import { useAppState, usePatch } from '../state/store';
+import { usePatch, useSituation } from '../state/store';
 import { PRESETS, presetFor } from '../data/presets';
 import { meshOnChange } from '../render/hullModels';
+import { PresetThumb } from './PresetThumb';
 
 export function Presets() {
-  const state = useAppState();
+  const { facts, jurisdiction } = useSituation();
   const patch = usePatch();
   const intl = useIntl();
-  const current = presetFor(state.facts)?.id;
+  const current = presetFor(facts)?.id;
   return (
     <div
       className="presets"
@@ -23,20 +24,22 @@ export function Presets() {
         <button
           key={p.id}
           type="button"
-          className={`chip${current === p.id ? ' active' : ''}`}
+          className={`preset-card${current === p.id ? ' active' : ''}`}
           aria-pressed={current === p.id}
           onClick={() => {
             const change: Patch = {
               facts: { ...p.facts },
-              displayIndex: 0,
-              additionsOn: [],
+              sandbox: { displayIndex: 0, additionsOn: [] },
             };
-            const mesh = meshOnChange(state.facts, p.facts);
-            if (mesh !== undefined) change.mesh = mesh;
+            const mesh = meshOnChange(facts, p.facts);
+            if (mesh !== undefined) change.sandbox = { ...change.sandbox, mesh };
             patch(change);
           }}
         >
-          {intl.formatMessage({ id: `preset.${p.id}` })}
+          <PresetThumb facts={p.facts} jurisdiction={jurisdiction} />
+          <span className="preset-name">
+            {intl.formatMessage({ id: `preset.${p.id}` })}
+          </span>
         </button>
       ))}
     </div>

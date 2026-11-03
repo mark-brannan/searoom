@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
-import { useAppState, usePatch } from '../state/store';
+import { useJurisdiction, usePatch } from '../state/store';
 import { findSignpost } from '../data/signposts';
 import {
   attentionParagraph,
@@ -153,7 +153,7 @@ function SignalDetail({ signal }: { signal: SoundSignal }) {
 }
 
 export function Sound() {
-  const state = useAppState();
+  const jurisdiction = useJurisdiction();
   const patch = usePatch();
   const intl = useIntl();
   const [tab, setTab] = useState<'table' | 'quiz'>('table');
@@ -162,7 +162,7 @@ export function Sound() {
   const { play, stop, nowPlaying } = usePlayer(lengthM);
   const groups = signalsByRule('intl');
   const available = audioAvailable();
-  const jurisdictionModelled = signalsFor(state.jurisdiction).length > 0;
+  const jurisdictionModelled = signalsFor(jurisdiction).length > 0;
 
   return (
     <div>
@@ -205,7 +205,7 @@ export function Sound() {
           <p className="blocker">
             <FormattedMessage
               id="sound.jurisdictionNote"
-              values={{ jurisdiction: state.jurisdiction }}
+              values={{ jurisdiction }}
             />
           </p>
         )}
