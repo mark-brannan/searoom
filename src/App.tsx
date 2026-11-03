@@ -1,12 +1,21 @@
-import { Suspense, lazy, useEffect, useMemo } from 'react';
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { FormattedMessage, IntlProvider } from 'react-intl';
 import fi from './i18n/fi.json';
 import { catalogs } from './i18n';
 import { DEFAULT_STATE } from './state/urlState';
-import { startSync, useAppState, usePatch } from './state/store';
+import { startSync, useMode, usePrefs, useJurisdiction } from './state/store';
 import { Header } from './components/Header';
+import { SettingsSheet } from './components/SettingsSheet';
+import { reducesMotion, useSettings } from './state/settings';
 import { FirstRunIntro } from './components/FirstRunIntro';
-import { SignpostPanel } from './components/SignpostPanel';
+import { OpenSignpost } from './components/SignpostPanel';
 import { colregsVersion } from './data/colregs';
 import { corpusIn } from './data/corpusText';
 import { CorpusContext } from './state/corpusContext';
@@ -37,16 +46,20 @@ const Vessels = lazy(() =>
 );
 
 export function App() {
-  const state = useAppState();
-  const patch = usePatch();
+  const mode = useMode();
+  const { locale: uiLocale, corpus, signpost } = usePrefs();
+  const jurisdiction = useJurisdiction();
   const layout = useVariant('layout');
   useEffect(() => startSync(), []);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+  useMotionPreference(useSettings().motion);
 
-  const locale = state.locale === 'fi' ? 'fi' : 'en';
+  const locale = uiLocale === 'fi' ? 'fi' : 'en';
   const messages = catalogs[locale];
 
   const body = useMemo(() => {
-    switch (state.mode) {
+    switch (mode) {
       case 'sandbox':
         return <Sandbox />;
       case 'identify':
@@ -62,15 +75,15 @@ export function App() {
       case 'vessels':
         return <Vessels />;
     }
-  }, [state.mode]);
+  }, [mode]);
 
   return (
     <IntlProvider locale={locale} messages={messages} defaultLocale="en">
       <CorpusContext.Provider
-        value={corpusIn(state.jurisdiction, state.corpus).id}
+        value={corpusIn(jurisdiction, corpus).id}
       >
         <div className="app">
-          <Header />
+          <Header onSettings={() => setSettingsOpen(true)} />
           {locale === 'fi' && (
             <p className="draft-banner">
               {(fi as Record<string, string>)['app.draftBanner']}
@@ -94,13 +107,13 @@ export function App() {
                 id="app.poweredBy"
                 values={{
                   version: colregsVersion,
-                  jurisdiction: state.jurisdiction,
+                  jurisdiction: jurisdiction,
                 }}
               />
             </span>
             <a href="https://github.com/mark-brannan/colregs">colregs</a>
             <a href="https://github.com/mark-brannan/searoom">searoom</a>
-            {state.mode === 'sandbox' && (
+            {mode === 'sandbox' && (
               <span
                 className="layout-switch"
                 role="group"
@@ -122,19 +135,11 @@ export function App() {
               </span>
             )}
           </footer>
-          {state.mode === 'sandbox' && !state.signpost && <FirstRunIntro />}
-          {state.signpost && (
-            <SignpostPanel
-              id={state.signpost}
-              onClose={() => patch({ signpost: null })}
-              locale={state.locale}
-              onLocale={(l) => patch({ locale: l })}
-              jurisdiction={state.jurisdiction}
-              corpus={state.corpus}
-              onCorpus={(c) => patch({ corpus: c })}
-              onOpen={(id) => patch({ signpost: id })}
-            />
+          {mode === 'sandbox' && !signpost && !settingsOpen && <FirstRunIntro />}
+          {settingsOpen && (
+            <SettingsSheet onClose={closeSettings} covered={!!signpost} />
           )}
+          <OpenSignpost />
         </div>
       </CorpusContext.Provider>
     </IntlProvider>
@@ -142,3 +147,24 @@ export function App() {
 }
 
 export const defaultState = DEFAULT_STATE;
+
+/**
+ * Resolve the motion preference against the OS setting onto the root as
+ * `data-motion="reduce" | "full"`; the stylesheet reads it.
+ */
+function useMotionPreference(pref: Parameters<typeof reducesMotion>[0]) {
+  useEffect(() => {
+    const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const apply = () => {
+      document.documentElement.dataset.motion = reducesMotion(
+        pref,
+        !!mq?.matches,
+      )
+        ? 'reduce'
+        : 'full';
+    };
+    apply();
+    mq?.addEventListener('change', apply);
+    return () => mq?.removeEventListener('change', apply);
+  }, [pref]);
+}

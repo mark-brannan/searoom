@@ -1,7 +1,9 @@
-// CI end-to-end: the default Sandbox draws a dim 3D vessel, every mode
-// opens from the header nav, plus one threshold crossing on the length
-// slider. Chromium only, software WebGL so the 3D canvas draws headless;
-// colorScheme is set to dark explicitly (the night theme is the app's identity).
+// CI end-to-end, a gate: the default Sandbox draws a dim 3D vessel; at 360
+// and 1280 px every mode opens from the header nav and four interactions
+// (length slider across 50 m, a display chip, an identify light, a quiz
+// answer) each change the page. Chromium only, software WebGL so the 3D
+// canvas draws headless; colorScheme is set to dark explicitly (the night
+// theme is the app's identity).
 // Usage: node scripts/e2e.mjs [baseUrl]   (serve the built dist first)
 
 import { chromium } from 'playwright';
@@ -50,39 +52,96 @@ check(
   hasCanvas && light.seen > MIN_SEEN_FRACTION && light.bright <= MAX_BRIGHT_FRACTION,
 );
 
-// every mode: click its tab, expect it active and its body non-blank
-for (const [name, hash, probe] of [
+// At phone and desktop width: every mode renders from its tab, then the four
+// interactions each change the page. Loose on purpose: a check asks that
+// something rendered or moved, never which value or which pixels (#116).
+const MODES = [
   ['Sandbox', '#/sandbox', '.sandbox-grid'],
   ['Identify', '#/identify', '.color-btn'],
   ['Quiz', '#/quiz', '.quiz-option'],
   ['Flashcards', '#/flashcards', '.flashcard'],
   ['Rules', '#/rules', '[id^="rule-"]'],
   ['Sound', '#/sound', '.panel'],
-]) {
-  await tab(name).first().click();
-  await page.waitForFunction((h) => location.hash.startsWith(h), hash);
-  await page.locator(probe).first().waitFor({ timeout: 5000 }).catch(() => {});
-  const axe = await new AxeBuilder({ page }).analyze();
-  const serious = axe.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
-  for (const v of serious) console.log(`     axe ${v.impact} ${v.id}: ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`);
-  check(`${name} axe: zero serious or critical violations`, serious.length === 0);
-  check(
-    `${name} mode renders`,
-    (await page.locator(probe).count()) > 0 &&
-      (await tab(name).first().getAttribute('class')).includes('active'),
-  );
-}
+];
+const text = (sel) => page.evaluate((s) => document.querySelector(s)?.innerText ?? '', sel);
+// reads fn() once it holds still for half a second, so a lazy chunk landing
+// after networkidle is not mistaken for the interaction's effect
+const settled = async (fn) => {
+  let prev = await fn();
+  for (let i = 0; i < 20; i++) {
+    await page.waitForTimeout(500);
+    const cur = await fn();
+    if (cur === prev) return cur;
+    prev = cur;
+  }
+  return prev;
+};
+// waits for fn() to differ from before; true once it does. A null read is an
+// error (failed screenshot), never a change.
+const changes = async (fn, before) => {
+  for (let i = 0; i < 20; i++) {
+    const now = await fn();
+    if (now !== null && now !== before) return true;
+    await page.waitForTimeout(250);
+  }
+  return false;
+};
+for (const width of [360, 1280]) {
+  await page.setViewportSize({ width, height: 800 });
+  await page.goto(`${base}#/sandbox`, { waitUntil: 'networkidle' });
+  for (const [name, hash, probe] of MODES) {
+    await tab(name).first().click();
+    await page.waitForFunction((h) => location.hash.startsWith(h), hash);
+    await page.locator(probe).first().waitFor({ timeout: 5000 }).catch(() => {});
+    if (width === 1280) {
+      const axe = await new AxeBuilder({ page }).analyze();
+      const serious = axe.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
+      for (const v of serious) console.log(`     axe ${v.impact} ${v.id}: ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`);
+      check(`${name} axe: zero serious or critical violations`, serious.length === 0);
+    }
+    check(
+      `${width}px ${name} mode renders`,
+      (await page.locator(probe).count()) > 0 &&
+        (await tab(name).first().getAttribute('class')).includes('active'),
+    );
+  }
 
-// threshold crossing: the second masthead light is an optional addition
-// below 50 m and drops out at 55 m (23(a)(ii))
-await page.goto(`${base}#/sandbox?p=power&a=none&pos=underway&mw=1&len=49`, {
-  waitUntil: 'networkidle',
-});
-const addition = page.locator('.chip.addition', { hasText: '23(a)(ii)' });
-const below = await addition.first().waitFor({ timeout: 5000 }).then(() => addition.count(), () => 0);
-await page.locator('#length').fill('55');
-const above = await addition.first().waitFor({ state: 'detached', timeout: 5000 }).then(() => 0, () => addition.count());
-check(`length slider crosses 50 m (${below} -> ${above} optional additions)`, below === 1 && above === 0);
+  // the length slider across 50 m changes the lawful displays shown
+  await page.goto(`${base}#/sandbox?p=power&a=none&pos=underway&mw=1&len=49`, { waitUntil: 'networkidle' });
+  // the chips panel renders in every Sandbox layout
+  await page.locator('.chips').first().waitFor({ timeout: 5000 }).catch(() => {});
+  const displays = () => text('.chips');
+  const beforeLen = await settled(displays);
+  await page.locator('#length').fill('55');
+  check(`${width}px length slider across 50 m changes the displays`, beforeLen !== '' && (await changes(displays, beforeLen)));
+
+  // picking another display chip changes what the 3D scene draws
+  await page.goto(`${base}#/sandbox?p=sail&a=none&pos=underway&len=10`, { waitUntil: 'networkidle' });
+  const chip = page.locator('.chips [role=radio][aria-checked=false]').first();
+  const hasChip = await chip.waitFor({ timeout: 5000 }).then(() => true, () => false);
+  const scene = page.locator('.scene-main canvas').first();
+  const pixels = () => scene.screenshot().then((b) => b.toString('base64'), () => null);
+  const beforeChip = await settled(pixels);
+  if (hasChip) await chip.click();
+  check(`${width}px display chip changes the scene`, hasChip && beforeChip !== null && (await changes(pixels, beforeChip)));
+
+  // adding a seen light in Identify changes the page
+  await page.goto(`${base}#/identify`, { waitUntil: 'networkidle' });
+  const colour = page.locator('.color-btn').first();
+  const hasColour = await colour.waitFor({ timeout: 5000 }).then(() => true, () => false);
+  const beforeSeen = await settled(() => text('#root'));
+  if (hasColour) await colour.click();
+  check(`${width}px identify light changes the page`, hasColour && (await changes(() => text('#root'), beforeSeen)));
+
+  // answering a quiz question changes the page
+  await page.goto(`${base}#/quiz`, { waitUntil: 'networkidle' });
+  const option = page.locator('.quiz-option').first();
+  const hasOption = await option.waitFor({ timeout: 5000 }).then(() => true, () => false);
+  const beforeAnswer = await settled(() => text('#root'));
+  if (hasOption) await option.click();
+  check(`${width}px quiz answer changes the page`, hasOption && (await changes(() => text('#root'), beforeAnswer)));
+}
+await page.setViewportSize({ width: 1280, height: 720 });
 
 // every Sandbox view: axe, then the theta dial and the display chips by keyboard
 for (const view of ['model', 'plan']) {

@@ -4,63 +4,18 @@
 
 import { useMemo, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
-import { useAppState, usePatch } from '../state/store';
+import { usePatch, useJurisdiction } from '../state/store';
 import { describeFacts } from '../components/factLabel';
 import { identifyCandidates } from '../engine/identify';
 import type { Arrangement, SeenLight } from '../engine/identify';
-import { Glow, bearingLabel, lightFill, skyColor } from 'nav-wright';
-import { Seascape } from '../render/Seascape';
-import { DEFAULT_STATE, serialize } from '../state/urlState';
+import { bearingLabel, lightFill } from 'nav-wright';
+import { Scene } from '../components/Scene';
+import { serialize, stateWith } from '../state/urlState';
 
 const COLORS: SeenLight['color'][] = ['white', 'red', 'green', 'yellow'];
 
-// Field size, in viewBox units.
-const FIELD_W = 440;
-const FIELD_H = 120;
-const FIELD_HORIZON = 100;
-// A vertical line of lights runs from FIELD_TOP down to FIELD_LOWEST at most:
-// they are on her, so they stay above the waterline the horizon draws.
-const FIELD_TOP = 20;
-const FIELD_LOWEST = FIELD_HORIZON - 14;
-const FIELD_STEP = 22;
-
-/** The lights picked so far, on the bearing view's night sea, so the learner
- *  builds what they saw against the sea the Sandbox shows. */
-export function SeenField({
-  seen,
-  arrangement,
-}: {
-  seen: SeenLight[];
-  arrangement: Arrangement;
-}) {
-  const step =
-    seen.length > 1
-      ? Math.min(FIELD_STEP, (FIELD_LOWEST - FIELD_TOP) / (seen.length - 1))
-      : FIELD_STEP;
-  return (
-    <svg
-      viewBox={`0 0 ${FIELD_W} ${FIELD_H}`}
-      className="scene-svg scene-svg-black"
-      aria-hidden="true"
-    >
-      <rect width={FIELD_W} height={FIELD_H} fill={skyColor(0)} />
-      <Seascape width={FIELD_W} height={FIELD_H} horizon={FIELD_HORIZON} />
-      {seen.map((l, i) => (
-        <Glow
-          key={i}
-          x={arrangement === 'vertical' ? 220 : 60 + i * 50}
-          y={arrangement === 'vertical' ? FIELD_TOP + i * step : 60}
-          color={l.color}
-          flashing={l.flashing}
-          r={6}
-        />
-      ))}
-    </svg>
-  );
-}
-
 export function Identify() {
-  const state = useAppState();
+  const jurisdiction = useJurisdiction();
   const patch = usePatch();
   const intl = useIntl();
   const [seen, setSeen] = useState<SeenLight[]>([]);
@@ -69,8 +24,8 @@ export function Identify() {
   const [arrangement, setArrangement] = useState<Arrangement>('free');
 
   const candidates = useMemo(
-    () => identifyCandidates(seen, state.jurisdiction, arrangement),
-    [seen, state.jurisdiction, arrangement],
+    () => identifyCandidates(seen, jurisdiction, arrangement),
+    [seen, jurisdiction, arrangement],
   );
 
   const aspectsOf = (thetas: number[]): string => {
@@ -156,7 +111,7 @@ export function Identify() {
           </p>
         ) : (
           <>
-            <SeenField seen={seen} arrangement={arrangement} />
+            <Scene presentation="seen" seen={seen} arrangement={arrangement} />
             <div className="seen-list">
               {seen.map((l, i) => (
                 <button
@@ -236,22 +191,20 @@ export function Identify() {
                 }}
               />{' '}
               <a
-                href={serialize({
-                  ...DEFAULT_STATE,
-                  mode: 'sandbox',
-                  facts: c.facts,
-                  view: 'model',
-                  theta: c.thetas[0],
-                })}
+                href={serialize(
+                  stateWith({ mode: 'sandbox', facts: c.facts, sandbox: { theta: c.thetas[0] } }),
+                )}
                 onClick={(ev) => {
                   ev.preventDefault();
                   patch({
                     mode: 'sandbox',
                     facts: c.facts,
-                    view: 'model',
-                    theta: c.thetas[0],
-                    displayIndex: 0,
-                    additionsOn: [],
+                    sandbox: {
+                      view: 'model',
+                      theta: c.thetas[0],
+                      displayIndex: 0,
+                      additionsOn: [],
+                    },
                   });
                 }}
               >
