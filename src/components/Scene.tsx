@@ -25,7 +25,7 @@ import {
   useDragRotate,
   wrapDegrees,
 } from 'nav-wright';
-import type { Aspect } from 'nav-wright';
+import type { Aspect, Hull } from 'nav-wright';
 import { placeLights } from '../render/navWright';
 import { MeshProfileView } from '../render/MeshProfileView';
 import { profileSide, seenFrom } from '../render/profileSide';
@@ -145,12 +145,13 @@ function MiniProfile({
   facts,
   lights,
   theta,
+  hull = selectHull(facts),
 }: {
   facts: FactRecord;
   lights: DisplayLight[];
   theta: number;
+  hull?: Hull;
 }) {
-  const hull = selectHull(facts);
   const side = profileSide(theta);
   const placed = seenFrom(
     placeLights(lights, hull.spec, facts, lightCatalog),
@@ -185,14 +186,15 @@ function MiniBearing({
   theta,
   sky,
   drag,
+  hull = selectHull(facts),
 }: {
   facts: FactRecord;
   lights: DisplayLight[];
   theta: number;
   sky?: number;
   drag?: HTMLAttributes<SVGSVGElement>;
+  hull?: Hull;
 }) {
-  const hull = selectHull(facts);
   const placed = placeLights(lights, hull.spec, facts, lightCatalog);
   const rad = (theta * Math.PI) / 180;
   return (
@@ -283,6 +285,9 @@ export type SceneProps =
       presentation?: 'full' | 'mini';
       /** the view tabs offered; a view outside them shows the first */
       views?: View[];
+      /** 'mini' only: draw on this hull rather than the one `facts` selects,
+       * so a quiz's options share the asked vessel's silhouette */
+      hull?: Hull;
     }
   | {
       /** lights as a learner saw them, before any vessel explains them */
@@ -294,12 +299,12 @@ export type SceneProps =
 export function Scene(props: SceneProps) {
   if (props.presentation === 'seen')
     return <MiniSeen seen={props.seen} arrangement={props.arrangement} />;
-  const { facts, lights, settings, onChange, views = ALL_VIEWS } = props;
+  const { facts, lights, settings, onChange, views = ALL_VIEWS, hull } = props;
   if (props.presentation === 'mini')
     return settings.view === 'model' ? (
-      <MiniBearing facts={facts} lights={lights} theta={settings.theta} />
+      <MiniBearing facts={facts} lights={lights} theta={settings.theta} hull={hull} />
     ) : (
-      <MiniProfile facts={facts} lights={lights} theta={settings.theta} />
+      <MiniProfile facts={facts} lights={lights} theta={settings.theta} hull={hull} />
     );
   return (
     <FullScene
