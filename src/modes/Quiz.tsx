@@ -6,10 +6,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { Scene } from '../components/Scene';
 import { describeFacts } from '../components/factLabel';
-import { citeOf } from '../engine/quiz';
-import type { QuizQuestion } from '../engine/quiz';
+import { QUIZ_DIFFICULTIES, citeOf, forwardHull } from '../engine/quiz';
+import type { QuizDifficulty, QuizQuestion } from '../engine/quiz';
 import { evaluateDisplayIn } from '../engine/evaluate';
 import {
+  drillDifficulty,
+  drillSeedAt,
   exportProgress,
   loadProgress,
   mergeProgress,
@@ -133,7 +135,7 @@ export function Quiz() {
   const patchApp = usePatch();
   const patch = (p: Partial<QuizView>) => patchApp({ quiz: p });
   const intl = useIntl();
-  const { mode, seed: quizSeed, n: quizN, rule: quizRule } = quiz;
+  const { mode, seed: quizSeed, n: quizN, rule: quizRule, difficulty: quizDifficulty } = quiz;
   const reverse = quiz.direction === 'reverse';
   const quizIndex = quizN - 1;
   const [picked, setPicked] = useState<number | null>(null);
@@ -158,13 +160,18 @@ export function Quiz() {
 
   // a new question by any route (back/forward, an edited link, the
   // jurisdiction switcher) starts unanswered
-  useEffect(() => setPicked(null), [seed, reverse, jurisdiction]);
+  useEffect(() => setPicked(null), [seed, reverse, jurisdiction, quizDifficulty]);
 
   const rules = useMemo(() => rulesInPool(jurisdiction), [jurisdiction]);
 
+  // a drilled rule the chosen level never asks about widens to one that does
+  const askAt = (rule: string): QuizDifficulty =>
+    mode === 'drill' ? drillDifficulty(jurisdiction, rule, quizDifficulty) : quizDifficulty;
+  const level = askAt(quizRule);
+
   const question: QuizQuestion = useMemo(
-    () => questionFor(seed, reverse, jurisdiction),
-    [seed, reverse, jurisdiction],
+    () => questionFor(seed, reverse, jurisdiction, level),
+    [seed, reverse, jurisdiction, level],
   );
 
   const answer = (i: number) => {
@@ -182,7 +189,7 @@ export function Quiz() {
     setPicked(null);
     if (mode === 'drill')
       patch({
-        seed: nextDrillSeed(seed, reverse, jurisdiction, progress, quizRule),
+        seed: nextDrillSeed(seed, reverse, jurisdiction, progress, quizRule, level),
         n: 1,
       });
     else patch({ n: quizN + 1 });
@@ -202,6 +209,26 @@ export function Quiz() {
     setScore({ right: 0, total: 0 });
     patch({ mode: m, seed: seed, n: 1 });
   };
+
+  const setDifficulty = (d: QuizDifficulty) => {
+    setPicked(null);
+    setExam(null);
+    setScore({ right: 0, total: 0 });
+    // a drill seed picked for the old level can ask about another rule at this one
+    const nextSeed =
+      mode === 'drill'
+        ? drillSeedAt(
+            seed,
+            reverse,
+            jurisdiction,
+            progress,
+            quizRule,
+            drillDifficulty(jurisdiction, quizRule, d),
+          )
+        : seed;
+    patch({ difficulty: d, seed: nextSeed, n: 1 });
+  };
+  const difficultyName = intl.formatMessage({ id: `quiz.difficulty.${quizDifficulty}` });
 
   const optionClass = (i: number) => {
     if (picked === null) return 'quiz-option';
@@ -303,6 +330,7 @@ export function Quiz() {
                     jurisdiction,
                     progress,
                     e.target.value,
+                    askAt(e.target.value),
                   ),
                 });
               }}
@@ -315,6 +343,22 @@ export function Quiz() {
               ))}
             </select>
           )}
+        </div>
+        <div className="theta-control">
+          <label htmlFor="quiz-difficulty">
+            <FormattedMessage id="quiz.difficulty.label" />
+          </label>
+          <input
+            id="quiz-difficulty"
+            type="range"
+            min={0}
+            max={QUIZ_DIFFICULTIES.length - 1}
+            step={1}
+            value={QUIZ_DIFFICULTIES.indexOf(quizDifficulty)}
+            onChange={(e) => setDifficulty(QUIZ_DIFFICULTIES[Number(e.target.value)])}
+            aria-valuetext={difficultyName}
+          />
+          <span className="theta-readout theta-readout-short">{difficultyName}</span>
         </div>
 
         {mode === 'exam' && !exam && (
@@ -369,11 +413,13 @@ export function Quiz() {
                   aria-pressed={picked === i}
                   aria-label={describeFacts(intl, o.facts)}
                 >
+                  {/* one hull for every option: only the lights tell them apart */}
                   <Scene
                     presentation="mini"
                     facts={o.facts}
                     lights={o.display.lights}
                     settings={{ view: 'profile', theta: 90 }}
+                    hull={forwardHull(question)}
                   />
                 </button>
               ))}
