@@ -153,18 +153,47 @@ const ACCENTS: Record<string, string> = {
   Z: 'Ž',
 };
 
-/** Accent every letter outside `{…}` / `<…>`, pad with ~40% filler, bracket. */
+/**
+ * Accent the message text, pad with ~40% filler, bracket. Argument heads
+ * (`{n, plural, one`), `#` and `<tags>` stay as they are; the text inside
+ * plural/select branches is accented like the rest.
+ */
 export function pseudoLocalize(message: string): string {
-  let out = '';
-  let depth = 0;
-  let inTag = false;
-  for (const ch of message) {
-    if (ch === '{') depth++;
-    else if (ch === '}') depth = Math.max(0, depth - 1);
-    else if (ch === '<' && depth === 0) inTag = true;
-    out += depth > 0 || inTag ? ch : (ACCENTS[ch] ?? ch);
-    if (ch === '>' && inTag) inTag = false;
-  }
+  let i = 0;
+  // Text up to the `}` that closes the enclosing branch, or the end.
+  const text = (nested: boolean): string => {
+    let out = '';
+    while (i < message.length) {
+      const ch = message[i];
+      if (ch === '}' && nested) return out;
+      if (ch === '{') out += argument();
+      else if (ch === '<') {
+        const end = message.indexOf('>', i);
+        const stop = end < 0 ? message.length : end + 1;
+        out += message.slice(i, stop);
+        i = stop;
+      } else {
+        out += nested && ch === '#' ? ch : (ACCENTS[ch] ?? ch);
+        i++;
+      }
+    }
+    return out;
+  };
+  // `{…}` from its `{` to its `}`: head copied, each `{branch}` body as text.
+  const argument = (): string => {
+    let out = message[i++];
+    while (i < message.length) {
+      const ch = message[i++];
+      out += ch;
+      if (ch === '}') return out;
+      if (ch === '{') {
+        out += text(true);
+        if (i < message.length) out += message[i++];
+      }
+    }
+    return out;
+  };
+  const out = text(false);
   // spaced, so the filler wraps like words instead of forcing one wide line
   const pad = Array(Math.ceil(message.length * 0.2)).fill('~').join(' ');
   return `[${out} ${pad}]`;

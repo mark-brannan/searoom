@@ -117,6 +117,7 @@ async function compare(goldenPng, actualPng) {
 }
 
 let failed = 0;
+let clipped = 0;
 for (const [w, h] of widths) {
   await page.setViewportSize({ width: w, height: h });
   for (const [name, hash] of states) {
@@ -135,7 +136,7 @@ for (const [w, h] of widths) {
         console.log(
           `CLIPPED ${name}-${w}: page is ${over}px wider than the viewport`,
         );
-        failed++;
+        clipped++;
       }
     }
     const height = await page.evaluate(
@@ -172,7 +173,9 @@ for (const [w, h] of widths) {
 }
 
 await browser.close();
-if (failed) {
-  console.error(`${failed} golden(s) over ${MAX_DIFF_FRACTION * 100}%`);
+if (failed || clipped) {
+  console.error(
+    `${failed} golden(s) over ${MAX_DIFF_FRACTION * 100}%, ${clipped} pseudo shot(s) wider than the viewport`,
+  );
   process.exit(1);
 }
