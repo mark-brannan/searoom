@@ -43,19 +43,13 @@ against is the number of questions in these PDFs, refreshed yearly.
 
 The samples are works of the US Government, so they carry no US
 copyright ([17 U.S.C. 105](https://www.law.cornell.edu/uscode/text/17/105))
-and the repo may store, quote and test against them. Two limits:
-
-- §105 is US law. Whether another country treats the text as free is
-  that country's question; the US corpus is the only one this check reads.
-- Third-party "Coast Guard question" sites (Quizlet decks, commercial
-  banks) are not the NMC's text and carry their own terms. They are not a
-  source here.
+and the repo may store, quote and test against them. One limit: third-party
+"Coast Guard question" sites (Quizlet decks, commercial banks) are not the
+NMC's text and carry their own terms. They are not a source here.
 
 ## Coverage
 
-Not counted yet. On 2026-11-17 the `dco.uscg.mil` host answered HTTP 403
-to scripted fetches from the build machine, so the PDFs could not be read
-there. A copy fetched by a person's browser and committed under
-`docs/` (or a fixtures folder) unblocks step 2 of #125: mapping each
+Not counted yet. The four PDFs are not in the repo; a copy fetched in a
+browser and committed unblocks step 2 of #125: mapping each
 lights-and-shapes and steering-and-sailing question to a fact record or
 situation record, and counting the rest.
