@@ -48,13 +48,15 @@ jobs:
           done
           node scripts/e2e.mjs
 
-  # Screenshot goldens (scripts/goldens.mjs): every mode's default state plus
-  # three sandbox states, dark, at 1280 and 360 px. Fails when a shot differs
-  # from screenshots/goldens by more than 0.1% of pixels. goldens-out/ (the
-  # actual renders, plus red-mask diff-*.png for failures) is uploaded either
-  # way; on a deliberate change, copy the renders over screenshots/goldens in
-  # the update commit. A measurement, not a gate, so it stays out of ci-gate's
-  # needs until it has a track record.
+  # Screenshot goldens (scripts/goldens.mjs, fixtures in golden-fixtures.mjs):
+  # every mode's default state plus two sandbox states, and the matrix of
+  # every preset hull x 3D/Plan view x theta 0/45/90 (screenshots/goldens/
+  # matrix), dark, at 1280 and 360 px. Fails when a shot differs from
+  # screenshots/goldens by more than 0.1% of pixels. goldens-out/ (the actual
+  # renders, red-mask diff-*.png for failures, and gallery.html showing every
+  # golden beside its render) is uploaded either way; on a deliberate change,
+  # copy the renders over screenshots/goldens in the update commit. A gate:
+  # listed in ci-gate's needs (#102).
   goldens:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -136,7 +138,7 @@ jobs:
   # evaluate when a dependency failed or was skipped, so it reports an explicit
   # pass or fail of its own rather than inheriting the skip.
   ci-gate:
-    needs: [check, e2e, nonempty, pr-title]
+    needs: [check, e2e, goldens, nonempty, pr-title]
     if: always()
     # It reads nothing and writes nothing; the results go in as an input.
     permissions: {}

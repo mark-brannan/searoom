@@ -2,11 +2,16 @@
 //   node scripts/goldens.mjs update [baseUrl]   rewrite screenshots/goldens/
 //   node scripts/goldens.mjs check  [baseUrl]   compare; exit 1 if any shot
 //                                               differs by more than 0.1% of pixels
-// `check` writes actual and diff images to goldens-out/ (CI uploads them).
+// The fixtures (scripts/golden-fixtures.mjs) are the full-page states plus a
+// matrix of every preset hull x view x theta x width, clipped to the scene
+// panel, kept under screenshots/goldens/matrix/.
+// `check` writes actual and diff images to goldens-out/ (CI uploads them),
+// plus goldens-out/gallery.html: every picture, golden beside actual.
 // Comparison runs in the browser on a canvas, so no image dependency is added.
 
 import { chromium } from 'playwright';
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync, existsSync, copyFileSync } from 'node:fs';
+import { states, widths, matrix } from './golden-fixtures.mjs';
 
 const mode = process.argv[2] ?? 'check';
 const base = process.argv[3] ?? 'http://localhost:4173/searoom/';
@@ -16,36 +21,34 @@ const MAX_DIFF_FRACTION = 0.001; // 0.1% of pixels
 const MAX_HEIGHT = 3000; // px; enough for every sandbox state at 360 px
 const CHANNEL_TOLERANCE = 16; // per-channel delta below this is anti-aliasing noise
 
-const states = [
-  ['sandbox', '#/sandbox'],
-  ['identify', '#/identify'],
-  ['quiz', '#/quiz'],
-  ['quiz-reverse', '#/quiz?dir=reverse'],
-  ['rules', '#/rules'],
-  ['sound', '#/sound'],
-  ['sandbox-power-60m', '#/sandbox?p=power&a=none&pos=underway&mw=1&len=60'],
-  ['sandbox-trawler', '#/sandbox?p=power&a=trawling&pos=underway&mw=0&len=30'],
-];
-const widths = [
-  [1280, 900],
-  [360, 740],
-];
+const only = process.argv[4]; // optional substring filter, for a local run
 
-mkdirSync(mode === 'update' ? goldenDir : outDir, { recursive: true });
+const matrixGolden = `${goldenDir}/matrix`;
+const outDirs = mode === 'update' ? [goldenDir, matrixGolden] : [outDir, `${outDir}/matrix`, `${outDir}/golden/matrix`];
+for (const d of outDirs) mkdirSync(d, { recursive: true });
 
 const browser = await chromium.launch();
-const context = await browser.newContext({
-  colorScheme: 'dark',
-  reducedMotion: 'reduce',
-  deviceScaleFactor: 1,
-});
-// The first-run intro (#108) would cover the page; mark it seen.
-await context.addInitScript(() => {
-  localStorage.setItem('searoom.introSeen', '1');
-});
-// the opening mesh is random (searoom#174); pin it to the hull's first variant
-await context.addInitScript(() => { Math.random = () => 0; });
+// One context per arcs setting: the Plan view is offered only while the arcs
+// are hidden, and the app reads that preference once, from localStorage.
+async function newContext(arcs) {
+  const context = await browser.newContext({
+    colorScheme: 'dark',
+    reducedMotion: 'reduce',
+    deviceScaleFactor: 1,
+  });
+  // The first-run intro (#108) would cover the page; mark it seen.
+  await context.addInitScript((a) => {
+    localStorage.setItem('searoom.introSeen', '1');
+    if (a === 'hidden') localStorage.setItem('searoom.arcs', 'hidden');
+  }, arcs);
+  // the opening mesh is random (searoom#174); pin it to the hull's first variant
+  await context.addInitScript(() => { Math.random = () => 0; });
+  return context;
+}
+const context = await newContext('shown');
+const planContext = await newContext('hidden');
 const page = await context.newPage();
+const planPage = await planContext.newPage();
 const cmp = await context.newPage();
 
 // Returns { fraction, diffPng (base64) } for two PNG buffers.
@@ -107,47 +110,92 @@ async function compare(goldenPng, actualPng) {
 }
 
 let failed = 0;
+const gallery = []; // { file, golden, actual, pct, status }
+
+// One picture: shoot it, then write it (update) or compare it (check).
+async function settle(pg, w, h, hash, shotOf) {
+  await pg.setViewportSize({ width: w, height: h });
+  await pg.goto(base + hash, { waitUntil: 'networkidle' });
+  await pg.waitForTimeout(600);
+  return shotOf(pg);
+}
+async function record(file, shot) {
+  if (mode === 'update') {
+    writeFileSync(`${goldenDir}/${file}`, shot);
+    console.log('wrote', file);
+    return;
+  }
+  writeFileSync(`${outDir}/${file}`, shot);
+  const entry = { file, pct: null, status: 'missing' };
+  gallery.push(entry);
+  if (!existsSync(`${goldenDir}/${file}`)) {
+    console.log('MISSING', file);
+    failed++;
+    return;
+  }
+  copyFileSync(`${goldenDir}/${file}`, `${outDir}/golden/${file}`);
+  const { fraction, diffPng } = await compare(
+    readFileSync(`${goldenDir}/${file}`),
+    shot,
+  );
+  entry.pct = (fraction * 100).toFixed(3);
+  if (fraction > MAX_DIFF_FRACTION) {
+    writeFileSync(`${outDir}/diff-${file}`, Buffer.from(diffPng, 'base64'));
+    entry.status = 'fail';
+    console.log(`FAIL ${file} ${entry.pct}% differs`);
+    failed++;
+  } else {
+    entry.status = 'ok';
+    console.log(`ok   ${file} ${entry.pct}%`);
+  }
+}
+
 for (const [w, h] of widths) {
-  await page.setViewportSize({ width: w, height: h });
   for (const [name, hash] of states) {
-    const file = `${name}-${w}.png`;
-    await page.goto(base + hash, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(600);
+    if (only && !name.includes(only)) continue;
     // Past the viewport: at 360 px the first screen holds only the fact
     // record, so a viewport shot never sees the vessel drawing or the
     // displays. Clipped to the viewport width and MAX_HEIGHT so a long page
     // (the rules list) stays a reviewable PNG.
-    const height = await page.evaluate(
-      () => document.documentElement.scrollHeight,
-    );
-    const shot = await page.screenshot({
-      fullPage: true,
-      clip: { x: 0, y: 0, width: w, height: Math.min(height, MAX_HEIGHT) },
+    const shot = await settle(page, w, h, hash, async (pg) => {
+      const height = await pg.evaluate(
+        () => document.documentElement.scrollHeight,
+      );
+      return pg.screenshot({
+        fullPage: true,
+        clip: { x: 0, y: 0, width: w, height: Math.min(height, MAX_HEIGHT) },
+      });
     });
-    if (mode === 'update') {
-      writeFileSync(`${goldenDir}/${file}`, shot);
-      console.log('wrote', file);
-      continue;
-    }
-    writeFileSync(`${outDir}/${file}`, shot);
-    if (!existsSync(`${goldenDir}/${file}`)) {
-      console.log('MISSING', file);
-      failed++;
-      continue;
-    }
-    const { fraction, diffPng } = await compare(
-      readFileSync(`${goldenDir}/${file}`),
-      shot,
-    );
-    const pct = (fraction * 100).toFixed(3);
-    if (fraction > MAX_DIFF_FRACTION) {
-      writeFileSync(`${outDir}/diff-${file}`, Buffer.from(diffPng, 'base64'));
-      console.log(`FAIL ${file} ${pct}% differs`);
-      failed++;
-    } else {
-      console.log(`ok   ${file} ${pct}%`);
-    }
+    await record(`${name}-${w}.png`, shot);
   }
+  for (const { name, hash, arcs } of matrix) {
+    if (only && !name.includes(only)) continue;
+    const pg = arcs === 'hidden' ? planPage : page;
+    const shot = await settle(pg, w, h, hash, (p) =>
+      p.locator('.scene-panel').first().screenshot(),
+    );
+    await record(`matrix/${name}-${w}.png`, shot);
+  }
+}
+
+if (mode === 'check') {
+  const rows = gallery
+    .map(
+      (g) =>
+        `<figure class="${g.status}"><figcaption>${g.file} ${g.pct ?? ''}% ${g.status}</figcaption>` +
+        `<img loading="lazy" src="golden/${g.file}" alt="golden">` +
+        `<img loading="lazy" src="${g.file}" alt="actual"></figure>`,
+    )
+    .join('\n');
+  // Self-contained in the artifact: the goldens are copied into golden/.
+  writeFileSync(
+    `${outDir}/gallery.html`,
+    `<!doctype html><meta charset="utf-8"><title>searoom goldens</title>` +
+      `<style>body{background:#111;color:#ddd;font:14px sans-serif}` +
+      `figure{display:inline-block;margin:6px;vertical-align:top}` +
+      `figure.fail{outline:2px solid #f04}img{max-width:360px;display:block;margin:2px 0}` +
+      `</style>\n<h1>${gallery.length} goldens: golden above, actual below</h1>\n${rows}\n`,
+  );
 }
 
 await browser.close();
