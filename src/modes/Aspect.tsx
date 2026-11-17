@@ -11,11 +11,13 @@ import {
   ASPECT_SCENES,
   GLIMPSE_MS,
   TOLERANCE_DEG,
-  angularError,
   aspectScenes,
+  errorsOf,
   headingSeenFrom,
+  inSternSector,
   scoreDrill,
 } from '../engine/aspect';
+import { describeFacts } from '../components/factLabel';
 import { loadAspectRuns, recordAspectRun } from '../engine/quizProgress';
 import type { AspectRun } from '../engine/quizProgress';
 import { useJurisdiction } from '../state/store';
@@ -28,7 +30,7 @@ const C = 100;
 /** Dial reading of a point in the dial's viewBox: 0 up, clockwise. */
 function readingAt(x: number, y: number): number {
   const deg = (Math.atan2(x - C, C - y) * 180) / Math.PI;
-  return Math.round((deg + 360) % 360);
+  return Math.round(deg + 360) % 360;
 }
 
 const onRing = (deg: number, r: number) => {
@@ -128,20 +130,20 @@ function RecentRuns({ runs }: { runs: AspectRun[] }) {
 
 export function Aspect() {
   const jurisdiction = useJurisdiction();
+  const intl = useIntl();
   const [seed, setSeed] = useState(0);
   const scenes = useMemo(
     () => (seed ? aspectScenes(seed, jurisdiction, ASPECT_SCENES) : []),
     [seed, jurisdiction],
   );
   const [phase, setPhase] = useState<Phase>('idle');
-  const [index, setIndex] = useState(0);
   const [aim, setAim] = useState<number | null>(null);
   const [picks, setPicks] = useState<(number | null)[]>([]);
   const [runs, setRuns] = useState<AspectRun[]>(loadAspectRuns);
+  const index = picks.length;
 
   const start = () => {
     setSeed(Math.floor(Math.random() * 1e9) + 1);
-    setIndex(0);
     setPicks([]);
     setAim(null);
     setPhase('glimpse');
@@ -152,14 +154,16 @@ export function Aspect() {
     setPicks(next);
     setAim(null);
     if (next.length < scenes.length) {
-      setIndex(next.length);
       setPhase('glimpse');
       return;
     }
-    const errors = next.map((p, i) =>
-      p === null ? 180 : angularError(p, headingSeenFrom(scenes[i].theta)),
+    setRuns(
+      recordAspectRun({
+        at: Date.now(),
+        scenes: scenes.length,
+        ...scoreDrill(errorsOf(next, scenes)),
+      }),
     );
-    setRuns(recordAspectRun({ at: Date.now(), scenes: scenes.length, ...scoreDrill(errors) }));
     setPhase('done');
   };
 
@@ -178,9 +182,7 @@ export function Aspect() {
   }, [phase, index]);
 
   const scene = scenes[index];
-  const errors = picks.map((p, i) =>
-    p === null ? 180 : angularError(p, headingSeenFrom(scenes[i].theta)),
-  );
+  const errors = errorsOf(picks, scenes);
   const score = scoreDrill(errors);
 
   return (
@@ -240,12 +242,18 @@ export function Aspect() {
               {scenes.map((s, i) => (
                 <li key={i}>
                   <FormattedMessage
-                    id={picks[i] === null ? 'aspect.review.none' : 'aspect.review.row'}
+                    id={
+                      picks[i] === null
+                        ? 'aspect.review.none'
+                        : inSternSector(s.theta)
+                          ? 'aspect.review.stern'
+                          : 'aspect.review.row'
+                    }
                     values={{
                       heading: headingSeenFrom(s.theta),
                       pick: picks[i],
                       error: Math.round(errors[i]),
-                      name: s.fixtureName,
+                      name: describeFacts(intl, s.facts),
                     }}
                   />
                 </li>

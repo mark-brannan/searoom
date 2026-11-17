@@ -9,9 +9,12 @@ import {
   aspectPool,
   aspectScenes,
   headingSeenFrom,
+  inSternSector,
+  sceneError,
   scoreDrill,
-  sidelightBearing,
 } from './aspect';
+
+const arc = (id: string) => lightCatalog.lights[id].arc;
 
 describe('aspect trainer', () => {
   it.each([
@@ -23,20 +26,40 @@ describe('aspect trainer', () => {
     expect(headingSeenFrom(theta)).toBe(heading);
   });
 
-  it('sees her green sidelight exactly when she crosses to your right', () => {
-    const green = lightCatalog.lights['light:sidelight_starboard'].arc;
-    for (let theta = 1; theta < 112; theta++) {
-      expect(bearingInArc(theta, green)).toBe(true);
+  it.each(Array.from({ length: 360 }, (_, theta) => theta))(
+    'θ %i: green alone means she crosses right, red alone means left',
+    (theta) => {
+      const green = bearingInArc(theta, arc('light:sidelight_starboard'));
+      const red = bearingInArc(theta, arc('light:sidelight_port'));
       const h = headingSeenFrom(theta);
-      expect(h > 0 && h < 180).toBe(true);
-    }
-  });
+      if (green && !red) expect(h > 0 && h <= 180).toBe(true);
+      if (red && !green) expect(h >= 180 && h < 360).toBe(true);
+    },
+  );
 
   it('measures error the short way round the dial', () => {
     expect(angularError(350, 10)).toBe(20);
     expect(angularError(10, 350)).toBe(20);
     expect(angularError(0, 180)).toBe(180);
     expect(angularError(45, 45)).toBe(0);
+  });
+
+  it.each([
+    [180, 40, 0, 'right astern, any pick within the sternlight arc'],
+    [180, 300, 0, 'right astern, the other side of away'],
+    [180, 90, 22.5, 'right astern, past the arc by its distance to the edge'],
+    [150, 90, 22.5, 'anywhere astern scores against the same arc'],
+    [90, 120, 30, 'abeam, plain angular error'],
+    [90, null, 180, 'no pick is the worst miss'],
+  ] as [number, number | null, number, string][])('θ %i, pick %s scores %i: %s', (theta, pick, error) => {
+    expect(sceneError(pick, theta)).toBe(error);
+  });
+
+  it('the stern sector is where no sidelight shows', () => {
+    expect(inSternSector(113)).toBe(true);
+    expect(inSternSector(247)).toBe(true);
+    expect(inSternSector(112)).toBe(false);
+    expect(inSternSector(248)).toBe(false);
   });
 
   it('draws only vessels whose lights say which way she points', () => {
@@ -52,16 +75,6 @@ describe('aspect trainer', () => {
     const a = aspectScenes(7, 'intl');
     expect(a).toHaveLength(ASPECT_SCENES);
     expect(aspectScenes(7, 'intl')).toEqual(a);
-  });
-
-  it('every bearing a drill can draw shows a sidelight', () => {
-    const { lights } = lightCatalog;
-    const stbd = lights['light:sidelight_starboard'].arc;
-    const port = lights['light:sidelight_port'].arc;
-    const drawn = Array.from({ length: 225 }, (_, i) => sidelightBearing(i));
-    expect(new Set(drawn).size).toBe(225);
-    for (const theta of drawn)
-      expect(bearingInArc(theta, stbd) || bearingInArc(theta, port)).toBe(true);
   });
 
   it('a ten-scene drill fits in under a minute, even unanswered', () => {

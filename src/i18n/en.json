@@ -32,6 +32,7 @@
   "aspect.dial.you": "you",
   "aspect.score": "Mean error {mean}°; {within} of {scenes} within {tolerance}°.",
   "aspect.review.row": "{name}: heading {heading}°, you said {pick}°, off by {error}°",
+  "aspect.review.stern": "{name}: heading away, sternlight only, you said {pick}°, off by {error}°",
   "aspect.review.none": "{name}: heading {heading}°, no answer",
   "aspect.runs.title": "Your drills",
   "aspect.runs.empty": "No drills yet. Results stay in this browser, with your quiz progress.",
