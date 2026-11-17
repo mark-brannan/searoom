@@ -140,7 +140,7 @@ async function record(file, shot) {
   );
   entry.pct = (fraction * 100).toFixed(3);
   if (fraction > MAX_DIFF_FRACTION) {
-    writeFileSync(`${outDir}/diff-${file}`, Buffer.from(diffPng, 'base64'));
+    writeFileSync(`${outDir}/diff-${file.replace("/", "-")}`, Buffer.from(diffPng, 'base64'));
     entry.status = 'fail';
     console.log(`FAIL ${file} ${entry.pct}% differs`);
     failed++;
@@ -171,9 +171,12 @@ for (const [w, h] of widths) {
   for (const { name, hash, arcs } of matrix) {
     if (only && !name.includes(only)) continue;
     const pg = arcs === 'hidden' ? planPage : page;
-    const shot = await settle(pg, w, h, hash, (p) =>
-      p.locator('.scene-panel').first().screenshot(),
-    );
+    const shot = await settle(pg, w, h, hash, async (p) => {
+      // at phone width the fixed fact sheet covers the scene panel's foot
+      const handle = p.locator('.sheet-handle[aria-expanded="true"]');
+      if (await handle.isVisible()) await handle.click();
+      return p.locator('.scene-panel').first().screenshot();
+    });
     await record(`matrix/${name}-${w}.png`, shot);
   }
 }

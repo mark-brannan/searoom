@@ -44,7 +44,10 @@ export const matrix = matrixPresets.flatMap((preset) =>
   matrixViews.flatMap((view) =>
     matrixThetas.map((theta) => ({
       name: `${preset}-${view}-${theta}`,
-      hash: `#/sandbox/${preset}?view=${view}&th=${theta}`,
+      // the 3D hull defaults to a 30% hint on a black sky, too faint for a
+      // mesh change to cross the tolerance; shoot it at full hint on a
+      // lighter sky (the URL's hh and bg parameters)
+      hash: `#/sandbox/${preset}?view=${view}&th=${theta}${view === 'model' ? '&hh=100&bg=30' : ''}`,
       // plan is only offered while the arcs are hidden (Sandbox.tsx, ARCS_KEY)
       arcs: view === 'plan' ? 'hidden' : 'shown',
     })),
