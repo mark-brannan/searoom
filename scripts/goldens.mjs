@@ -33,7 +33,6 @@ const states = [
   ['pseudo-flashcards', '#/flashcards?loc=en-XA'],
   ['pseudo-rules', '#/rules?loc=en-XA'],
   ['pseudo-sound', '#/sound?loc=en-XA'],
-  ['pseudo-vessels', '#/vessels?loc=en-XA'],
 ];
 const widths = [
   [1280, 900],
