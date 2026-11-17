@@ -17,7 +17,7 @@ failed and what is written rests on search results.
 | RYA Day Skipper (theory) | Steering and sailing rules 5, 7, 8, 9, 10 and 12–19; "General rules (all other rules)" | RYA syllabus wording as reproduced by Classic Sailing (syllabus section 5) | secondary |
 | RYA Coastal Skipper / Yachtmaster Offshore (theory) | "A sound knowledge of the International Regulations for Preventing Collisions at Sea, except Annexes 1 and 3" | Syllabus as reproduced by a training centre (PDF dated 2024-04-16, section 13) | secondary |
 | ICC (UNECE Resolution 40) | Coastal waters: "the Regulations for Preventing Collisions at Sea, including aids to navigation"; inland: CEVNI. No rule numbers. | ECE/TRANS/SC.3/147/Rev.4, Annex I, para 3.1 | read |
-| ICC, as the RYA examines it | Oral questions, no rule numbers: see the next table | RYA TG10-14, *Guidance Notes for ICC Test Centres*, rev. May 2021, Appendix 1 | read |
+| USCG OUPV near-coastal and Master ≤100 GRT | Module Q100 "Rules of the Road: International and Inland". NMC publishes no paragraph-level list. | NMC exam pages for ONC06/ONC07; the question bank is the de facto syllabus | not reached (dco.uscg.mil returns 403 to the fetcher) |
 | USCG OUPV near-coastal and Master ≤100 GRT | Module Q100 "Rules of the Road: International and Inland". NMC publishes no paragraph-level list. Its question bank is the de facto syllabus. | NMC exam pages for ONC06/ONC07 | not reached (dco.uscg.mil returns 403 to the fetcher) |
 
 ### ICC: the RYA's sample questions, mapped to rules
@@ -39,7 +39,7 @@ The rule column is this research's reading, not the RYA's.
 
 ## Reproduction terms
 
-| Source | Terms | What a study set may take |
+| USCG NMC question bank and samples | U.S. federal works, outside copyright under 17 U.S.C. §105 (general law; the NMC page was not reached) | Ids freely. The question text is reproducible too, which no RYA source allows |
 |---|---|---|
 | RYA syllabi (Day Skipper, Coastal / Yachtmaster), published in the RYA's syllabus and logbook | © Royal Yachting Association; the RYA's own copy was not located online | Rule and paragraph numbers only |
 | RYA TG10-14 ICC guidance | "© Royal Yachting Association" on every page. CEVNI answer papers are withheld "for obvious reason" | Rule numbers from our own reading; no question text |
