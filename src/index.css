@@ -1836,6 +1836,12 @@ nav details > summary {
 
 /* my boat (searoom#121) */
 .my-boat input[type='text'] {
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font: inherit;
   min-width: 12em;
 }
 .my-boat-list {
