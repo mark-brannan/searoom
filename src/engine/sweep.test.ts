@@ -88,6 +88,9 @@ function excludesOf(id: string): string[] {
   return (e?.['rel:excludes'] as string[] | undefined) ?? [];
 }
 
+const OPEN_ARC = new Set(['light:torch', 'light:deck_lights']);
+let darkJudged = 0; // displays the dark-sector check actually judged
+
 /** Degrees of a light's horizontal arc, from its catalog entry; combined sidelights span both. */
 function arcsOf(id: string | undefined): [number, number][] | 'unknown' {
   if (id === 'light:sidelights') return [[0, 112.5], [247.5, 360]];
@@ -158,16 +161,29 @@ function violationsOf(ev: DisplayEvaluation, f: FactRecord): string[] {
     if (count('light:sidelights') > 0 && (stbd > 0 || port > 0))
       out.push(`${tag}: sidelight pair and combined sidelights both shown`);
 
-    // 3b. no dark sector: an underway display at night is seen from every
-    // bearing. Lights whose arc the catalog leaves open (torch, deck lights)
-    // are not counted, so a display carrying only those is not judged.
+    // 3b. no dark sector: an underway display at night, or by day in
+    // restricted visibility (Rule 20(c)), is seen from every bearing. A
+    // display carrying any light whose arc the catalog leaves open (torch,
+    // deck lights) is not judged.
     if (
       f['fact:position'] === 'position:underway' &&
-      f['fact:time'] === 'time:night' &&
+      (f['fact:time'] === 'time:night' ||
+        f['fact:visibility'] === 'visibility:restricted') &&
       d.lights.length > 0
     ) {
       const arcs = d.lights.map((l) => arcsOf(lightId(l)));
-      if (!arcs.includes('unknown') && !coversHorizon(arcs.flat() as [number, number][]))
+      if (arcs.includes('unknown')) {
+        // Pin the skip: only the two lights the catalog gives no arc.
+        const open = d.lights.filter((l) => arcsOf(lightId(l)) === 'unknown');
+        if (open.some((l) => !OPEN_ARC.has(lightId(l) ?? '')))
+          out.push(`${tag}: light with no catalog arc outside the known two`);
+      } else {
+        darkJudged++;
+      }
+      if (
+        !arcs.includes('unknown') &&
+        !coversHorizon(arcs.flat() as [number, number][])
+      )
         out.push(`${tag}: dark sector in the horizontal plane`);
     }
 
@@ -260,6 +276,7 @@ describe('property sweep over the fact space (#123)', () => {
     expect(
       [...unreported].map(([v, rec]) => `${v}\n    first record: ${rec}`),
     ).toEqual([]);
+    expect(darkJudged, 'dark-sector check judged no display').toBeGreaterThan(0);
     const stale = Object.keys(REPORTED).filter((k) => !covered.has(k));
     expect(stale, 'reported classes no longer occur; drop them').toEqual([]);
   });

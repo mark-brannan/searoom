@@ -104,16 +104,15 @@ CI step (`Property sweep`) so its seconds show on the run. Across the grid:
 5. Entries a `rel:excludes` relation separates are never in one display.
 6. A standing `shall` entry (not exempted, overridden or replaced by a
    chosen alternative) is in every display.
-7. An underway display at night leaves no dark sector in the horizontal
-   plane: the catalog arcs of its lights together cover 360 degrees. A display
-   whose lights include one with no catalog arc (torch, deck lights) is not
-   judged.
+7. An underway display at night, or by day in restricted visibility, leaves no
+   dark sector: its lights' catalog arcs cover 360°.
 8. `known_omissions` is present and every record carries cite, what and why
    (the Rules reference renders them).
 
 Not swept: all-round lights in a vertical line being spaced (Annex I 2(i)).
-The engine's output carries no heights, so the sweep cannot see it; the seat
-checks in `src/render/annexISeats.test.ts` hold the placed lights to Annex I.
+The engine's output carries no heights, so the sweep cannot see it, and nothing
+else checks it yet: the seat checks in `src/render/annexISeats.test.ts` cover
+Annex I 3(a) and 3(b) only.
 
 A violation is a colregs issue carrying the failing record, not an app-side
 patch. Classes already reported are listed in the test with their colregs
