@@ -87,3 +87,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t211147z
 - The USCG question source is recorded in a new docs/uscg-question-bank.md, not a section of design.md. Undo: move the file ([#288](https://github.com/mark-brannan/searoom/pull/288))
+
+### 20261117t211155z
+- Third-party Coast Guard question banks are named as not a source for the #125 cross-check. Undo: drop the bullet ([#288](https://github.com/mark-brannan/searoom/pull/288))
