@@ -105,3 +105,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t213220z
 - Aspect trainer glimpse uses the 2D lights-only bearing card, not the 3D view; reads the 2026-10-17 default-view line as the Sandbox's default Undo: swap the mini bearing card for the 3D view in Aspect.tsx ([#290](https://github.com/mark-brannan/searoom/pull/290))
+
+### 20261117t213231z
+- Aspect trainer timing 2.5 s glimpse, 3 s answer, 22.5 deg tolerance; dial with you at the bottom, 0 = heading away Undo: change the constants in src/engine/aspect.ts ([#290](https://github.com/mark-brannan/searoom/pull/290))
