@@ -37,7 +37,7 @@ export function parseBoats(raw: string | null): SavedBoat[] {
       if (typeof facts !== 'object' || facts === null) continue;
       if (out.some((b) => b.name === name)) continue;
       out.push({
-        name: name.slice(0, NAME_MAX),
+        name: name.trim().slice(0, NAME_MAX),
         facts: cleanFacts(facts as FactRecord),
       });
     }
