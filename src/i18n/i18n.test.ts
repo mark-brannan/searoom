@@ -89,7 +89,8 @@ describe('pseudo-locale', () => {
     expect(out).toContain('<b>');
     expect(out).toContain('{n, plural, one {a} other {b}}');
     expect(out.startsWith('[') && out.endsWith(']')).toBe(true);
-    expect(out.length).toBeGreaterThan(1.4 * 'Hello'.length);
+    const plain = 'Show the lights for a vessel';
+    expect(pseudoLocalize(plain).length).toBeGreaterThanOrEqual(1.4 * plain.length);
   });
 
   it('covers every English key and stays out of the picker', () => {

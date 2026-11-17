@@ -107,15 +107,16 @@ show('Unused keys (reported only)', unused);
 console.log(
   `Finnish package vocabulary: ${pkgFiCount} of ${pkgKeys.size} keys (baseline ${baseline})`,
 );
-const regressed = pkgFiCount < baseline;
-if (regressed)
+const drift = pkgFiCount !== baseline;
+if (pkgFiCount < baseline)
   console.log(
     'Finnish coverage fell below src/i18n/fi-coverage.json; a colregs bump dropped translations',
   );
-else if (pkgFiCount > baseline)
-  console.log('Finnish coverage rose: raise packageKeysInFinnish to match');
+else if (drift)
+  console.log(
+    `Finnish coverage rose: set packageKeysInFinnish to ${pkgFiCount} in src/i18n/fi-coverage.json`,
+  );
 
-const bad =
-  onlyEn.length + onlyFi.length + missing.length + (regressed ? 1 : 0);
+const bad = onlyEn.length + onlyFi.length + missing.length + (drift ? 1 : 0);
 console.log(bad ? 'i18n check FAILED' : 'i18n check passed');
 process.exit(bad ? 1 : 0);
