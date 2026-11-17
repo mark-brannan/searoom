@@ -99,3 +99,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t213151z
 - searoom#212: wrong place is built as two lights of an all-round stack trading places, checked on each vertical line's order; moving other lights (fore and aft, sidelights) waits on nav-wright drawing them moved Undo: revert ([#289](https://github.com/mark-brannan/searoom/pull/289))
+
+### 20261117t213201z
+- searoom#212: Practice and Drill stop at a wrong lawful/unlawful judgement and reveal; Exam always asks the second step so it keeps its verdict back Undo: revert judge in Quiz.tsx ([#289](https://github.com/mark-brannan/searoom/pull/289))
