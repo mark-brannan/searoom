@@ -129,3 +129,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t220437z
 - her situations: sail -> under sail, under engine, at anchor, aground; power -> underway, stopped, at anchor, aground; oars -> under oars, at anchor, aground Undo: edit boatSituations ([#293](https://github.com/mark-brannan/searoom/pull/293))
+
+### 20261117t220451z
+- vessel filter reads the fact record in view; quiz carries it as qb=1, flashcards and rules per visit; drill ignores it; quiz on her skips the level's scenario filter Undo: revert ([#293](https://github.com/mark-brannan/searoom/pull/293))
