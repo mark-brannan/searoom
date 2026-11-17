@@ -141,3 +141,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t224612z
 - Identify's side-by-side arrangement is every light she shows, left to right as seen; lights within 2% of her length may come in either order. Undo: revert the horizontal branch of matchesSeen ([#297](https://github.com/mark-brannan/searoom/pull/297))
+
+### 20261117t224621z
+- Identify's ambiguity note merges aspects with one look-alike group, names each once by activity, lists six then counts the rest. Undo: revert few and shortName ([#297](https://github.com/mark-brannan/searoom/pull/297))
