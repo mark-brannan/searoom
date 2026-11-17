@@ -153,3 +153,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t225055z
 - Quiz framing shows in Practice and Drill until the visit's first answer; Exam keeps its own intro. Undo: show quiz-intro unconditionally ([#298](https://github.com/mark-brannan/searoom/pull/298))
+
+### 20261117t225950z
+- Quiz Mixed deals each question's direction from the top bit of a seed hash, not its parity, so a run does not strictly alternate (replaces the parity entry). Undo: revert 167f364 ([#298](https://github.com/mark-brannan/searoom/pull/298))
