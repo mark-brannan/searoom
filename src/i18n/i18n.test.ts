@@ -7,6 +7,10 @@ import appEn from './en.json' with { type: 'json' };
 import appFi from './fi.json' with { type: 'json' };
 import {
   LOCALES,
+  PSEUDO_LOCALE,
+  catalogs,
+  pseudoCatalog,
+  pseudoLocalize,
   catalogDuplicates,
   catalogFor,
   flattenPackageCatalog,
@@ -73,5 +77,24 @@ describe('display catalogs', () => {
       (k) => !(k in (appFi as Record<string, string>)),
     );
     expect(missing).toEqual([]);
+  });
+});
+
+describe('pseudo-locale', () => {
+  it('accents and lengthens, and leaves ICU placeholders alone', () => {
+    const out = pseudoLocalize(
+      'Hello {name}, <b>bold</b> and {n, plural, one {a} other {b}}',
+    );
+    expect(out).toContain('Ĥéļļö {name}');
+    expect(out).toContain('<b>');
+    expect(out).toContain('{n, plural, one {a} other {b}}');
+    expect(out.startsWith('[') && out.endsWith(']')).toBe(true);
+    expect(out.length).toBeGreaterThan(1.4 * 'Hello'.length);
+  });
+
+  it('covers every English key and stays out of the picker', () => {
+    const p = pseudoCatalog();
+    expect(Object.keys(p).sort()).toEqual(Object.keys(catalogFor('en')).sort());
+    expect(Object.keys(catalogs)).not.toContain(PSEUDO_LOCALE);
   });
 });
