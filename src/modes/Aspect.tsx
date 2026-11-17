@@ -14,7 +14,6 @@ import {
   aspectScenes,
   errorsOf,
   headingSeenFrom,
-  inSternSector,
   scoreDrill,
 } from '../engine/aspect';
 import { describeFacts } from '../components/factLabel';
@@ -242,13 +241,7 @@ export function Aspect() {
               {scenes.map((s, i) => (
                 <li key={i}>
                   <FormattedMessage
-                    id={
-                      picks[i] === null
-                        ? 'aspect.review.none'
-                        : inSternSector(s.theta)
-                          ? 'aspect.review.stern'
-                          : 'aspect.review.row'
-                    }
+                    id={picks[i] === null ? 'aspect.review.none' : 'aspect.review.row'}
                     values={{
                       heading: headingSeenFrom(s.theta),
                       pick: picks[i],

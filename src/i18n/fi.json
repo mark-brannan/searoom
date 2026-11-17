@@ -32,7 +32,6 @@
   "aspect.dial.you": "sinä",
   "aspect.score": "Keskivirhe {mean}°; {within}/{scenes} alle {tolerance}°.",
   "aspect.review.row": "{name}: suunta {heading}°, vastasit {pick}°, virhe {error}°",
-  "aspect.review.stern": "{name}: poispäin, vain perävalo, vastasit {pick}°, virhe {error}°",
   "aspect.review.none": "{name}: suunta {heading}°, ei vastausta",
   "aspect.runs.title": "Harjoituksesi",
   "aspect.runs.empty": "Ei vielä harjoituksia. Tulokset säilyvät tässä selaimessa visan edistymisen kanssa.",

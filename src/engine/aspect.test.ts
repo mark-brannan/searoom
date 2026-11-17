@@ -9,7 +9,6 @@ import {
   aspectPool,
   aspectScenes,
   headingSeenFrom,
-  inSternSector,
   sceneError,
   scoreDrill,
 } from './aspect';
@@ -45,21 +44,11 @@ describe('aspect trainer', () => {
   });
 
   it.each([
-    [180, 40, 0, 'right astern, any pick within the sternlight arc'],
-    [180, 300, 0, 'right astern, the other side of away'],
-    [180, 90, 22.5, 'right astern, past the arc by its distance to the edge'],
-    [150, 90, 22.5, 'anywhere astern scores against the same arc'],
-    [90, 120, 30, 'abeam, plain angular error'],
+    [90, 120, 30, 'abeam, against her heading'],
+    [180, 340, 20, 'right astern, the short way past away'],
     [90, null, 180, 'no pick is the worst miss'],
   ] as [number, number | null, number, string][])('θ %i, pick %s scores %i: %s', (theta, pick, error) => {
     expect(sceneError(pick, theta)).toBe(error);
-  });
-
-  it('the stern sector is where no sidelight shows', () => {
-    expect(inSternSector(113)).toBe(true);
-    expect(inSternSector(247)).toBe(true);
-    expect(inSternSector(112)).toBe(false);
-    expect(inSternSector(248)).toBe(false);
   });
 
   it('draws only vessels whose lights say which way she points', () => {

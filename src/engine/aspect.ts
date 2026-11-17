@@ -5,8 +5,6 @@
 // looking up at her: 0 heading away from you, 90 crossing to your right,
 // 180 straight at you.
 
-import { bearingInArc } from 'nav-wright';
-import { lights as lightCatalog } from '../data/colregs';
 import { evaluateDisplayIn } from './evaluate';
 import { mulberry32, scenarioPoolFor } from './quiz';
 import type { DisplayLight, FactRecord } from './types';
@@ -45,27 +43,9 @@ export function angularError(a: number, b: number): number {
   return Math.min(d, 360 - d);
 }
 
-const arcOf = (id: string) => lightCatalog.lights[id].arc!;
-const STERN = arcOf('light:sternlight');
-const STBD = arcOf('light:sidelight_starboard');
-const PORT = arcOf('light:sidelight_port');
-
-/**
- * From the stern sector her sidelights are hidden and her lights say
- * "heading away" and nothing finer, so any pick inside the headings that
- * sector spans scores 0, and one outside it by its distance to the edge.
- */
-export function inSternSector(theta: number): boolean {
-  return bearingInArc(theta, STERN) && !bearingInArc(theta, STBD) && !bearingInArc(theta, PORT);
-}
-
 /** A scene's error, degrees; no pick is the worst miss. */
 export function sceneError(pick: number | null, theta: number): number {
-  if (pick === null) return 180;
-  if (!inSternSector(theta)) return angularError(pick, headingSeenFrom(theta));
-  const centre = headingSeenFrom((STERN.from_deg + STERN.to_deg) / 2);
-  const half = (STERN.to_deg - STERN.from_deg) / 2;
-  return Math.max(0, angularError(pick, centre) - half);
+  return pick === null ? 180 : angularError(pick, headingSeenFrom(theta));
 }
 
 export function errorsOf(picks: (number | null)[], scenes: AspectScene[]): number[] {
