@@ -147,3 +147,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t225030z
 - Quiz Mixed takes each question's direction from its seed's parity, so a mixed URL reproduces the question. Undo: drop dir=mixed and the parity helper ([#298](https://github.com/mark-brannan/searoom/pull/298))
+
+### 20261117t225043z
+- Identify's empty-sea example is red over white over red, all-round, in a vertical line (restricted in ability to manoeuvre). Undo: change EXAMPLE in Identify.tsx ([#298](https://github.com/mark-brannan/searoom/pull/298))
