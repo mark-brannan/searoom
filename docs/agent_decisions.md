@@ -132,3 +132,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t220451z
 - vessel filter reads the fact record in view; quiz carries it as qb=1, flashcards and rules per visit; drill ignores it; quiz on her skips the level's scenario filter Undo: revert ([#293](https://github.com/mark-brannan/searoom/pull/293))
+
+### 20261117t220504z
+- cheat sheet: PDF via the browser print dialog, night only until #85, reached from the My boat panel rather than a header tab Undo: revert ([#293](https://github.com/mark-brannan/searoom/pull/293))
