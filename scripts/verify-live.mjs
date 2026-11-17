@@ -54,7 +54,7 @@ check(
 
 // 3. drifting trawler: identity lights stay, sidelights/sternlight go
 const countLights = async () =>
-  page.locator('.scene-svg g > circle:nth-child(3)').count();
+  page.locator('.arcs-panel .plan-svg g > circle:nth-child(3)').count();
 await page.goto(
   `${base}#/sandbox?p=power&a=trawling&pos=underway&mw=1&len=30`,
   { waitUntil: 'networkidle' },
@@ -167,6 +167,58 @@ await page.goto(`${base}#/sandbox?p=power&a=none&pos=anchored&len=6&nc=0`, {
 });
 const exempted = await page.locator('.panel', { hasText: 'Exempted' }).count();
 check('30(e) exemption is visible', exempted >= 1);
+
+// 13. corpus switch (REQ-LANG-2): the Finnish corpus quotes the same
+// paragraph path in other words
+const quoteOf = async (url) => {
+  await page.goto(url, { waitUntil: 'networkidle' });
+  await page
+    .locator('[data-path="27(a)(i)"] .rule-text')
+    .first()
+    .waitFor({ timeout: 5000 })
+    .catch(() => {});
+  return (
+    (await page
+      .locator('[data-path="27(a)(i)"] .rule-text')
+      .first()
+      .textContent()
+      .catch(() => null)) ?? ''
+  );
+};
+const rulePath = `#/rules/${encodeURIComponent('27(a)(i)')}`;
+const quoteEn = await quoteOf(`${base}${rulePath}`);
+const quoteFi = await quoteOf(
+  `${base}${rulePath}?j=intl&cp=${encodeURIComponent('intl@1977.fi.finlex')}`,
+);
+check(
+  'corpus switch: 27(a)(i) quoted in other words',
+  quoteEn.length > 0 && quoteFi.length > 0 && quoteEn !== quoteFi,
+);
+
+// 14. a preset boat: picking one from the gallery yields a verdict
+await page.goto(`${base}#/sandbox`, { waitUntil: 'networkidle' });
+const presetCards = page.locator('.preset-card');
+if ((await presetCards.count()) > 1) {
+  await presetCards.nth(1).click();
+}
+check(
+  'preset boat: a verdict (display chips) shows',
+  (await presetCards.count()) > 1 && (await chips.count()) >= 1,
+  `${await presetCards.count()} presets, ${await chips.count()} chips`,
+);
+
+// 15. the 3D view (the Sandbox default) draws a WebGL canvas
+await page.goto(`${base}#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12`, {
+  waitUntil: 'networkidle',
+});
+const canvas = page.locator('canvas').first();
+await canvas.waitFor({ timeout: 10000 }).catch(() => {});
+const box = await canvas.boundingBox().catch(() => null);
+check(
+  '3D view loads a canvas',
+  !!box && box.width > 100 && box.height > 100,
+  box ? `${Math.round(box.width)}x${Math.round(box.height)}` : 'no canvas',
+);
 
 // 12. the social preview image named by og:image resolves to an image
 await page.goto(base, { waitUntil: 'networkidle' });
