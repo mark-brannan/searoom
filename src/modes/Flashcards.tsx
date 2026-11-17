@@ -17,7 +17,9 @@ import {
   today,
 } from '../state/leitner';
 import type { Boxes } from '../state/leitner';
-import { useJurisdiction } from '../state/store';
+import { useJurisdiction, useSituation } from '../state/store';
+import { BoatFilter } from '../components/MyBoat';
+import { boatScenarios } from '../engine/myBoat';
 
 const SESSION_CAP = 20;
 
@@ -27,12 +29,17 @@ export function Flashcards() {
   const [boxes, setBoxes] = useState<Boxes>(() => loadBoxes());
   const [rule, setRule] = useState('');
   const [family, setFamily] = useState('');
+  const [mine, setMine] = useState(false);
+  const { facts } = useSituation();
   const [flipped, setFlipped] = useState(false);
   const [requeued, setRequeued] = useState<Card[]>([]);
   const [session, setSession] = useState(0);
   const day = today();
 
-  const deck = useMemo(() => buildDeck(jurisdiction), [jurisdiction]);
+  const deck = useMemo(
+    () => buildDeck(jurisdiction, mine ? boatScenarios(facts) : undefined),
+    [jurisdiction, mine, facts],
+  );
   const rules = useMemo(
     () =>
       [...new Set(deck.map((c) => c.rule))]
@@ -126,6 +133,15 @@ export function Flashcards() {
               ))}
             </select>
           </label>
+          <BoatFilter
+            mine={mine}
+            onMine={(m) => {
+              setMine(m);
+              setRule('');
+              setFamily('');
+              restart();
+            }}
+          />
           <span style={{ marginLeft: 'auto', color: 'var(--dim)' }}>
             <FormattedMessage id="flashcards.due" values={{ count: dueTotal }} />
           </span>

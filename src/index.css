@@ -1833,3 +1833,106 @@ nav details > summary {
     animation: light-flash 0.5s steps(1) infinite;
   }
 }
+
+/* my boat (searoom#121) */
+.my-boat input[type='text'] {
+  min-width: 12em;
+}
+.my-boat-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+}
+.my-boat-list li {
+  display: inline-flex;
+  gap: 2px;
+}
+
+/* the cheat sheet: one card, on screen and on paper */
+.cheat-sheet h3 {
+  margin: 0.6rem 0 0.2rem;
+  font-size: 1rem;
+}
+.sheet-cite {
+  margin: 0.2rem 0;
+  font-size: 0.9rem;
+}
+.sheet-views {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+.sheet-views figure {
+  margin: 0;
+}
+.sheet-views figcaption {
+  font-size: 0.75rem;
+  color: var(--dim);
+  text-align: center;
+}
+.sheet-views .plan-svg {
+  width: 100%;
+  height: auto;
+  max-height: 120px;
+}
+@media (max-width: 520px) {
+  .sheet-views {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+  .app {
+    padding: 0;
+  }
+  .topbar,
+  .footer,
+  .disclaimer,
+  .draft-banner,
+  .no-print {
+    display: none !important;
+  }
+  .cheat-sheet {
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-size: 8pt;
+  }
+  .sheet-cite {
+    margin: 1pt 0;
+    font-size: 8pt;
+  }
+  .sheet-views figcaption {
+    font-size: 6.5pt;
+  }
+  .sheet-foot {
+    margin: 2pt 0 0;
+    font-size: 7pt;
+  }
+  .cheat-sheet h2 {
+    font-size: 13pt;
+    margin: 0;
+  }
+  .cheat-sheet h3 {
+    font-size: 10pt;
+    margin: 4pt 0 1pt;
+  }
+  .sheet-situation,
+  .sheet-display {
+    break-inside: avoid;
+  }
+  .sheet-views {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 3pt;
+  }
+  .sheet-views .scene-svg,
+  .sheet-views .plan-svg {
+    max-height: 17mm;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
