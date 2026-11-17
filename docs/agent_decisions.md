@@ -114,3 +114,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t215952z
 - docs/syllabi.md quotes short cited syllabus lines; #122's no-copy rule read as binding the study-set files Undo: replace the quotes with paraphrase ([#291](https://github.com/mark-brannan/searoom/pull/291))
+
+### 20261117t220004z
+- ICC rule numbers in docs/syllabi.md are this research's reading of the RYA TG10-14 sample questions, labelled as such Undo: drop the ICC mapping table ([#291](https://github.com/mark-brannan/searoom/pull/291))
