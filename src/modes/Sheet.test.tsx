@@ -7,7 +7,7 @@ import { boatSheet } from '../engine/myBoat';
 import { DEFAULT_STATE } from '../state/urlState';
 
 describe('cheat sheet', () => {
-  it('draws every lawful display of each situation, from four aspects and overhead', () => {
+  it('draws every lawful display of each situation, in the bearing, profile and arcs views', () => {
     const out = renderToStaticMarkup(
       <IntlProvider locale="en" messages={catalogs.en} defaultLocale="en">
         <Sheet />
@@ -19,6 +19,6 @@ describe('cheat sheet', () => {
     ).reduce((n, r) => n + r.displays.length, 0);
     expect(want).toBeGreaterThan(0);
     expect(out.match(/data-testid="sheet-display"/g)?.length).toBe(want);
-    expect(out.match(/<figure>/g)?.length).toBe(want * 5);
+    expect(out.match(/<figure>/g)?.length).toBe(want * 6);
   });
 });

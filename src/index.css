@@ -1865,7 +1865,7 @@ nav details > summary {
 }
 .sheet-views {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 6px;
 }
 .sheet-views figure {
@@ -1932,7 +1932,7 @@ nav details > summary {
     break-inside: avoid;
   }
   .sheet-views {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 3pt;
   }
   .sheet-views .scene-svg,

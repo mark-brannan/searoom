@@ -1,9 +1,9 @@
 // The cheat sheet (searoom#121): one page for the companionway — her lawful
-// displays in each situation she will meet, as the lights show from ahead,
-// abeam and astern and as the arcs overhead, each with the paragraphs that
-// require it. The page is the fact record in view, so its link is the sheet;
-// the print stylesheet fits it to one page, and the browser's print dialog
-// saves it as a PDF.
+// displays in each situation she will meet, in three views — the lights
+// alone from ahead, abeam and astern, her profile, and the arcs overhead —
+// each with the paragraphs that require it. The page is the fact record in
+// view, so its link is the sheet; the print stylesheet fits it to one page,
+// and the browser's print dialog saves it as a PDF.
 
 import { useMemo, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
@@ -11,6 +11,7 @@ import { Arcs, Scene } from '../components/Scene';
 import { describeFacts } from '../components/factLabel';
 import { useBoatName } from '../components/MyBoat';
 import { boatSheet } from '../engine/myBoat';
+import { selectHull } from 'nav-wright';
 import { useApp, useSituation } from '../state/store';
 
 /** Ahead, starboard beam, astern, port beam. */
@@ -26,6 +27,9 @@ export function Sheet() {
   const { jurisdiction, facts } = useSituation();
   const setMode = useApp((s) => s.setMode);
   const name = useBoatName(facts);
+  // every situation is drawn on her own hull, not the one its record selects
+  // (aground would draw a ship, under engine a motor boat)
+  const hull = useMemo(() => selectHull(facts), [facts]);
   const rows = useMemo(
     () => boatSheet(jurisdiction, facts),
     [jurisdiction, facts],
@@ -122,12 +126,25 @@ export function Sheet() {
                         facts={situation.facts}
                         lights={display.lights}
                         settings={{ view: 'model', theta }}
+                        hull={hull}
                       />
                       <figcaption>
                         <FormattedMessage id={`aspect.${aspect}`} />
                       </figcaption>
                     </figure>
                   ))}
+                  <figure>
+                    <Scene
+                      presentation="mini"
+                      facts={situation.facts}
+                      lights={display.lights}
+                      settings={{ view: 'profile', theta: 90 }}
+                      hull={hull}
+                    />
+                    <figcaption>
+                      <FormattedMessage id="view.profile" />
+                    </figcaption>
+                  </figure>
                   <figure>
                     <Arcs
                       facts={situation.facts}
