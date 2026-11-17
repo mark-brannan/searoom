@@ -205,7 +205,7 @@
   "identify.ask.others": "Any other light, apart from those?",
   "identify.ambiguity": "{members} show these same lights {aspect}. They differ in {differ}, which the lights don't show from there.",
   "identify.ambiguity.parted": "They look different {aspects}.",
-  "identify.ambiguity.more": "{count, plural, one {# more} other {# more}}",
+  "identify.ambiguity.more": "{count} more",
   "identify.axis.activity": "what she is doing",
   "identify.axis.propulsion": "how she is driven",
   "identify.axis.position": "whether she is underway, anchored or aground",

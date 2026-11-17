@@ -119,7 +119,7 @@ const fits = (s: SeenLight, v: VisibleLight): boolean =>
   s.color === v.color &&
   s.flashing === v.flashing &&
   (s.kind === undefined || KIND_ID[s.kind] === v.lightId) &&
-  (s.seat === undefined || (s.seat === 'forward' ? v.along > 0 : v.along < 0));
+  (s.seat === undefined || (s.seat === 'forward' ? v.along >= 0 : v.along <= 0));
 
 /** Where the light sits across the viewer's field, larger to their right. */
 const screenX = (v: VisibleLight, theta: number): number => {

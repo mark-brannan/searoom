@@ -354,6 +354,7 @@ export function Identify() {
                   setAnswers((a) => ({ ...a, others: [...a.others, l] }))
                 }
               />
+              <FlashingBox flashing={flashing} setFlashing={setFlashing} />
             </div>
             <SeenList
               seen={answers.others}
