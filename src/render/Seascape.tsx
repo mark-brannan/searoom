@@ -4,6 +4,12 @@
 
 import { useId } from 'react';
 
+/** The 3D view's sea brightness (nav-wright seaColor, 0..1) on the night
+ *  sea: #071124, the near end of the gradient below, so the 3D view and
+ *  Identify's field are the same sea. nav-wright's own default, 0.1, is
+ *  near black. */
+export const SEASCAPE_SEA = 0.3;
+
 export function Seascape({
   width,
   height,

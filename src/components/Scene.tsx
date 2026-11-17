@@ -12,7 +12,7 @@ import { rovingKeyDown } from './roving';
 import { lights as lightCatalog } from '../data/colregs';
 import type { DisplayLight, FactRecord } from '../engine/types';
 import type { Arrangement, SeenLight } from '../engine/identify';
-import { Seascape } from '../render/Seascape';
+import { SEASCAPE_SEA, Seascape } from '../render/Seascape';
 import {
   Glow,
   PX,
@@ -49,7 +49,15 @@ import type { SandboxView, View } from '../state/urlState';
 
 export type SceneSettings = Pick<
   SandboxView,
-  'view' | 'theta' | 'tilt' | 'hullHint' | 'range' | 'sky' | 'mesh' | 'benchy'
+  | 'view'
+  | 'theta'
+  | 'tilt'
+  | 'hullHint'
+  | 'range'
+  | 'sky'
+  | 'mesh'
+  | 'benchy'
+  | 'lightsOnly'
 >;
 
 const ASPECTS: Aspect[] = [
@@ -438,6 +446,10 @@ function FullScene({
     variants.find((v) => v.name === settings.mesh) ?? variants[0];
   const meshUrl = meshVariant?.url ?? FALLBACK_MODEL_URL;
   const meshOff = view === 'plan' || (view === 'model' && settings.benchy);
+  // the strict exam view: her lights on black, the night sea's sliders kept
+  // for when the seascape comes back
+  const lightsOnly = view === 'model' && settings.lightsOnly;
+  const seaOff = view === 'plan' || lightsOnly;
 
   return (
     <div className="panel scene-panel">
@@ -501,9 +513,10 @@ function FullScene({
             onTheta={onTheta}
             tilt={settings.tilt}
             onTilt={(t) => onChange({ tilt: t })}
-            hullHint={settings.hullHint / 100}
+            hullHint={lightsOnly ? 0 : settings.hullHint / 100}
             range={settings.range}
-            sky={settings.sky / 100}
+            sky={lightsOnly ? 0 : settings.sky / 100}
+            sea={lightsOnly ? 0 : SEASCAPE_SEA}
             labels={sceneLabels}
           />
         )}
@@ -537,6 +550,19 @@ function FullScene({
             />
           </>
         )}
+        <label
+          className={`benchy-toggle${view === 'model' ? '' : ' disabled'}`}
+          htmlFor="lights-only"
+        >
+          <input
+            id="lights-only"
+            type="checkbox"
+            checked={settings.lightsOnly}
+            disabled={view !== 'model'}
+            onChange={(e) => onChange({ lightsOnly: e.target.checked })}
+          />
+          <FormattedMessage id="scene.lightsOnly" />
+        </label>
         <SceneSlider
           id="hull-hint"
           label={intl.formatMessage({ id: 'scene.hullHint' })}
@@ -546,7 +572,7 @@ function FullScene({
               ? intl.formatMessage({ id: 'scene.hullHint.off' })
               : percentText(settings.hullHint)
           }
-          disabled={view === 'plan'}
+          disabled={seaOff}
           onChange={(v) => onChange({ hullHint: v })}
         />
         <SceneSlider
@@ -565,7 +591,7 @@ function FullScene({
               }),
             },
           )}
-          disabled={view === 'plan'}
+          disabled={seaOff}
           onChange={(v) => onChange({ range: v })}
         />
         <SceneSlider
@@ -573,7 +599,7 @@ function FullScene({
           label={intl.formatMessage({ id: 'scene.sky' })}
           value={settings.sky}
           readout={percentText(settings.sky)}
-          disabled={view === 'plan'}
+          disabled={seaOff}
           onChange={(v) => onChange({ sky: v })}
         />
         <label className="check-row" htmlFor="mesh">

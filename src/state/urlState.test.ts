@@ -146,6 +146,16 @@ describe('URL state round-trip', () => {
     expect(deserialize('#/sandbox?view=bogus').sandbox.view).toBe(DEFAULT_STATE.sandbox.view);
   });
 
+  it('opens on the seascape and round-trips lights only as lo=1', () => {
+    expect(DEFAULT_STATE.sandbox.lightsOnly).toBe(false);
+    expect(serialize(DEFAULT_STATE)).not.toContain('lo=');
+    const state = stateWith({ sandbox: { lightsOnly: true } });
+    expect(serialize(state)).toContain('lo=1');
+    expect(deserialize(serialize(state))).toEqual(state);
+    expect(deserialize('#/sandbox?lo=0').sandbox.lightsOnly).toBe(false);
+    expect(deserialize('#/sandbox?lo=yes').sandbox.lightsOnly).toBe(false);
+  });
+
   it('round-trips Benchy in place of her own model, and leaves it off by default', () => {
     const state = stateWith({ sandbox: { benchy: true } });
     expect(deserialize(serialize(state))).toEqual(state);
