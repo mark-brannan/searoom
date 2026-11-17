@@ -81,3 +81,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t095239z
 - Two wrong forward quiz options that draw alike on the shared hull are left as they are; the PR body states the measured counts. Undo: de-duplicate forward options on the lights as drawn on the asked hull, in forwardAt in src/engine/quiz.ts ([#252](https://github.com/mark-brannan/searoom/pull/252#discussion_r4597802477)) ([#252](https://github.com/mark-brannan/searoom/pull/252))
+
+### 20261117t104912z
+- Main was merged into the quiz difficulty branch without a conflict, so its goldens check ran against the re-taken sandbox goldens; the queue does not take a pull request whose last run is red. Undo: none needed; the queue makes the same merge ([#252](https://github.com/mark-brannan/searoom/pull/252))
