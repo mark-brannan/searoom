@@ -120,3 +120,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t220142z
 - searoom #98 read as the 2D profile/plan illustration style; the 3D bearing-view night look (card C1) is a separate choice (scoping 2026-11-17 ambiguity 6, reading B). Undo: fold the bearing-view look into #98's ruling ([#292](https://github.com/mark-brannan/searoom/pull/292))
+
+### 20261117t220153z
+- #98 candidate sheets captured from nav-wright's published gallery (main), not searoom's pinned nav-wright f6575e5; both carry src/hullStyles.tsx. Undo: re-capture from the pinned commit's playground ([#292](https://github.com/mark-brannan/searoom/pull/292))
