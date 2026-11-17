@@ -11,7 +11,9 @@ import {
   makeReverse,
   scenarioPoolAt,
   scenarioPoolFor,
+  visibleSignature,
 } from './quiz';
+import { evaluateDisplayIn } from './evaluate';
 import type { QuizDifficulty } from './quiz';
 import type { FactRecord } from './types';
 import { drillDifficulty, drillSeedAt, nextDrillSeed, questionFor, rulesInPool, rulesOfCite } from './quizProgress';
@@ -43,7 +45,7 @@ it('easy scenarios are recreational: power, sail or oars, doing nothing, underwa
   expect(isEasy({ ...base, 'fact:length_m': 20 })).toBe(false);
 });
 
-it('medium scenarios are everyday traffic in good visibility: no tows, restricted vessels or exotics', () => {
+it('medium scenarios are everyday traffic in good visibility: no pushing, towed or restricted vessels, no exotics', () => {
   const base: FactRecord = {
     'fact:propulsion': 'propulsion:power',
     'fact:activity': 'activity:trawling',
@@ -137,12 +139,35 @@ describe.each(JURISDICTIONS.map((j) => j.id))('difficulty in %s', (j) => {
     }
   });
 
-  it('a widened question only ever goes harder, and only when the easy pool could not make one', () => {
-    for (const s of SEEDS) {
-      for (const q of [makeForward(s, j, 'easy'), makeReverse(s, j, 'easy')]) {
-        expect(QUIZ_DIFFICULTIES).toContain(q.difficulty);
-        if (q.difficulty !== 'easy') expect(isEasy(q.facts)).toBe(false);
+  it('a level whose pool is dry asks at the next level up', () => {
+    const easy = DIFFICULTY_LEVELS.easy;
+    const scenario = easy.scenario;
+    easy.scenario = () => false;
+    try {
+      expect(scenarioPoolAt(j, 'easy')).toEqual([]);
+      for (const s of SEEDS.slice(0, 10)) {
+        for (const q of [makeForward(s, j, 'easy'), makeReverse(s, j, 'easy')]) {
+          expect(q.difficulty).toBe('medium');
+          expect(isMedium(q.facts)).toBe(true);
+        }
       }
+    } finally {
+      easy.scenario = scenario;
+    }
+    expect(makeForward(1, j, 'easy').difficulty).toBe('easy');
+  });
+
+  it.each(QUIZ_DIFFICULTIES)('%s reverse: no wrong option has a lawful display that looks like the scene', (d) => {
+    for (const s of Array.from({ length: 200 }, (_, i) => i + 1)) {
+      const q = makeReverse(s, j, d);
+      const scene = visibleSignature(q.facts, q.display, q.theta);
+      q.options.forEach((o, i) => {
+        if (i === q.answerIndex) return;
+        const looks = evaluateDisplayIn(j, o.facts).displays.map((x) =>
+          visibleSignature(o.facts, x, o.theta),
+        );
+        expect(looks, `seed ${s}, option ${i}`).not.toContain(scene);
+      });
     }
   });
 

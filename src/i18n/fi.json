@@ -151,6 +151,7 @@
   "quiz.difficulty.medium": "Keskitaso",
   "quiz.difficulty.hard": "Vaikea",
   "quiz.difficulty.extreme": "Äärimmäinen",
+  "quiz.difficulty.askedAt": "{level} (kysytty tasolla {asked})",
   "quiz.share": "Kopioi kysymyksen linkki",
   "quiz.share.copied": "Linkki kopioitu.",
   "quiz.exam.intro": "{count} kysymystä {minutes} minuutissa. Tulos näytetään lopuksi.",

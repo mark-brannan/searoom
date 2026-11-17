@@ -145,7 +145,7 @@ export function drillDifficulty(
 ): QuizDifficulty {
   if (!rule) return difficulty;
   const levels = QUIZ_DIFFICULTIES.slice(QUIZ_DIFFICULTIES.indexOf(difficulty));
-  return levels.find((d) => rulesInPool(jurisdiction, d).includes(rule)) ?? 'extreme';
+  return levels.find((d) => rulesInPool(jurisdiction, d).includes(rule)) ?? difficulty;
 }
 
 const CANDIDATES = 16;

@@ -228,7 +228,19 @@ export function Quiz() {
         : seed;
     patch({ difficulty: d, seed: nextSeed, n: 1 });
   };
-  const difficultyName = intl.formatMessage({ id: `quiz.difficulty.${quizDifficulty}` });
+  const chosenName = intl.formatMessage({ id: `quiz.difficulty.${quizDifficulty}` });
+  // a level that can't make the question (a drilled rule it never asks about)
+  // asks at a harder one: say so, or the slider reads Easy over an Extreme question
+  const difficultyName =
+    question.difficulty !== quizDifficulty
+      ? intl.formatMessage(
+          { id: 'quiz.difficulty.askedAt' },
+          {
+            level: chosenName,
+            asked: intl.formatMessage({ id: `quiz.difficulty.${question.difficulty}` }),
+          },
+        )
+      : chosenName;
 
   const optionClass = (i: number) => {
     if (picked === null) return 'quiz-option';

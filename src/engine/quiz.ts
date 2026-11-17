@@ -572,11 +572,11 @@ function reverseAt(
       if (unusual + missUnusual > level.maxUnusual) continue;
       const missEval = evaluateDisplayIn(jurisdiction, miss);
       if (missEval.displays.length === 0) continue;
-      const d = missEval.displays[0];
       const missTheta = thetas[Math.floor(rng() * thetas.length)];
-      // a distractor must actually look different from the scene, or it
-      // would also be a correct answer
-      if (visibleSignature(miss, d, missTheta) === sceneSig) continue;
+      // a distractor must look different from the scene in every display it
+      // may lawfully show, or it would also be a correct answer
+      if (missEval.displays.some((d) => visibleSignature(miss, d, missTheta) === sceneSig))
+        continue;
       options.push({ facts: miss, theta: missTheta });
       unusual += missUnusual;
     }
