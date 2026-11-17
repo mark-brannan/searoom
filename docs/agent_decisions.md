@@ -117,3 +117,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t220004z
 - ICC rule numbers in docs/syllabi.md are this research's reading of the RYA TG10-14 sample questions, labelled as such Undo: drop the ICC mapping table ([#291](https://github.com/mark-brannan/searoom/pull/291))
+
+### 20261117t220142z
+- searoom #98 read as the 2D profile/plan illustration style; the 3D bearing-view night look (card C1) is a separate choice (scoping 2026-11-17 ambiguity 6, reading B). Undo: fold the bearing-view look into #98's ruling ([#292](https://github.com/mark-brannan/searoom/pull/292))
