@@ -90,3 +90,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t211155z
 - Third-party Coast Guard question banks are named as not a source for the #125 cross-check. Undo: drop the bullet ([#288](https://github.com/mark-brannan/searoom/pull/288))
+
+### 20261117t212554z
+- searoom#212: one judged 'What is she?' question in five shows an unlawful display (one change: drop, add an all-round, recolour an all-round), the same in Practice, Drill and Exam; the forward direction is unchanged Undo: change UNLAWFUL_SHARE or revert ([#289](https://github.com/mark-brannan/searoom/pull/289))
