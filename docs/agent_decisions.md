@@ -84,3 +84,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t104912z
 - Main was merged into the quiz difficulty branch without a conflict, so its goldens check ran against the re-taken sandbox goldens; the queue does not take a pull request whose last run is red. Undo: none needed; the queue makes the same merge ([#252](https://github.com/mark-brannan/searoom/pull/252))
+
+### 20261117t211147z
+- The USCG question source is recorded in a new docs/uscg-question-bank.md, not a section of design.md. Undo: move the file ([#288](https://github.com/mark-brannan/searoom/pull/288))
