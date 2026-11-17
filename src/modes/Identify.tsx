@@ -7,7 +7,7 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import { usePatch, useJurisdiction } from '../state/store';
 import { describeFacts } from '../components/factLabel';
 import { identifyCandidates } from '../engine/identify';
-import { explainUnlawful, isLawfulView } from '../engine/unlawful';
+import { explainOrder, explainUnlawful, isLawfulView } from '../engine/unlawful';
 import { reasonText } from '../components/unlawfulText';
 import type { Arrangement, SeenLight } from '../engine/identify';
 import { bearingLabel, lightFill } from 'nav-wright';
@@ -30,11 +30,13 @@ export function Identify() {
     [seen, jurisdiction, arrangement],
   );
 
-  // the bare colours, before any order or light type the learner gave
-  const unlawful = useMemo(
-    () => (isLawfulView(seen, jurisdiction) ? null : explainUnlawful(seen, jurisdiction)),
-    [seen, jurisdiction],
-  );
+  // the bare colours first; then, for a vertical line, the order
+  const lawfulColours = isLawfulView(seen, jurisdiction);
+  const unlawful = useMemo(() => {
+    if (!lawfulColours) return explainUnlawful(seen, jurisdiction);
+    const order = explainOrder(seen, jurisdiction, arrangement);
+    return order.length > 0 ? order : null;
+  }, [seen, jurisdiction, arrangement, lawfulColours]);
 
   const aspectsOf = (thetas: number[]): string => {
     const labels = [...new Set(thetas.map(bearingLabel))];
@@ -176,7 +178,9 @@ export function Identify() {
           {unlawful && (
             <div role="status">
               <p>
-                <FormattedMessage id="identify.unlawful.title" />
+                <FormattedMessage
+                  id={lawfulColours ? 'identify.unlawful.titleOrder' : 'identify.unlawful.title'}
+                />
               </p>
               {unlawful.length === 0 ? (
                 <p className="elim">

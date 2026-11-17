@@ -111,7 +111,7 @@ const fits = (s: SeenLight, v: VisibleLight): boolean =>
  * lights may look side to side and still read as one vertical line: about
  * 2% of the hull's length.
  */
-const IN_LINE = 0.04;
+export const IN_LINE = 0.04;
 
 const inOneLine = (run: VisibleLight[]): boolean => {
   const xs = run.map((v) => v.across);

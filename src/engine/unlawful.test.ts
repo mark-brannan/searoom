@@ -9,6 +9,8 @@ import { questionFor } from './quizProgress';
 import type { ReverseQuestion } from './quiz';
 import {
   UNLAWFUL_SHARE,
+  explainOrder,
+  isLawfulLayout,
   explainUnlawful,
   isLawfulView,
   oneChange,
@@ -27,6 +29,10 @@ const questions = SEEDS.map(
   (s) => questionFor(s, true, J, 'extreme') as ReverseQuestion,
 );
 const unlawful = questions.filter((q) => q.unlawful);
+const byColour = unlawful.filter((q) => q.unlawful!.reason.kind !== 'place');
+const byPlace = unlawful.filter((q) => q.unlawful!.reason.kind === 'place');
+const named = (qs: ReverseQuestion[]) =>
+  qs.map((q) => [q.fixtureName, q] as const);
 
 describe('judged questions', () => {
   it('about one in five shows an unlawful display', () => {
@@ -35,7 +41,7 @@ describe('judged questions', () => {
     expect(share).toBeLessThan(UNLAWFUL_SHARE + 0.08);
   });
 
-  it.each(unlawful.map((q) => [q.fixtureName, q] as const))(
+  it.each(named(byColour))(
     '%s: no lawful vessel in scope shows the scene from any bearing',
     (_, q) => {
       const shown = visibleLights(q.facts, q.unlawful!.shown, q.theta);
@@ -46,7 +52,7 @@ describe('judged questions', () => {
     },
   );
 
-  it.each(unlawful.map((q) => [q.fixtureName, q] as const))(
+  it.each(named(byColour))(
     '%s: one change from the lawful display; the right "why" answers are the kinds that mend it',
     (_, q) => {
       const before = visibleLights(q.facts, q.display, q.theta);
@@ -58,6 +64,22 @@ describe('judged questions', () => {
     },
   );
 
+  it.each(named(byPlace))(
+    '%s: the same lights, in an order no lawful vessel shows from any bearing',
+    (_, q) => {
+      const before = visibleLights(q.facts, q.display, q.theta);
+      const after = visibleLights(q.facts, q.unlawful!.shown, q.theta);
+      expect(oneChange(before, after)).toBeNull();
+      expect(isLawfulView(after, J)).toBe(true);
+      expect(isLawfulLayout(after, J)).toBe(false);
+      expect(q.unlawful!.mends).toContain('place');
+    },
+  );
+
+  it('some questions move a light rather than change one', () => {
+    expect(byPlace.length).toBeGreaterThan(0);
+  });
+
   it('a lawful question keeps a scene that Identify can explain', () => {
     for (const q of questions.filter((q) => !q.unlawful)) {
       const shown = visibleLights(q.facts, q.display, q.theta);
@@ -67,6 +89,23 @@ describe('judged questions', () => {
 
   it('the same seed gives the same question', () => {
     expect(questionFor(7, true, J)).toEqual(questionFor(7, true, J));
+  });
+});
+
+describe('explainOrder', () => {
+  const r: SeenLight = { color: 'red', flashing: false };
+  const g: SeenLight = { color: 'green', flashing: false };
+
+  it('green over red is red over green the wrong way up', () => {
+    const [e, ...rest] = explainOrder([g, r], J, 'vertical');
+    expect(rest).toEqual([]);
+    expect(e.kind).toBe('place');
+    expect(identifyCandidates([r, g], J, 'vertical').length).toBeGreaterThan(0);
+  });
+
+  it('says nothing of a lawful order, or of lights in any order', () => {
+    expect(explainOrder([r, g], J, 'vertical')).toEqual([]);
+    expect(explainOrder([g, r], J, 'free')).toEqual([]);
   });
 });
 

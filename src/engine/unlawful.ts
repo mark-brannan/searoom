@@ -1,6 +1,6 @@
 // Unlawful displays (#212). A real watchkeeper meets lights no lawful vessel
 // would carry: a burnt-out sidelight, an extra red, a white where a red
-// belongs. The quiz makes them by one change to a lawful display, and the
+// belongs, a pair the wrong way up. The quiz makes them by one change to a lawful display, and the
 // engine checks the result against every lawful display of every fact record
 // in scope, from every bearing, so a "wrong" display never happens to be
 // another vessel's right one. Identify uses the same check to say when the
@@ -8,13 +8,24 @@
 
 import type { DisplayLight, Display, FactRecord } from './types';
 import { evaluateDisplayIn } from './evaluate';
-import { candidatePool, THETA_STEP } from './identify';
+import {
+  IN_LINE,
+  THETA_STEP,
+  candidatePool,
+  identifyCandidates,
+} from './identify';
+import type { Arrangement, SeenLight } from './identify';
 import { mulberry32, placedVisibility } from './quiz';
-import type { ReverseQuestion } from './quiz';
+import type { ReverseQuestion, VisibleLight } from './quiz';
 
 /** What one change did to the lights seen from the bearing. */
-export type UnlawfulKind = 'missing' | 'extra' | 'colour';
-export const UNLAWFUL_KINDS: UnlawfulKind[] = ['missing', 'extra', 'colour'];
+export type UnlawfulKind = 'missing' | 'extra' | 'colour' | 'place';
+export const UNLAWFUL_KINDS: UnlawfulKind[] = [
+  'missing',
+  'extra',
+  'colour',
+  'place',
+];
 
 /** The share of judged questions that show an unlawful display, in every quiz mode. */
 export const UNLAWFUL_SHARE = 0.2;
@@ -25,12 +36,12 @@ export interface LightToken {
   flashing: boolean;
 }
 
-/** The change, as the learner is told it: a light gone, a light added, or one recoloured. */
+/** The change, as the learner is told it: a light gone, added, recoloured, or moved. */
 export interface UnlawfulReason {
   kind: UnlawfulKind;
-  /** the lawful light: missing, or shown in the wrong colour */
+  /** the lawful light: missing, shown in the wrong colour, or the one that belongs on top */
   lawful?: LightToken;
-  /** the light shown: extra, or the wrong colour */
+  /** the light shown: extra, the wrong colour, or the one on top that should not be */
   shown?: LightToken;
 }
 
@@ -57,9 +68,43 @@ export function viewKey(lights: LightToken[]): string {
   return lights.map(tokenKey).sort().join(',');
 }
 
+/**
+ * A view as the eye arranges it: the centreline lights that line up
+ * vertically from this bearing, each line top first, and the rest unordered.
+ */
+interface Layout {
+  cols: string[][];
+  off: string[];
+}
+
+function layoutOf(visible: VisibleLight[]): Layout {
+  const centre = visible
+    .filter((v) => v.centreline)
+    .sort((a, b) => a.across - b.across);
+  const cols: VisibleLight[][] = [];
+  for (const v of centre) {
+    const last = cols[cols.length - 1];
+    if (last && v.across - last[0].across <= IN_LINE) last.push(v);
+    else cols.push([v]);
+  }
+  return {
+    cols: cols.map((c) => [...c].sort((a, b) => b.z - a.z).map(tokenKey)),
+    off: visible.filter((v) => !v.centreline).map(tokenKey),
+  };
+}
+
+const layoutKey = (l: Layout): string =>
+  `${l.cols
+    .filter((c) => c.length > 0)
+    .map((c) => c.join('>'))
+    .sort()
+    .join(' ')}|${[...l.off].sort().join(',')}`;
+
 interface LawfulViews {
   /** view key -> the first lawful vessel and bearing found showing it */
   views: Map<string, LawfulExample>;
+  /** every lawful layout: the view with its vertical lines in order */
+  layouts: Set<string>;
   /** every light token any lawful view contains */
   tokens: string[];
 }
@@ -75,6 +120,7 @@ export function lawfulViews(jurisdiction: string): LawfulViews {
   const hit = viewsCache.get(jurisdiction);
   if (hit) return hit;
   const views = new Map<string, LawfulExample>();
+  const layouts = new Set<string>();
   const tokens = new Set<string>();
   for (const facts of candidatePool(jurisdiction)) {
     for (const display of evaluateDisplayIn(jurisdiction, facts).displays) {
@@ -85,11 +131,12 @@ export function lawfulViews(jurisdiction: string): LawfulViews {
         if (seen.length === 0) continue;
         const key = viewKey(seen);
         if (!views.has(key)) views.set(key, { facts, display, theta });
+        layouts.add(layoutKey(layoutOf(seen)));
         for (const t of seen) tokens.add(tokenKey(t));
       }
     }
   }
-  const out = { views, tokens: [...tokens].sort() };
+  const out = { views, layouts, tokens: [...tokens].sort() };
   viewsCache.set(jurisdiction, out);
   return out;
 }
@@ -144,6 +191,115 @@ export function explainUnlawful(
   return out;
 }
 
+/** Does some lawful vessel show these lights from some bearing, with every vertical line in this order? */
+export function isLawfulLayout(
+  visible: VisibleLight[],
+  jurisdiction: string,
+): boolean {
+  return (
+    visible.length === 0 ||
+    lawfulViews(jurisdiction).layouts.has(layoutKey(layoutOf(visible)))
+  );
+}
+
+/**
+ * The kinds of one-light change that turn this layout into a lawful one:
+ * add a light anywhere, take one away, recolour one, or swap two.
+ */
+function layoutMends(
+  visible: VisibleLight[],
+  jurisdiction: string,
+): Set<UnlawfulKind> {
+  const { layouts, tokens } = lawfulViews(jurisdiction);
+  const base = layoutOf(visible);
+  const kinds = new Set<UnlawfulKind>();
+  const test = (kind: UnlawfulKind, l: Layout) => {
+    if (layouts.has(layoutKey(l))) kinds.add(kind);
+  };
+  // every light's slot: [column index or -1 for off-line, position]
+  const slots: [number, number][] = [
+    ...base.cols.flatMap((c, ci) =>
+      c.map((_, k) => [ci, k] as [number, number]),
+    ),
+    ...base.off.map((_, k) => [-1, k] as [number, number]),
+  ];
+  const get = (l: Layout, [ci, k]: [number, number]) =>
+    ci < 0 ? l.off[k] : l.cols[ci][k];
+  const copy = (l: Layout): Layout => ({
+    cols: l.cols.map((c) => [...c]),
+    off: [...l.off],
+  });
+  const set = (l: Layout, [ci, k]: [number, number], t: string) => {
+    if (ci < 0) l.off[k] = t;
+    else l.cols[ci][k] = t;
+  };
+  for (const t of tokens) {
+    test('missing', { cols: base.cols, off: [...base.off, t] });
+    test('missing', { cols: [...base.cols, [t]], off: base.off });
+    base.cols.forEach((c, ci) => {
+      for (let k = 0; k <= c.length; k++) {
+        const l = copy(base);
+        l.cols[ci].splice(k, 0, t);
+        test('missing', l);
+      }
+    });
+  }
+  for (const s of slots) {
+    const l = copy(base);
+    if (s[0] < 0) l.off.splice(s[1], 1);
+    else l.cols[s[0]].splice(s[1], 1);
+    test('extra', l);
+    for (const t of tokens) {
+      if (t === get(base, s)) continue;
+      const r = copy(base);
+      set(r, s, t);
+      test('colour', r);
+    }
+  }
+  slots.forEach((a, i) =>
+    slots.slice(i + 1).forEach((b) => {
+      if (get(base, a) === get(base, b)) return;
+      const l = copy(base);
+      set(l, a, get(base, b));
+      set(l, b, get(base, a));
+      test('place', l);
+    }),
+  );
+  return kinds;
+}
+
+/**
+ * Lights Identify was told are one vertical line that no lawful vessel
+ * shows in that order, though some does with two of them swapped: the
+ * swaps that mend it, each with a vessel that shows the mended line.
+ */
+export function explainOrder(
+  seen: SeenLight[],
+  jurisdiction: string,
+  arrangement: Arrangement,
+): UnlawfulExplanation[] {
+  if (arrangement !== 'vertical' || seen.length < 2) return [];
+  if (identifyCandidates(seen, jurisdiction, arrangement).length > 0) return [];
+  const out: UnlawfulExplanation[] = [];
+  seen.forEach((a, i) =>
+    seen.slice(i + 1).forEach((b, d) => {
+      const j = i + 1 + d;
+      if (a.color === b.color && a.flashing === b.flashing) return;
+      const swapped = [...seen];
+      [swapped[i], swapped[j]] = [b, a];
+      const c = identifyCandidates(swapped, jurisdiction, arrangement)[0];
+      if (!c) return;
+      out.push({
+        kind: 'place',
+        shown: { color: a.color, flashing: a.flashing },
+        lawful: { color: b.color, flashing: b.flashing },
+        example: { facts: c.facts, display: c.display, theta: c.thetas[0] },
+      });
+    }),
+  );
+  return out;
+}
+
 const COLOURS = ['white', 'red', 'green', 'yellow'];
 
 /** An all-round light added at the mast, as no rule asks for. */
@@ -161,6 +317,7 @@ function mutations(display: Display): Record<UnlawfulKind, Display[]> {
     missing: [],
     extra: [],
     colour: [],
+    place: [],
   };
   const withLights = (lights: DisplayLight[]): Display => ({
     ...display,
@@ -204,6 +361,30 @@ function mutations(display: Display): Record<UnlawfulKind, Display[]> {
     }
   });
   for (const c of COLOURS) out.extra.push(withLights([...ls, extraLight(c)]));
+  // place: two lights of a stack, different colours, trade places
+  ls.forEach((a, i) =>
+    ls.forEach((b, j) => {
+      if (
+        j <= i ||
+        a.spec.light !== 'light:all_round' ||
+        b.spec.light !== 'light:all_round'
+      )
+        return;
+      if (!a.spec.position || !b.spec.position || a.spec.color === b.spec.color)
+        return;
+      out.place.push(
+        withLights(
+          ls.map((m, k) =>
+            k === i
+              ? { ...m, spec: { ...m.spec, position: b.spec.position } }
+              : k === j
+                ? { ...m, spec: { ...m.spec, position: a.spec.position } }
+                : m,
+          ),
+        ),
+      );
+    }),
+  );
   return out;
 }
 
@@ -273,6 +454,11 @@ export function unlawfulVariant(
   for (const shown of cands) {
     const after = placedVisibility(facts, shown)(theta);
     if (after.length === 0) continue;
+    if (viewKey(after) === viewKey(before)) {
+      const moved = placeVariant(before, after, jurisdiction);
+      if (moved) return { shown, ...moved };
+      continue;
+    }
     const reason = oneChange(before, after);
     if (!reason || isLawfulView(after, jurisdiction)) continue;
     const kinds = new Set(
@@ -280,6 +466,33 @@ export function unlawfulVariant(
     );
     if (!kinds.has(reason.kind)) continue;
     return { shown, reason, mends: UNLAWFUL_KINDS.filter((k) => kinds.has(k)) };
+  }
+  return null;
+}
+
+/** The same lights in a new order: unlawful only if no lawful vessel lines them up so. */
+function placeVariant(
+  before: VisibleLight[],
+  after: VisibleLight[],
+  jurisdiction: string,
+): Omit<UnlawfulDisplay, 'shown'> | null {
+  if (isLawfulLayout(after, jurisdiction)) return null;
+  const was = layoutOf(before).cols;
+  const now = layoutOf(after).cols;
+  if (was.length !== now.length) return null;
+  for (let c = 0; c < now.length; c++) {
+    const k = now[c].findIndex((t, i) => t !== was[c][i]);
+    if (k < 0) continue;
+    const kinds = layoutMends(after, jurisdiction);
+    if (!kinds.has('place')) return null;
+    return {
+      reason: {
+        kind: 'place',
+        shown: parseToken(now[c][k]),
+        lawful: parseToken(was[c][k]),
+      },
+      mends: UNLAWFUL_KINDS.filter((x) => kinds.has(x)),
+    };
   }
   return null;
 }
