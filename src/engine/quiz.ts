@@ -79,7 +79,9 @@ export function visibleSignature(
   const hull = selectHull(facts);
   const placed = placeLights(display.lights, hull.spec, facts, lights);
   return placed
-    .filter((l) => bearingInArc(theta, l.arc) && l.lightId !== 'light:deck_lights')
+    .filter(
+      (l) => bearingInArc(theta, l.arc) && l.lightId !== 'light:deck_lights',
+    )
     .map((l) => `${l.color}${l.character === 'flashing' ? '!' : ''}`)
     .sort()
     .join(',');
@@ -101,6 +103,10 @@ export interface VisibleLight {
    * fore and aft line up only from ahead or astern.
    */
   across: number;
+  /** fore-aft seat in the hull's units, larger is further forward */
+  along: number;
+  /** athwartships seat, so a pair of sidelights can be told apart */
+  py: number;
 }
 
 /** Place a display once; callers then ask what shows from each bearing. */
@@ -122,6 +128,8 @@ export function placedVisibility(
         centreline: l.py === 0,
         z: l.z,
         across: l.fx * Math.sin((theta * Math.PI) / 180),
+        along: l.fx,
+        py: l.py,
       }));
 }
 
@@ -203,7 +211,11 @@ export function taggedNearMisses(
   if (position === 'position:underway') {
     push({ ...facts, 'fact:position': 'position:anchored' });
   } else if (position === 'position:anchored') {
-    push({ ...facts, 'fact:position': 'position:underway', 'fact:making_way': true });
+    push({
+      ...facts,
+      'fact:position': 'position:underway',
+      'fact:making_way': true,
+    });
   }
   kind = 'propulsion';
   if (facts['fact:propulsion'] === 'propulsion:sail') {
@@ -283,7 +295,12 @@ export function scenarioPoolFor(jurisdiction: string) {
 }
 
 export type QuizDifficulty = 'easy' | 'medium' | 'hard' | 'extreme';
-export const QUIZ_DIFFICULTIES: QuizDifficulty[] = ['easy', 'medium', 'hard', 'extreme'];
+export const QUIZ_DIFFICULTIES: QuizDifficulty[] = [
+  'easy',
+  'medium',
+  'hard',
+  'extreme',
+];
 
 const ALL_THETAS = [0, 20, 45, 90, 135, 180, 225, 270, 315, 340];
 /** Ahead, astern, abeam and the quarters: no near-ahead bearings to squint at. */
@@ -320,7 +337,11 @@ const EASY_KEYS = new Set<string>([
   ...EXOTIC_FACTS,
 ]);
 
-const RECREATIONAL_PROPULSION = ['propulsion:power', 'propulsion:sail', 'propulsion:oars'];
+const RECREATIONAL_PROPULSION = [
+  'propulsion:power',
+  'propulsion:sail',
+  'propulsion:oars',
+];
 
 /**
  * A vessel going about recreational business: power, sail or oars, doing
@@ -330,7 +351,9 @@ const RECREATIONAL_PROPULSION = ['propulsion:power', 'propulsion:sail', 'propuls
 export const isRecreational = (f: FactRecord): boolean =>
   RECREATIONAL_PROPULSION.includes(String(f['fact:propulsion'])) &&
   String(f['fact:activity']) === 'activity:none' &&
-  ['position:underway', 'position:anchored'].includes(String(f['fact:position'])) &&
+  ['position:underway', 'position:anchored'].includes(
+    String(f['fact:position']),
+  ) &&
   !isExotic(f);
 
 /** Activities a skipper meets on an ordinary passage; medium asks about these. */
@@ -376,7 +399,8 @@ export const DIFFICULTY_LEVELS: Record<QuizDifficulty, Level> = {
       isRecreational(f) &&
       Number(f['fact:length_m'] ?? 0) < 20 &&
       Object.entries(f).every(
-        ([k, v]) => EASY_KEYS.has(k) || (k in EASY_BENIGN && EASY_BENIGN[k] === v),
+        ([k, v]) =>
+          EASY_KEYS.has(k) || (k in EASY_BENIGN && EASY_BENIGN[k] === v),
       ),
     // length: a few yachts where size decides the lawful display
     kinds: new Set(['length', 'propulsion', 'position', 'activity']),
@@ -388,7 +412,9 @@ export const DIFFICULTY_LEVELS: Record<QuizDifficulty, Level> = {
   medium: {
     scenario: (f) =>
       EVERYDAY_ACTIVITIES.includes(String(f['fact:activity'])) &&
-      ['position:underway', 'position:anchored'].includes(String(f['fact:position'])) &&
+      ['position:underway', 'position:anchored'].includes(
+        String(f['fact:position']),
+      ) &&
       f['fact:visibility'] !== 'visibility:restricted' &&
       !isExotic(f),
     kinds: new Set(['length', 'activity', 'position', 'propulsion']),
@@ -402,7 +428,13 @@ export const DIFFICULTY_LEVELS: Record<QuizDifficulty, Level> = {
       !['activity:mine', 'activity:diving', 'activity:ram_underwater'].includes(
         String(f['fact:activity']),
       ) && !isExotic(f),
-    kinds: new Set(['length', 'activity', 'position', 'propulsion', 'tow_length']),
+    kinds: new Set([
+      'length',
+      'activity',
+      'position',
+      'propulsion',
+      'tow_length',
+    ]),
     maxDistractors: 3,
     thetas: ALL_THETAS,
     maxUnusual: Infinity,
@@ -410,7 +442,14 @@ export const DIFFICULTY_LEVELS: Record<QuizDifficulty, Level> = {
   },
   extreme: {
     scenario: () => true,
-    kinds: new Set(['length', 'making_way', 'activity', 'position', 'propulsion', 'tow_length']),
+    kinds: new Set([
+      'length',
+      'making_way',
+      'activity',
+      'position',
+      'propulsion',
+      'tow_length',
+    ]),
     maxDistractors: 3,
     thetas: ALL_THETAS,
     maxUnusual: Infinity,
@@ -441,7 +480,10 @@ function missesAt(
 }
 
 /** The scenario pool at one difficulty. */
-export function scenarioPoolAt(jurisdiction: string, difficulty: QuizDifficulty) {
+export function scenarioPoolAt(
+  jurisdiction: string,
+  difficulty: QuizDifficulty,
+) {
   const keep = DIFFICULTY_LEVELS[difficulty].scenario;
   return scenarioPoolFor(jurisdiction).filter((c) => keep(c.facts));
 }
@@ -474,13 +516,11 @@ function forwardAt(
   const scenarioPool = scenarioPoolAt(jurisdiction, difficulty);
   if (scenarioPool.length === 0) return null;
   for (let attempt = 0; attempt < 40; attempt++) {
-    const fixture =
-      scenarioPool[Math.floor(rng() * scenarioPool.length)];
+    const fixture = scenarioPool[Math.floor(rng() * scenarioPool.length)];
     const evaln = evaluateDisplayIn(jurisdiction, fixture.facts);
     if (evaln.displays.length === 0 || evaln.displays[0].lights.length === 0)
       continue;
-    const correct =
-      evaln.displays[Math.floor(rng() * evaln.displays.length)];
+    const correct = evaln.displays[Math.floor(rng() * evaln.displays.length)];
     const lawfulSignatures = new Set(
       evaln.displays.map((d) => displaySignature(fixture.facts, d)),
     );
@@ -505,7 +545,10 @@ function forwardAt(
       if (distractors.length >= maxDistractors) break;
     }
     if (distractors.length < 2) continue;
-    const options = [{ display: correct, facts: fixture.facts }, ...distractors];
+    const options = [
+      { display: correct, facts: fixture.facts },
+      ...distractors,
+    ];
     // Fisher-Yates with the seeded rng
     for (let i = options.length - 1; i > 0; i--) {
       const j = Math.floor(rng() * (i + 1));
@@ -551,12 +594,10 @@ function reverseAt(
   const scenarioPool = scenarioPoolAt(jurisdiction, difficulty);
   if (scenarioPool.length === 0) return null;
   for (let attempt = 0; attempt < 60; attempt++) {
-    const fixture =
-      scenarioPool[Math.floor(rng() * scenarioPool.length)];
+    const fixture = scenarioPool[Math.floor(rng() * scenarioPool.length)];
     const evaln = evaluateDisplayIn(jurisdiction, fixture.facts);
     if (evaln.displays.length === 0) continue;
-    const display =
-      evaln.displays[Math.floor(rng() * evaln.displays.length)];
+    const display = evaln.displays[Math.floor(rng() * evaln.displays.length)];
     if (display.lights.length === 0) continue;
     const theta = thetas[Math.floor(rng() * thetas.length)];
     const sceneSig = visibleSignature(fixture.facts, display, theta);
@@ -575,7 +616,11 @@ function reverseAt(
       const missTheta = thetas[Math.floor(rng() * thetas.length)];
       // a distractor must look different from the scene in every display it
       // may lawfully show, or it would also be a correct answer
-      if (missEval.displays.some((d) => visibleSignature(miss, d, missTheta) === sceneSig))
+      if (
+        missEval.displays.some(
+          (d) => visibleSignature(miss, d, missTheta) === sceneSig,
+        )
+      )
         continue;
       options.push({ facts: miss, theta: missTheta });
       unusual += missUnusual;
