@@ -126,3 +126,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t220420z
 - my boat stores named fact records in one localStorage key, searoom.myboats.v1, read and written through the URL codec Undo: revert; the key goes unread ([#293](https://github.com/mark-brannan/searoom/pull/293))
+
+### 20261117t220437z
+- her situations: sail -> under sail, under engine, at anchor, aground; power -> underway, stopped, at anchor, aground; oars -> under oars, at anchor, aground Undo: edit boatSituations ([#293](https://github.com/mark-brannan/searoom/pull/293))
