@@ -178,6 +178,33 @@ describe("identify: the what's-at-the-masthead questions", () => {
     expect(a.has('activity:pilot')).toBe(false);
   });
 
+  it('one white all-round and nothing else is the anchored vessel', () => {
+    const cs = identifyByAnswers({
+      masthead: [],
+      sidelights: 'none',
+      others: [w],
+    });
+    expect(
+      cs.some((c) => c.facts['fact:position'] === 'position:anchored'),
+    ).toBe(true);
+  });
+
+  it('a masthead white, both sidelights and another white is a power vessel of 50 m or more', () => {
+    const cs = identifyByAnswers({
+      masthead: [w],
+      sidelights: 'both',
+      others: [w],
+    });
+    expect(
+      cs.some(
+        (c) =>
+          c.facts['fact:propulsion'] === 'propulsion:power' &&
+          c.facts['fact:activity'] === 'activity:none' &&
+          Number(c.facts['fact:length_m']) >= 50,
+      ),
+    ).toBe(true);
+  });
+
   it('nothing answered yet is no candidates', () => {
     expect(
       identifyByAnswers({ masthead: [], sidelights: 'none', others: [] }),
@@ -201,6 +228,15 @@ describe('identify: what stays indistinguishable, and why', () => {
     expect(withTow!.differ).toContain('activity');
     // another aspect tells them apart: the sidelights, the towing light
     expect(withTow!.partedFrom.length).toBeGreaterThan(0);
+  });
+
+  it('a fact one record leaves unset does not read as a difference', () => {
+    const [c] = identifyCandidates([w, r], undefined, 'vertical').filter(
+      (m) => m.facts['fact:making_way'] === true,
+    );
+    const { ['fact:making_way']: _, ...unset } = c.facts;
+    const [group] = ambiguities([c, { ...c, facts: unset }]);
+    expect(group.differ).not.toContain('making_way');
   });
 
   it('one situation from one aspect is no ambiguity', () => {

@@ -229,7 +229,7 @@ export function matchesAnswers(a: Answers, visible: VisibleLight[]): boolean {
   return pairsAll(a.others, left);
 }
 
-const answered = (a: Answers): boolean =>
+export const answered = (a: Answers): boolean =>
   a.masthead.length + a.others.length > 0 || a.sidelights !== 'none';
 
 function collect(
@@ -319,8 +319,12 @@ export function ambiguities(candidates: Candidate[]): Ambiguity[] {
   const out: Ambiguity[] = [];
   for (const [key, aspects] of bySet) {
     const members = key.split(',').map((i) => candidates[Number(i)]);
+    // a fact a record leaves unset does not apply to it, so it parts nothing
     const differ = AXES.filter(
-      ([, get]) => new Set(members.map((m) => String(get(m)))).size > 1,
+      ([, get]) =>
+        new Set(
+          members.map(get).filter((v) => v !== undefined).map(String),
+        ).size > 1,
     ).map(([axis]) => axis);
     const looks = members.map((m) => placedVisibility(m.facts, m.display));
     const parted = new Set<Aspect>();

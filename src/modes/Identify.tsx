@@ -7,9 +7,10 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import type { IntlShape } from 'react-intl';
 import type { FactRecord } from '../engine/types';
 import { usePatch, useJurisdiction } from '../state/store';
-import { describeFacts } from '../components/factLabel';
+import { describeFacts, enumLabel } from '../components/factLabel';
 import {
   ambiguities,
+  answered,
   identifyByAnswers,
   identifyCandidates,
 } from '../engine/identify';
@@ -26,10 +27,7 @@ const FEW = 6;
 
 /** What she is doing, or how she is driven and where, when she is doing nothing. */
 function shortName(intl: IntlShape, facts: FactRecord): string {
-  const label = (v: unknown) => {
-    const [prefix, suffix] = String(v).split(':');
-    return intl.formatMessage({ id: `${prefix}.${suffix}` });
-  };
+  const label = (v: unknown) => enumLabel(intl, v) ?? '';
   const a = facts['fact:activity'];
   if (typeof a === 'string' && a !== 'activity:none') return label(a);
   const p = facts['fact:propulsion'];
@@ -155,11 +153,7 @@ export function Identify() {
     [flow, seen, answers, jurisdiction, arrangement],
   );
   const groups = useMemo(() => ambiguities(candidates), [candidates]);
-  const started =
-    flow === 'build'
-      ? seen.length > 0
-      : answers.masthead.length + answers.others.length > 0 ||
-        answers.sidelights !== 'none';
+  const started = flow === 'build' ? seen.length > 0 : answered(answers);
 
   const aspectsOf = (thetas: number[]): string => {
     const labels = [...new Set(thetas.map(bearingLabel))];
