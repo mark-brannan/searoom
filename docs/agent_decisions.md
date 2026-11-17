@@ -123,3 +123,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t220153z
 - #98 candidate sheets captured from nav-wright's published gallery (main), not searoom's pinned nav-wright f6575e5; both carry src/hullStyles.tsx. Undo: re-capture from the pinned commit's playground ([#292](https://github.com/mark-brannan/searoom/pull/292))
+
+### 20261117t220420z
+- my boat stores named fact records in one localStorage key, searoom.myboats.v1, read and written through the URL codec Undo: revert; the key goes unread ([#293](https://github.com/mark-brannan/searoom/pull/293))
