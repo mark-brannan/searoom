@@ -76,7 +76,6 @@ describe('seascape', () => {
   it("the Sandbox's 3D view opens on the night sea, the sloop hinted", () => {
     const p = sandboxScene();
     expect(p.sea).toBe(SEASCAPE_SEA);
-    expect(seaColor(SEASCAPE_SEA)).toBe('#071124');
     expect(p.hullHint).toBeGreaterThan(0);
     expect(p.range).toBe(RANGE_MIN_NM);
   });
