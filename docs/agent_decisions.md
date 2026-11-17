@@ -111,3 +111,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t215316z
 - Aspect trainer seed stays out of the URL in this PR Undo: add an aspect seed slice to urlState ([#290](https://github.com/mark-brannan/searoom/pull/290))
+
+### 20261117t215952z
+- docs/syllabi.md quotes short cited syllabus lines; #122's no-copy rule read as binding the study-set files Undo: replace the quotes with paraphrase ([#291](https://github.com/mark-brannan/searoom/pull/291))
