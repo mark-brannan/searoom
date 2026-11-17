@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   exportProgress,
+  isReverseAt,
   mergeProgress,
   nextDrillSeed,
   parseProgress,
@@ -28,12 +29,14 @@ describe('quiz progress', () => {
   });
 
   it('a mixed run asks both ways, each seed the same way every time', () => {
-    const kinds = [1, 2, 3, 4].map((s) => questionFor(s, 'mixed', 'intl', 'easy').kind);
+    const kinds = [1, 2, 3, 4, 5, 6].map((s) => questionFor(s, 'mixed', 'intl', 'easy').kind);
     expect(new Set(kinds)).toEqual(new Set(['forward', 'reverse']));
+    // not a strict alternation the learner could read ahead
+    expect(kinds.some((k, i) => i > 0 && k === kinds[i - 1])).toBe(true);
     expect(questionFor(3, 'mixed', 'intl', 'easy')).toEqual(questionFor(3, 'mixed', 'intl', 'easy'));
     const drilled = nextDrillSeed(1, 'mixed', 'intl', {}, '', 'easy');
     expect(questionFor(drilled, 'mixed', 'intl', 'easy').kind).toBe(
-      drilled % 2 === 1 ? 'reverse' : 'forward',
+      isReverseAt(drilled, 'mixed') ? 'reverse' : 'forward',
     );
   });
 

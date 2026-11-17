@@ -142,6 +142,8 @@ export function Quiz() {
   const [score, setScore] = useState({ right: 0, total: 0 });
   const [progress, setProgress] = useState<Progress>(loadProgress);
   const [note, setNote] = useState<string | null>(null);
+  // the framing goes with the visit's first answer; a mode or level switch keeps it gone
+  const [answered, setAnswered] = useState(false);
   // exam run, local: it starts on the button, not on the link
   const [exam, setExam] = useState<{ deadline: number; log: boolean[] } | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -178,6 +180,7 @@ export function Quiz() {
     if (picked !== null || examDone) return;
     const ok = i === question.answerIndex;
     setPicked(i);
+    setAnswered(true);
     setScore((s) => ({ right: s.right + (ok ? 1 : 0), total: s.total + 1 }));
     const nextProgress = record(progress, question.fixtureName, ok);
     saveProgress(nextProgress);
@@ -373,7 +376,7 @@ export function Quiz() {
           <span className="theta-readout theta-readout-short">{difficultyName}</span>
         </div>
 
-        {mode !== 'exam' && score.total === 0 && picked === null && (
+        {mode !== 'exam' && !answered && (
           <div className="quiz-intro">
             <p>
               <FormattedMessage id="quiz.intro.ways" />

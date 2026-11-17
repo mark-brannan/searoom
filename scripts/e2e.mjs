@@ -181,7 +181,7 @@ check(`display chips move by arrow key (${nChips} chips)`, nChips > 1 && chipMov
 // A stranger's first minute (#108), in a context that has never seen the app:
 // the intro greets them once, and each mode opens on something to do.
 const fresh = await browser.newContext({ colorScheme: 'dark', viewport: { width: 1280, height: 800 } });
-await fresh.addInitScript(() => { Math.random = () => 0; });
+await fresh.addInitScript(() => { Math.random = () => 0; }); // the opening mesh is random (searoom#174), as above
 const first = await fresh.newPage();
 first.on('pageerror', (e) => errors.push(String(e)));
 await first.goto(base, { waitUntil: 'networkidle' });

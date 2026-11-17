@@ -99,8 +99,9 @@ export function weight(p: Progress, scenario: string): number {
  *  mixed run still reopens from its URL. */
 export type QuizWay = boolean | 'mixed';
 
+// the hash's top bit, not the seed's parity: consecutive seeds must not alternate
 export const isReverseAt = (seed: number, way: QuizWay): boolean =>
-  way === 'mixed' ? seed % 2 === 1 : way;
+  way === 'mixed' ? ((seed * 2654435761) >>> 0) >>> 31 === 1 : way;
 
 export function questionFor(
   seed: number,
