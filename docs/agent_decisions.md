@@ -93,3 +93,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t212554z
 - searoom#212: one judged 'What is she?' question in five shows an unlawful display (one change: drop, add an all-round, recolour an all-round), the same in Practice, Drill and Exam; the forward direction is unchanged Undo: change UNLAWFUL_SHARE or revert ([#289](https://github.com/mark-brannan/searoom/pull/289))
+
+### 20261117t213138z
+- searoom#212: 'why' is picked from the four kinds of change #212 names (missing, extra, wrong colour, wrong place); any kind that mends the scene into some lawful view counts as right; tapping the offending light is not built Undo: require mends.length === 1 in unlawfulVariant ([#289](https://github.com/mark-brannan/searoom/pull/289))
