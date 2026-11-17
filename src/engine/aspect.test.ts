@@ -10,6 +10,7 @@ import {
   aspectScenes,
   headingSeenFrom,
   scoreDrill,
+  sidelightBearing,
 } from './aspect';
 
 describe('aspect trainer', () => {
@@ -51,7 +52,16 @@ describe('aspect trainer', () => {
     const a = aspectScenes(7, 'intl');
     expect(a).toHaveLength(ASPECT_SCENES);
     expect(aspectScenes(7, 'intl')).toEqual(a);
-    for (const s of a) expect(s.theta >= 0 && s.theta < 360).toBe(true);
+  });
+
+  it('every bearing a drill can draw shows a sidelight', () => {
+    const { lights } = lightCatalog;
+    const stbd = lights['light:sidelight_starboard'].arc;
+    const port = lights['light:sidelight_port'].arc;
+    const drawn = Array.from({ length: 225 }, (_, i) => sidelightBearing(i));
+    expect(new Set(drawn).size).toBe(225);
+    for (const theta of drawn)
+      expect(bearingInArc(theta, stbd) || bearingInArc(theta, port)).toBe(true);
   });
 
   it('a ten-scene drill fits in under a minute, even unanswered', () => {

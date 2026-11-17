@@ -57,6 +57,15 @@ export function aspectPool(jurisdiction: string) {
   return out;
 }
 
+/**
+ * 0..224 onto the whole degrees where a sidelight shows (0–112, 248–359).
+ * From the stern sector only her sternlight shows, which says "heading
+ * away" and nothing finer, so a steady scene never sits there.
+ */
+export function sidelightBearing(i: number): number {
+  return i <= 112 ? i : i + 135;
+}
+
 /** A drill's scenes, a pure function of the seed. */
 export function aspectScenes(
   seed: number,
@@ -68,7 +77,7 @@ export function aspectScenes(
   const rng = mulberry32(seed);
   return Array.from({ length: n }, () => ({
     ...pool[Math.floor(rng() * pool.length)],
-    theta: Math.floor(rng() * 360),
+    theta: sidelightBearing(Math.floor(rng() * 225)),
   }));
 }
 

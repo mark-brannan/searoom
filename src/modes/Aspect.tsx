@@ -78,8 +78,13 @@ function Dial({
       aria-valuetext={
         aim === null ? undefined : intl.formatMessage({ id: 'aspect.dial.value' }, { deg: aim })
       }
+      onPointerDown={(e) => {
+        // aim on touch, pick on release: a touch screen has no hover to preview
+        e.currentTarget.setPointerCapture(e.pointerId);
+        onAim(at(e));
+      }}
       onPointerMove={(e) => onAim(at(e))}
-      onPointerDown={(e) => onPick(at(e))}
+      onPointerUp={(e) => onPick(at(e))}
       onKeyDown={key}
     >
       <circle cx={C} cy={C} r={R} className="aspect-ring" />
