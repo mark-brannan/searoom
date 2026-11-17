@@ -35,9 +35,10 @@ export function parseBoats(raw: string | null): SavedBoat[] {
       const { name, facts } = item as Record<string, unknown>;
       if (typeof name !== 'string' || !name.trim()) continue;
       if (typeof facts !== 'object' || facts === null) continue;
-      if (out.some((b) => b.name === name)) continue;
+      const n = name.trim().slice(0, NAME_MAX);
+      if (out.some((b) => b.name === n)) continue;
       out.push({
-        name: name.slice(0, NAME_MAX),
+        name: n,
         facts: cleanFacts(facts as FactRecord),
       });
     }

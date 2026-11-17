@@ -176,10 +176,16 @@ export function Quiz() {
   const mine = quiz.mine && mode !== 'drill';
   const pool = useMemo(() => (mine ? boatScenarios(facts) : undefined), [mine, facts]);
 
-  const question: QuizQuestion = useMemo(
-    () => questionFor(seed, reverse, jurisdiction, level, pool),
-    [seed, reverse, jurisdiction, level, pool],
-  );
+  // a boat whose situations make no question at all asks about every vessel
+  // rather than leaving the quiz blank
+  const question: QuizQuestion = useMemo(() => {
+    try {
+      return questionFor(seed, reverse, jurisdiction, level, pool);
+    } catch (e) {
+      if (!pool) throw e;
+      return questionFor(seed, reverse, jurisdiction, level);
+    }
+  }, [seed, reverse, jurisdiction, level, pool]);
 
   const answer = (i: number) => {
     if (picked !== null || examDone) return;

@@ -17,7 +17,31 @@ const SLOOP: FactRecord = {
   'fact:length_m': 12,
 };
 
+const POWER_60: FactRecord = {
+  ...SLOOP,
+  'fact:propulsion': 'propulsion:power',
+  'fact:length_m': 60,
+};
+const DINGHY: FactRecord = {
+  ...SLOOP,
+  'fact:propulsion': 'propulsion:oars',
+  'fact:length_m': 3,
+};
+const KINDS = [
+  ['12 m sloop', SLOOP, ['sailing', 'motoring', 'anchored', 'aground']],
+  [
+    '60 m power vessel',
+    POWER_60,
+    ['underway', 'stopped', 'anchored', 'aground'],
+  ],
+  ['3 m boat under oars', DINGHY, ['rowing', 'anchored', 'aground']],
+] as const;
+
 describe('my boat', () => {
+  it.each(KINDS)('meets the %s in her own situations', (_, facts, ids) => {
+    expect(boatSituations(facts).map((s) => s.id)).toEqual(ids);
+  });
+
   it('meets a sloop sailing, motoring, at anchor and aground, at her own length', () => {
     const s = boatSituations(SLOOP);
     expect(s.map((x) => x.id)).toEqual([
@@ -48,23 +72,33 @@ describe('my boat', () => {
     for (const r of [23, 25, 30]) expect(rules.has(r), `Rule ${r}`).toBe(true);
   });
 
-  it.each(QUIZ_DIFFICULTIES)(
-    'asks only about her at %s, both directions',
-    (d) => {
-      const pool = boatScenarios(SLOOP);
+  it.each(KINDS)(
+    'asks only about the %s, at every level, both directions',
+    (_, facts) => {
+      const pool = boatScenarios(facts);
       const names = new Set(pool.map((p) => p.name));
-      for (let seed = 1; seed <= 15; seed++) {
-        expect(
-          names.has(makeForward(seed, BASE_JURISDICTION, d, pool).fixtureName),
-        ).toBe(true);
-        expect(
-          names.has(makeReverse(seed, BASE_JURISDICTION, d, pool).fixtureName),
-        ).toBe(true);
-      }
+      for (const d of QUIZ_DIFFICULTIES)
+        for (let seed = 1; seed <= 10; seed++) {
+          expect(
+            names.has(
+              makeForward(seed, BASE_JURISDICTION, d, pool).fixtureName,
+            ),
+          ).toBe(true);
+          expect(
+            names.has(
+              makeReverse(seed, BASE_JURISDICTION, d, pool).fixtureName,
+            ),
+          ).toBe(true);
+        }
     },
   );
 
-  it('names her scenarios the same way on every visit', () => {
+  it('names her scenarios the same way on every visit, wherever she lies', () => {
     expect(boatScenarios({ ...SLOOP })).toEqual(boatScenarios(SLOOP));
+    const atAnchor: FactRecord = {
+      ...SLOOP,
+      'fact:position': 'position:anchored',
+    };
+    expect(boatScenarios(atAnchor)).toEqual(boatScenarios(SLOOP));
   });
 });

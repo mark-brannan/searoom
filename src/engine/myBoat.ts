@@ -103,9 +103,14 @@ export function boatScenarios(
   }));
 }
 
-/** A stable short key for a fact record: its fields, sorted, values only. */
+/**
+ * A stable short key for one boat: her record minus where she lies and
+ * whether she makes way (what boatSituations varies); fields sorted, values
+ * only.
+ */
 export function boatKey(facts: FactRecord): string {
   return Object.entries(facts)
+    .filter(([k]) => k !== 'fact:position' && k !== 'fact:making_way')
     .sort(([a], [b]) => a.localeCompare(b))
     .map(
       ([k, v]) =>
@@ -138,7 +143,7 @@ function comparePaths(a: string, b: string): number {
   return ra !== rb ? ra - rb : a.localeCompare(b);
 }
 
-/** Two fact records are one boat when every field agrees. */
+/** Two fact records are one boat when all but where she lies agree. */
 export function sameFacts(a: FactRecord, b: FactRecord): boolean {
   return boatKey(a) === boatKey(b);
 }

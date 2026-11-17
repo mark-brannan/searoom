@@ -84,6 +84,16 @@ describe('saved boats', () => {
     expect(bag['fact:propulsion']).toBe('propulsion:sail');
   });
 
+  it('reads a stored name trimmed, so a fresh save of it replaces it', () => {
+    window.localStorage.setItem(
+      MY_BOATS_KEY,
+      JSON.stringify([{ name: ' Aurora ', facts: SLOOP }]),
+    );
+    resetMyBoatsForTest();
+    saveBoat('Aurora', { ...SLOOP, 'fact:length_m': 11 });
+    expect(stored()).toHaveLength(1);
+  });
+
   it('reads junk as no boats', () => {
     expect(parseBoats('{not json')).toEqual([]);
     expect(parseBoats('{"a":1}')).toEqual([]);
