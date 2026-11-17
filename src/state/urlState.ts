@@ -3,6 +3,7 @@
 // routing keeps GitHub Pages happy. Deep-link shape for rules: #/rules/27(a)(i).
 
 import type { FactRecord, FactValue } from '../engine/types';
+import type { QuizDifficulty } from '../engine/quiz';
 import { BASE_JURISDICTION, isJurisdiction } from '../data/jurisdictions';
 import { PRESETS } from '../data/presets';
 import { DEFAULT_TILT, MAX_TILT } from 'nav-wright/benchy';
@@ -65,6 +66,8 @@ export interface QuizView {
   mode: QuizMode;
   /** Drill: only scenarios exercising this rule number; '' is all. */
   rule: string;
+  /** Difficulty; a new run starts on easy. */
+  difficulty: QuizDifficulty;
 }
 
 /** The Rules reader's view state. */
@@ -146,6 +149,7 @@ export const DEFAULT_QUIZ: QuizView = {
   direction: 'forward',
   mode: 'practice',
   rule: '',
+  difficulty: 'easy',
 };
 
 export const DEFAULT_RULES: RulesView = { path: null };
@@ -302,6 +306,7 @@ export function serialize(state: AppState): string {
     if (q.direction !== 'forward') params.set('dir', q.direction);
     if (q.mode !== 'practice') params.set('qm', q.mode);
     if (q.rule) params.set('qr', q.rule);
+    if (q.difficulty !== 'easy') params.set('qd', q.difficulty);
     if (q.seed !== 1 || q.n !== 1) path = `/quiz/${q.seed}/${q.n}`;
   }
   const q = params.toString();
@@ -401,5 +406,7 @@ export function deserialize(hash: string): AppState {
   if (qm === 'drill' || qm === 'exam') quiz.mode = qm;
   const qr = params.get('qr');
   if (qr && /^\d{1,2}$/.test(qr)) quiz.rule = qr;
+  const qd = params.get('qd');
+  if (qd === 'medium' || qd === 'hard' || qd === 'extreme') quiz.difficulty = qd;
   return state;
 }

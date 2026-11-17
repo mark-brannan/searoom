@@ -82,13 +82,14 @@ describe('parseProgress with a hostile key', () => {
 });
 
 describe('quiz state in the URL', () => {
-  it('round-trips seed, direction, mode, index and rule', () => {
+  it('round-trips seed, direction, mode, index, rule and difficulty', () => {
     const quiz = {
       seed: 4242,
       direction: 'reverse' as const,
       mode: 'exam' as const,
       n: 4,
       rule: '27',
+      difficulty: 'hard' as const,
     };
     const back = deserialize(serialize({ ...deserialize('#/quiz'), quiz }));
     expect(back.quiz).toEqual(quiz);
