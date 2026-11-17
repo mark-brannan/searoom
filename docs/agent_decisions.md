@@ -96,3 +96,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t213138z
 - searoom#212: 'why' is picked from the four kinds of change #212 names (missing, extra, wrong colour, wrong place); any kind that mends the scene into some lawful view counts as right; tapping the offending light is not built Undo: require mends.length === 1 in unlawfulVariant ([#289](https://github.com/mark-brannan/searoom/pull/289))
+
+### 20261117t213151z
+- searoom#212: wrong place is built as two lights of an all-round stack trading places, checked on each vertical line's order; moving other lights (fore and aft, sidelights) waits on nav-wright drawing them moved Undo: revert ([#289](https://github.com/mark-brannan/searoom/pull/289))
