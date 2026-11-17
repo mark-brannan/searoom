@@ -108,3 +108,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t213231z
 - Aspect trainer timing 2.5 s glimpse, 3 s answer, 22.5 deg tolerance; dial with you at the bottom, 0 = heading away Undo: change the constants in src/engine/aspect.ts ([#290](https://github.com/mark-brannan/searoom/pull/290))
+
+### 20261117t215316z
+- Aspect trainer seed stays out of the URL in this PR Undo: add an aspect seed slice to urlState ([#290](https://github.com/mark-brannan/searoom/pull/290))
