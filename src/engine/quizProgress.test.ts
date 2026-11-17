@@ -27,6 +27,16 @@ describe('quiz progress', () => {
     expect(weight(p, 'sloop')).toBeGreaterThan(0);
   });
 
+  it('a mixed run asks both ways, each seed the same way every time', () => {
+    const kinds = [1, 2, 3, 4].map((s) => questionFor(s, 'mixed', 'intl', 'easy').kind);
+    expect(new Set(kinds)).toEqual(new Set(['forward', 'reverse']));
+    expect(questionFor(3, 'mixed', 'intl', 'easy')).toEqual(questionFor(3, 'mixed', 'intl', 'easy'));
+    const drilled = nextDrillSeed(1, 'mixed', 'intl', {}, '', 'easy');
+    expect(questionFor(drilled, 'mixed', 'intl', 'easy').kind).toBe(
+      drilled % 2 === 1 ? 'reverse' : 'forward',
+    );
+  });
+
   it('round-trips an export and drops malformed entries from an import', () => {
     const p = { a: { right: 1, wrong: 2 } };
     expect(parseProgress(JSON.parse(exportProgress(p)))).toEqual(p);

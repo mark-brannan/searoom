@@ -95,13 +95,20 @@ export function weight(p: Progress, scenario: string): number {
   return Math.max(0.25, 1 + 2 * t.wrong - 0.5 * t.right);
 }
 
+/** Which way round a question asks; 'mixed' takes it from the seed, so a
+ *  mixed run still reopens from its URL. */
+export type QuizWay = boolean | 'mixed';
+
+export const isReverseAt = (seed: number, way: QuizWay): boolean =>
+  way === 'mixed' ? seed % 2 === 1 : way;
+
 export function questionFor(
   seed: number,
-  reverse: boolean,
+  reverse: QuizWay,
   jurisdiction: string,
   difficulty: QuizDifficulty = 'extreme',
 ): QuizQuestion {
-  return reverse
+  return isReverseAt(seed, reverse)
     ? makeReverse(seed, jurisdiction, difficulty)
     : makeForward(seed, jurisdiction, difficulty);
 }
@@ -159,7 +166,7 @@ const MAX_SCAN = 200;
  */
 export function nextDrillSeed(
   after: number,
-  reverse: boolean,
+  reverse: QuizWay,
   jurisdiction: string,
   progress: Progress,
   rule: string,
@@ -195,7 +202,7 @@ export function nextDrillSeed(
  */
 export function drillSeedAt(
   seed: number,
-  reverse: boolean,
+  reverse: QuizWay,
   jurisdiction: string,
   progress: Progress,
   rule: string,
