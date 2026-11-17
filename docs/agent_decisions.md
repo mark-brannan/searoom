@@ -135,3 +135,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t220504z
 - cheat sheet: PDF via the browser print dialog, night only until #85, reached from the My boat panel rather than a header tab Undo: revert ([#293](https://github.com/mark-brannan/searoom/pull/293))
+
+### 20261117t224559z
+- Identify's masthead question flow: masthead answer is the top of her centreline stack, sidelights exact, other lights account for the rest. Undo: revert matchesAnswers ([#297](https://github.com/mark-brannan/searoom/pull/297))
