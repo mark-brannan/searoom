@@ -5,7 +5,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { IntlProvider } from 'react-intl';
-import { seaColor } from 'nav-wright';
 import { bearingHullOpacity } from 'nav-wright/benchy';
 import { Scene } from '../components/Scene';
 import { evaluateDisplayIn } from '../engine/evaluate';
