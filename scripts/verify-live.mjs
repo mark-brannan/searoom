@@ -198,13 +198,18 @@ check(
 // 14. a preset boat: picking one from the gallery yields a verdict
 await page.goto(`${base}#/sandbox`, { waitUntil: 'networkidle' });
 const presetCards = page.locator('.preset-card');
-if ((await presetCards.count()) > 1) {
-  await presetCards.nth(1).click();
+const presetCount = await presetCards.count();
+let presetPicked = false;
+if (presetCount > 1) {
+  const target = presetCards.nth(1);
+  await target.click();
+  presetPicked =
+    (await target.getAttribute('aria-pressed').catch(() => null)) === 'true';
 }
 check(
-  'preset boat: a verdict (display chips) shows',
-  (await presetCards.count()) > 1 && (await chips.count()) >= 1,
-  `${await presetCards.count()} presets, ${await chips.count()} chips`,
+  'preset boat: picking one selects it and a verdict (display chips) shows',
+  presetPicked && (await chips.count()) >= 1,
+  `${presetCount} presets, ${await chips.count()} chips`,
 );
 
 // 15. the 3D view (the Sandbox default) draws a WebGL canvas
