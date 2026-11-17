@@ -4,7 +4,7 @@ import { BoxGeometry, Group, Mesh } from 'three';
 import { renderToString } from 'react-dom/server';
 import { selectHull } from 'nav-wright';
 import type { FactRecord } from '../engine/types';
-import { evaluateDisplayIn } from '../engine/evaluate';
+import { evaluateSignalsIn } from '../engine/evaluate';
 import { lights as lightCatalog } from '../data/colregs';
 import { placeLights } from './navWright';
 import { MeshProfileView } from './MeshProfileView';
@@ -42,7 +42,7 @@ const facts: FactRecord = {
 
 function render(modelUrl = '/models/none.glb'): string {
   const hull = selectHull(facts);
-  const display = evaluateDisplayIn('intl', facts).displays[0];
+  const display = evaluateSignalsIn('intl', facts).displays[0];
   const placed = placeLights(display.lights, hull.spec, facts, lightCatalog);
   return renderToString(
     createElement(MeshProfileView, {

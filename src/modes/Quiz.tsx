@@ -8,7 +8,7 @@ import { Scene } from '../components/Scene';
 import { describeFacts } from '../components/factLabel';
 import { QUIZ_DIFFICULTIES, citeOf, forwardHull } from '../engine/quiz';
 import type { QuizDifficulty, QuizQuestion } from '../engine/quiz';
-import { evaluateDisplayIn } from '../engine/evaluate';
+import { evaluateSignalsIn } from '../engine/evaluate';
 import {
   drillDifficulty,
   drillSeedAt,
@@ -35,7 +35,7 @@ export const EXAM_SECONDS = 600;
 
 /** Cites of the display a reverse option stands for (the generator's first display). */
 function reverseOptionCite(jurisdiction: string, facts: FactRecord): string {
-  const d = evaluateDisplayIn(jurisdiction, facts).displays[0];
+  const d = evaluateSignalsIn(jurisdiction, facts).displays[0];
   return d ? citeOf(jurisdiction, d) : '';
 }
 

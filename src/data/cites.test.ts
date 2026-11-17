@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { applicability } from './colregs';
-import { evaluateDisplayIn } from '../engine/evaluate';
+import { evaluateSignalsIn } from '../engine/evaluate';
 import {
   BASE_JURISDICTION,
   entrySuppressionsFor,
@@ -32,7 +32,7 @@ describe('entry reachability', () => {
       const facts = factsForEntry(entry.id);
       expect(facts).toBeDefined();
       const jurisdiction = jurisdictionForEntry(entry.id) ?? entry.jurisdiction;
-      const evaln = evaluateDisplayIn(jurisdiction, facts!);
+      const evaln = evaluateSignalsIn(jurisdiction, facts!);
       expect(evaln.applied).toContain(entry.id);
     });
   }

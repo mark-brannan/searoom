@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { applicability } from '../data/colregs';
-import { evaluateDisplayIn } from '../engine/evaluate';
+import { evaluateSignalsIn } from '../engine/evaluate';
 import type { FactRecord } from '../engine/types';
 import {
   distinguishingEntries,
@@ -23,7 +23,7 @@ const anchoredSloop: FactRecord = {
 };
 
 const partsFor = (jurisdiction: string, facts: FactRecord, i: number) => {
-  const evaln = evaluateDisplayIn(jurisdiction, facts);
+  const evaln = evaluateSignalsIn(jurisdiction, facts);
   const display = evaln.displays[i];
   expect(display).toBeDefined();
   return reasonParts(display!, evaln.displays, entryById, evaln.modalities);
@@ -61,7 +61,7 @@ describe('chip reason', () => {
       ...anchoredSloop,
       'fact:position': 'position:aground',
     };
-    const evaln = evaluateDisplayIn('intl', aground);
+    const evaln = evaluateSignalsIn('intl', aground);
     // 30(d)'s red-over-red fires in both displays; 30(a)/30(b) is the choice
     expect(evaln.displays.every((d) => d.entries.includes('rule:30d'))).toBe(
       true,
@@ -88,7 +88,7 @@ describe('chip reason', () => {
 
 describe('what a display shows', () => {
   it('merges same-light specs and adds their counts, in the data order', () => {
-    const evaln = evaluateDisplayIn('intl', anchoredSloop);
+    const evaln = evaluateSignalsIn('intl', anchoredSloop);
     // 30(b): one all-round white; 30(a): fore and stern all-round whites
     expect(lightParts(evaln.displays[0]!.lights)).toEqual([
       { light: 'light:all_round', color: 'white', count: 1 },
@@ -103,7 +103,7 @@ describe('what a display shows', () => {
       ...anchoredSloop,
       'fact:position': 'position:underway',
     };
-    const evaln = evaluateDisplayIn('intl', sloop);
+    const evaln = evaluateSignalsIn('intl', sloop);
     // 25(b): sidelights and sternlight combined in one lantern
     expect(lightParts(evaln.displays[0]!.lights)).toEqual([
       { light: 'light:sidelights', combined: true },
@@ -126,7 +126,7 @@ describe('what a display shows', () => {
       'fact:position': 'position:underway',
       'fact:length_m': 30,
     };
-    const evaln = evaluateDisplayIn('intl', power);
+    const evaln = evaluateSignalsIn('intl', power);
     const second = evaln.optionalAdditions.find((a) => a.id === 'rule:23a_ii');
     expect(second).toBeDefined();
     expect(lightParts(second!.lights)).toEqual([

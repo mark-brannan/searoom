@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { BASE_JURISDICTION } from '../data/jurisdictions';
-import { evaluateDisplayIn } from './evaluate';
+import { evaluateSignalsIn } from './evaluate';
 import type { DisplayEvaluation, FactRecord } from './types';
 
 // Composition is asserted at the base. The engine has no jurisdiction
@@ -12,7 +12,7 @@ import type { DisplayEvaluation, FactRecord } from './types';
 // into one answer — an 11 m power boat picks up Inland's rule:23d beside
 // intl's rule:23d_i. Going through the seam is what keeps the two apart.
 const evaluateDisplay = (facts: FactRecord): DisplayEvaluation =>
-  evaluateDisplayIn(BASE_JURISDICTION, facts);
+  evaluateSignalsIn(BASE_JURISDICTION, facts);
 
 const sloop12: FactRecord = {
   'fact:propulsion': 'propulsion:sail',

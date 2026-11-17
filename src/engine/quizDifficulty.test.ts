@@ -13,7 +13,7 @@ import {
   scenarioPoolFor,
   visibleSignature,
 } from './quiz';
-import { evaluateDisplayIn } from './evaluate';
+import { evaluateSignalsIn } from './evaluate';
 import type { QuizDifficulty } from './quiz';
 import type { FactRecord } from './types';
 import { drillDifficulty, drillSeedAt, nextDrillSeed, questionFor, rulesInPool, rulesOfCite } from './quizProgress';
@@ -163,7 +163,7 @@ describe.each(JURISDICTIONS.map((j) => j.id))('difficulty in %s', (j) => {
       const scene = visibleSignature(q.facts, q.display, q.theta);
       q.options.forEach((o, i) => {
         if (i === q.answerIndex) return;
-        const looks = evaluateDisplayIn(j, o.facts).displays.map((x) =>
+        const looks = evaluateSignalsIn(j, o.facts).displays.map((x) =>
           visibleSignature(o.facts, x, o.theta),
         );
         expect(looks, `seed ${s}, option ${i}`).not.toContain(scene);
