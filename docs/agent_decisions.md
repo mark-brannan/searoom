@@ -102,3 +102,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t213201z
 - searoom#212: Practice and Drill stop at a wrong lawful/unlawful judgement and reveal; Exam always asks the second step so it keeps its verdict back Undo: revert judge in Quiz.tsx ([#289](https://github.com/mark-brannan/searoom/pull/289))
+
+### 20261117t213220z
+- Aspect trainer glimpse uses the 2D lights-only bearing card, not the 3D view; reads the 2026-10-17 default-view line as the Sandbox's default Undo: swap the mini bearing card for the 3D view in Aspect.tsx ([#290](https://github.com/mark-brannan/searoom/pull/290))
