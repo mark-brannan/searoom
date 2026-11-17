@@ -168,22 +168,28 @@ await page.goto(`${base}#/sandbox?p=power&a=none&pos=anchored&len=6&nc=0`, {
 const exempted = await page.locator('.panel', { hasText: 'Exempted' }).count();
 check('30(e) exemption is visible', exempted >= 1);
 
+// 12. the social preview image named by og:image resolves to an image
+await page.goto(base, { waitUntil: 'networkidle' });
+const ogUrl = await page
+  .locator('meta[property="og:image"]')
+  .getAttribute('content');
+const ogRes = ogUrl ? await context.request.get(ogUrl) : null;
+check(
+  'og:image resolves to an image',
+  !!ogRes &&
+    ogRes.ok() &&
+    (ogRes.headers()['content-type'] ?? '').startsWith('image/'),
+  ogUrl ?? 'no og:image tag',
+);
+
 // 13. corpus switch (REQ-LANG-2): the Finnish corpus quotes the same
-// paragraph path in other words
+// paragraph path in other words. A wait that times out is not swallowed:
+// the empty quote it leaves fails the check below.
 const quoteOf = async (url) => {
   await page.goto(url, { waitUntil: 'networkidle' });
-  await page
-    .locator('[data-path="27(a)(i)"] .rule-text')
-    .first()
-    .waitFor({ timeout: 5000 })
-    .catch(() => {});
-  return (
-    (await page
-      .locator('[data-path="27(a)(i)"] .rule-text')
-      .first()
-      .textContent()
-      .catch(() => null)) ?? ''
-  );
+  const ruleText = page.locator('[data-path="27(a)(i)"] .rule-text').first();
+  await ruleText.waitFor({ timeout: 5000 }).catch(() => {});
+  return (await ruleText.textContent().catch(() => null)) ?? '';
 };
 const rulePath = `#/rules/${encodeURIComponent('27(a)(i)')}`;
 const quoteEn = await quoteOf(`${base}${rulePath}`);
@@ -223,20 +229,6 @@ check(
   '3D view loads a canvas',
   !!box && box.width > 100 && box.height > 100,
   box ? `${Math.round(box.width)}x${Math.round(box.height)}` : 'no canvas',
-);
-
-// 12. the social preview image named by og:image resolves to an image
-await page.goto(base, { waitUntil: 'networkidle' });
-const ogUrl = await page
-  .locator('meta[property="og:image"]')
-  .getAttribute('content');
-const ogRes = ogUrl ? await context.request.get(ogUrl) : null;
-check(
-  'og:image resolves to an image',
-  !!ogRes &&
-    ogRes.ok() &&
-    (ogRes.headers()['content-type'] ?? '').startsWith('image/'),
-  ogUrl ?? 'no og:image tag',
 );
 
 await browser.close();
