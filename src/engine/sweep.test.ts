@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 import factsJson from 'colregs/data/facts.json';
-import { applicability } from '../data/colregs';
+import { applicability, lights as lightCatalog } from '../data/colregs';
 import { evaluateDisplayIn } from './evaluate';
 import type { Display, DisplayEvaluation, Entry, FactRecord } from './types';
 
@@ -88,7 +88,28 @@ function excludesOf(id: string): string[] {
   return (e?.['rel:excludes'] as string[] | undefined) ?? [];
 }
 
-function violationsOf(ev: DisplayEvaluation): string[] {
+/** Degrees of a light's horizontal arc, from its catalog entry; combined sidelights span both. */
+function arcsOf(id: string | undefined): [number, number][] | 'unknown' {
+  if (id === 'light:sidelights') return [[0, 112.5], [247.5, 360]];
+  const def = (lightCatalog.lights as Record<string, { arc?: { from_deg: number; to_deg: number } | null }>)[
+    id ?? ''
+  ];
+  if (!def?.arc) return 'unknown';
+  const { from_deg: a, to_deg: b } = def.arc;
+  return a <= b ? [[a, b]] : [[a, 360], [0, b]];
+}
+
+/** True when the arcs together leave no gap in the 360 degrees. */
+function coversHorizon(arcs: [number, number][]): boolean {
+  let reach = 0;
+  for (const [a, b] of [...arcs].sort((x, y) => x[0] - y[0])) {
+    if (a > reach) return false;
+    reach = Math.max(reach, b);
+  }
+  return reach >= 360;
+}
+
+function violationsOf(ev: DisplayEvaluation, f: FactRecord): string[] {
   const out: string[] = [];
   // 1. a firing entry yields a lawful display, and no display is empty
   const fired = ev.applied.filter(
@@ -136,6 +157,19 @@ function violationsOf(ev: DisplayEvaluation): string[] {
       out.push(`${tag}: sidelights unpaired (stbd ${stbd}, port ${port})`);
     if (count('light:sidelights') > 0 && (stbd > 0 || port > 0))
       out.push(`${tag}: sidelight pair and combined sidelights both shown`);
+
+    // 3b. no dark sector: an underway display at night is seen from every
+    // bearing. Lights whose arc the catalog leaves open (torch, deck lights)
+    // are not counted, so a display carrying only those is not judged.
+    if (
+      f['fact:position'] === 'position:underway' &&
+      f['fact:time'] === 'time:night' &&
+      d.lights.length > 0
+    ) {
+      const arcs = d.lights.map((l) => arcsOf(lightId(l)));
+      if (!arcs.includes('unknown') && !coversHorizon(arcs.flat() as [number, number][]))
+        out.push(`${tag}: dark sector in the horizontal plane`);
+    }
 
     // 4. alternatives a relation excludes are never co-shown
     for (const id of d.entries)
@@ -212,7 +246,7 @@ describe('property sweep over the fact space (#123)', () => {
     const covered = new Set<string>();
     for (const { jurisdiction, facts: f } of grid()) {
       const ev = evaluateDisplayIn(jurisdiction, f);
-      for (const v of violationsOf(ev)) {
+      for (const v of violationsOf(ev, f)) {
         const key = v
           .replace(/display \d+ /, '')
           .replace(/\[[^\]]*\]/, '[..]')
