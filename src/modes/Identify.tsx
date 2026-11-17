@@ -7,6 +7,8 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import { usePatch, useJurisdiction } from '../state/store';
 import { describeFacts } from '../components/factLabel';
 import { identifyCandidates } from '../engine/identify';
+import { explainUnlawful, isLawfulView } from '../engine/unlawful';
+import { reasonText } from '../components/unlawfulText';
 import type { Arrangement, SeenLight } from '../engine/identify';
 import { bearingLabel, lightFill } from 'nav-wright';
 import { Scene } from '../components/Scene';
@@ -26,6 +28,12 @@ export function Identify() {
   const candidates = useMemo(
     () => identifyCandidates(seen, jurisdiction, arrangement),
     [seen, jurisdiction, arrangement],
+  );
+
+  // the bare colours, before any order or light type the learner gave
+  const unlawful = useMemo(
+    () => (isLawfulView(seen, jurisdiction) ? null : explainUnlawful(seen, jurisdiction)),
+    [seen, jurisdiction],
   );
 
   const aspectsOf = (thetas: number[]): string => {
@@ -160,10 +168,44 @@ export function Identify() {
               values={{ count: candidates.length }}
             />
           </h2>
-          {candidates.length === 0 && (
+          {candidates.length === 0 && !unlawful && (
             <p className="elim">
               <FormattedMessage id="identify.candidates.explainNone" />
             </p>
+          )}
+          {unlawful && (
+            <div role="status">
+              <p>
+                <FormattedMessage id="identify.unlawful.title" />
+              </p>
+              {unlawful.length === 0 ? (
+                <p className="elim">
+                  <FormattedMessage id="identify.unlawful.none" />
+                </p>
+              ) : (
+                <>
+                  <p className="elim">
+                    <FormattedMessage id="identify.unlawful.reasons" />
+                  </p>
+                  <ul>
+                    {unlawful.slice(0, 6).map((e, i) => (
+                      <li key={i}>
+                        <FormattedMessage
+                          id="identify.unlawful.reason"
+                          values={{
+                            reason: reasonText(intl, e),
+                            facts: describeFacts(intl, e.example.facts),
+                            aspect: intl.formatMessage({
+                              id: `aspect.${bearingLabel(e.example.theta)}`,
+                            }),
+                          }}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
           )}
           {candidates.length === 1 && (
             <p className="elim">

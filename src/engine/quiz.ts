@@ -11,6 +11,7 @@ import { evaluateDisplayIn } from './evaluate';
 import type { Display, FactRecord } from './types';
 import { bearingInArc, selectHull } from 'nav-wright';
 import { placeLights } from '../render/navWright';
+import type { UnlawfulDisplay } from './unlawful';
 
 const fixtures = fixturesJson as unknown as {
   jurisdiction: string;
@@ -253,6 +254,8 @@ export interface ReverseQuestion {
   answerIndex: number;
   options: { facts: FactRecord; theta: number }[];
   cite: string;
+  /** set when the scene shows `display` with one unlawful change (judged questions) */
+  unlawful?: UnlawfulDisplay;
 }
 
 export type QuizQuestion = ForwardQuestion | ReverseQuestion;
