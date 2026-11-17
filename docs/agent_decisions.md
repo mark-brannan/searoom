@@ -75,3 +75,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261022t055500z
 - searoom canvas check: 'seen' = off the sea by >2/255 either way, black sky excluded; floor 0.3% -> 0.8% on the new metric; new ceiling 'bright' (>4/255 over the sea) <= 0.3% Undo: revert scripts/canvas-light.mjs and the two constants in lit-canvas.mjs and e2e.mjs ([#218](https://github.com/mark-brannan/searoom/issues/218)) (no PR, branch claude/searoom-218-postmortem-6c2019)
+
+### 20261117t095235z
+- The quiz difficulty readout says "Easy (asked at Extreme)" when a question is asked at another level than the one chosen; the Finnish string is unreviewed. Undo: change quiz.difficulty.askedAt in src/i18n/en.json and fi.json ([#252](https://github.com/mark-brannan/searoom/pull/252))
