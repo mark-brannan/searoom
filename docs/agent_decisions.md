@@ -78,3 +78,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t095235z
 - The quiz difficulty readout says "Easy (asked at Extreme)" when a question is asked at another level than the one chosen; the Finnish string is unreviewed. Undo: change quiz.difficulty.askedAt in src/i18n/en.json and fi.json ([#252](https://github.com/mark-brannan/searoom/pull/252))
+
+### 20261117t095239z
+- Two wrong forward quiz options that draw alike on the shared hull are left as they are; the PR body states the measured counts. Undo: de-duplicate forward options on the lights as drawn on the asked hull, in forwardAt in src/engine/quiz.ts ([#252](https://github.com/mark-brannan/searoom/pull/252#discussion_r4597802477)) ([#252](https://github.com/mark-brannan/searoom/pull/252))
