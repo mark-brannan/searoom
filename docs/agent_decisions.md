@@ -150,3 +150,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t225043z
 - Identify's empty-sea example is red over white over red, all-round, in a vertical line (restricted in ability to manoeuvre). Undo: change EXAMPLE in Identify.tsx ([#298](https://github.com/mark-brannan/searoom/pull/298))
+
+### 20261117t225055z
+- Quiz framing shows in Practice and Drill until the visit's first answer; Exam keeps its own intro. Undo: show quiz-intro unconditionally ([#298](https://github.com/mark-brannan/searoom/pull/298))
