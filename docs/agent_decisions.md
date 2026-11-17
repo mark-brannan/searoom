@@ -144,3 +144,6 @@ heading is the UTC stamp, so `agent_decisions.md#<stamp>` links one entry.
 
 ### 20261117t224621z
 - Identify's ambiguity note merges aspects with one look-alike group, names each once by activity, lists six then counts the rest. Undo: revert few and shortName ([#297](https://github.com/mark-brannan/searoom/pull/297))
+
+### 20261117t225030z
+- Quiz Mixed takes each question's direction from its seed's parity, so a mixed URL reproduces the question. Undo: drop dir=mixed and the parity helper ([#298](https://github.com/mark-brannan/searoom/pull/298))
