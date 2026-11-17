@@ -17,27 +17,15 @@ const en = load('../src/i18n/en.json');
 const fi = load('../src/i18n/fi.json');
 
 // Package ids come qualified as the app sees them (see src/i18n/index.ts).
-const pkgEn = JSON.parse(
-  readFileSync(
-    new URL('../node_modules/colregs/data/i18n/en.json', import.meta.url),
-    'utf8',
-  ),
-);
+const pkgEn = load('../node_modules/colregs/data/i18n/en.json');
+const pkgFi = load('../node_modules/colregs/data/i18n/fi.json');
 const pkgKeys = new Set();
-for (const [cat, group] of Object.entries(pkgEn.strings))
-  for (const k of Object.keys(group))
-    pkgKeys.add(k.includes(':') ? k.replace(':', '.') : `${cat}.${k}`);
-
-const pkgFi = JSON.parse(
-  readFileSync(
-    new URL('../node_modules/colregs/data/i18n/fi.json', import.meta.url),
-    'utf8',
-  ),
-);
 let pkgFiCount = 0;
 for (const [cat, group] of Object.entries(pkgEn.strings))
-  for (const k of Object.keys(group))
+  for (const k of Object.keys(group)) {
+    pkgKeys.add(k.includes(':') ? k.replace(':', '.') : `${cat}.${k}`);
     if (pkgFi.strings?.[cat]?.[k]) pkgFiCount++;
+  }
 const baseline = load('../src/i18n/fi-coverage.json').packageKeysInFinnish;
 
 const files = [];
