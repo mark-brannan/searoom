@@ -10,6 +10,13 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` — ${detail}` : ''}`);
   if (!ok) failures++;
 };
+// A Playwright call that may time out: keep the error so the failing check
+// can say why, rather than swallow it.
+const attempt = (promise) =>
+  promise.then(
+    (value) => ({ value, error: '' }),
+    (e) => ({ value: null, error: String(e?.message ?? e).split('\n')[0] }),
+  );
 
 const browser = await chromium.launch();
 const context = await browser.newContext({ colorScheme: 'dark' });
@@ -183,13 +190,15 @@ check(
 );
 
 // 13. corpus switch (REQ-LANG-2): the Finnish corpus quotes the same
-// paragraph path in other words. A wait that times out is not swallowed:
-// the empty quote it leaves fails the check below.
+// paragraph path in other words. A wait that times out fails the check
+// below with its error in the detail.
 const quoteOf = async (url) => {
   await page.goto(url, { waitUntil: 'networkidle' });
   const ruleText = page.locator('[data-path="27(a)(i)"] .rule-text').first();
-  await ruleText.waitFor({ timeout: 5000 }).catch(() => {});
-  return (await ruleText.textContent().catch(() => null)) ?? '';
+  const read = await attempt(
+    ruleText.waitFor({ timeout: 5000 }).then(() => ruleText.textContent()),
+  );
+  return { text: read.value ?? '', error: read.error };
 };
 const rulePath = `#/rules/${encodeURIComponent('27(a)(i)')}`;
 const quoteEn = await quoteOf(`${base}${rulePath}`);
@@ -198,7 +207,12 @@ const quoteFi = await quoteOf(
 );
 check(
   'corpus switch: 27(a)(i) quoted in other words',
-  quoteEn.length > 0 && quoteFi.length > 0 && quoteEn !== quoteFi,
+  quoteEn.text.length > 0 &&
+    quoteFi.text.length > 0 &&
+    quoteEn.text !== quoteFi.text,
+  [quoteEn.error && `en: ${quoteEn.error}`, quoteFi.error && `fi: ${quoteFi.error}`]
+    .filter(Boolean)
+    .join('; '),
 );
 
 // 14. a preset boat: picking one from the gallery yields a verdict
@@ -206,16 +220,18 @@ await page.goto(`${base}#/sandbox`, { waitUntil: 'networkidle' });
 const presetCards = page.locator('.preset-card');
 const presetCount = await presetCards.count();
 let presetPicked = false;
+let presetError = '';
 if (presetCount > 1) {
   const target = presetCards.nth(1);
   await target.click();
-  presetPicked =
-    (await target.getAttribute('aria-pressed').catch(() => null)) === 'true';
+  const pressed = await attempt(target.getAttribute('aria-pressed'));
+  presetPicked = pressed.value === 'true';
+  presetError = pressed.error;
 }
 check(
   'preset boat: picking one selects it and a verdict (display chips) shows',
   presetPicked && (await chips.count()) >= 1,
-  `${presetCount} presets, ${await chips.count()} chips`,
+  `${presetCount} presets, ${await chips.count()} chips${presetError ? `; ${presetError}` : ''}`,
 );
 
 // 15. the 3D view (the Sandbox default) draws a WebGL canvas
@@ -223,12 +239,16 @@ await page.goto(`${base}#/sandbox?p=sail&a=none&pos=underway&mw=1&len=12`, {
   waitUntil: 'networkidle',
 });
 const canvas = page.locator('canvas').first();
-await canvas.waitFor({ timeout: 10000 }).catch(() => {});
-const box = await canvas.boundingBox().catch(() => null);
+const drawn = await attempt(
+  canvas.waitFor({ timeout: 10000 }).then(() => canvas.boundingBox()),
+);
+const box = drawn.value;
 check(
   '3D view loads a canvas',
   !!box && box.width > 100 && box.height > 100,
-  box ? `${Math.round(box.width)}x${Math.round(box.height)}` : 'no canvas',
+  box
+    ? `${Math.round(box.width)}x${Math.round(box.height)}`
+    : `no canvas${drawn.error ? `: ${drawn.error}` : ''}`,
 );
 
 await browser.close();
