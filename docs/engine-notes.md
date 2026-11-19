@@ -91,7 +91,8 @@ fact records: every propulsion, activity and position value, making way, the
 COLREGS length thresholds (7, 12, 20, 50, 100 m and a value either side), the
 tow-length and max-speed bands, day and night, good and restricted visibility,
 under `intl` and `us/inland`. About 21,000 records, roughly a second and a
-half, so it runs on every push with the rest of `npm test`. Across the grid:
+half, so it runs on every push with the rest of `npm test`, and again as its own
+CI step (`Property sweep`) so its seconds show on the run. Across the grid:
 
 1. Where an entry that shows a light or a shape fires, a display exists, and
    no display sitting beside others is empty (it names entries and shows a
@@ -103,8 +104,15 @@ half, so it runs on every push with the rest of `npm test`. Across the grid:
 5. Entries a `rel:excludes` relation separates are never in one display.
 6. A standing `shall` entry (not exempted, overridden or replaced by a
    chosen alternative) is in every display.
-7. `known_omissions` is present and every record carries cite, what and why
+7. An underway display at night, or by day in restricted visibility, leaves no
+   dark sector: its lights' catalog arcs cover 360°.
+8. `known_omissions` is present and every record carries cite, what and why
    (the Rules reference renders them).
+
+Not swept: all-round lights in a vertical line being spaced (Annex I 2(i)).
+The engine's output carries no heights, so the sweep cannot see it, and nothing
+else checks it yet: the seat checks in `src/render/annexISeats.test.ts` cover
+Annex I 3(a) and 3(b) only.
 
 A violation is a colregs issue carrying the failing record, not an app-side
 patch. Classes already reported are listed in the test with their colregs
