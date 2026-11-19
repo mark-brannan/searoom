@@ -13,7 +13,16 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
-import { applyPatch, useApp, usePatch, useJurisdiction, useSlice } from '../state/store';
+import {
+  applyPatch,
+  useApp,
+  usePatch,
+  useJurisdiction,
+  useSituation,
+  useSlice,
+} from '../state/store';
+import { BoatFilter } from '../components/MyBoat';
+import { boatParagraphs } from '../engine/myBoat';
 import { CorpusSwitcher } from '../components/CorpusSwitcher';
 import { CorpusLine, MixedNote, Paragraph } from '../components/RuleParagraphs';
 import {
@@ -168,6 +177,18 @@ export function Rules() {
     [allResolved, query],
   );
   const searching = query.trim().length > 0;
+  // my boat: only the paragraphs her situations' rules cite
+  const [mine, setMine] = useState(false);
+  const { facts } = useSituation();
+  const herPaths = useMemo(
+    () => (mine ? boatParagraphs(jurisdiction, facts).filter((p) => resolvedByPath.has(p)) : null),
+    [mine, jurisdiction, facts, resolvedByPath],
+  );
+  const listed = herPaths
+    ? searching
+      ? hits.filter((p) => herPaths.includes(p))
+      : herPaths
+    : hits;
 
   // part -> rules, for the browse tree
   const tree = useMemo(() => {
@@ -265,6 +286,9 @@ export function Rules() {
           placeholder={intl.formatMessage({ id: 'rules.search.placeholder' })}
           aria-label={intl.formatMessage({ id: 'rules.search.label' })}
         />
+        <div className="chips">
+          <BoatFilter mine={mine} onMine={setMine} />
+        </div>
         <p className="corpus-line" data-testid="rules-corpus-top">
           <CorpusLine corpus={corpus} /> ·{' '}
           <FormattedMessage
@@ -276,21 +300,21 @@ export function Rules() {
             }}
           />
         </p>
-        {searching ? (
+        {searching || herPaths ? (
           <div data-testid="rules-results">
             <p className="elim">
               <FormattedMessage
-                id="rules.search.count"
-                values={{ count: hits.length }}
+                id={searching ? 'rules.search.count' : 'rules.myBoat.count'}
+                values={{ count: listed.length }}
               />
             </p>
-            {hits.map((p) => {
+            {listed.map((p) => {
               const r = resolvedByPath.get(p)!;
               return (
                 <Paragraph
                   key={p}
                   r={r}
-                  highlight={query}
+                  highlight={searching ? query : undefined}
                   footer={entriesFooter(p)}
                   label={
                     <a

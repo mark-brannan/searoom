@@ -5,6 +5,7 @@
 
 import { evaluateDisplayIn } from './evaluate';
 import { scenarioPoolFor, citeOf } from './quiz';
+import type { ScenarioPool } from './quiz';
 import type { Display, FactRecord } from './types';
 
 export type CardDirection = 'scene-to-cite' | 'cite-to-scene';
@@ -27,9 +28,10 @@ export function ruleOf(cite: string): string {
   return /(\d+)/.exec(cite)?.[1] ?? '';
 }
 
-export function buildDeck(jurisdiction: string): Card[] {
+/** The deck over the fixture scenarios, or over a given pool (one boat's). */
+export function buildDeck(jurisdiction: string, pool?: ScenarioPool): Card[] {
   const out: Card[] = [];
-  for (const fixture of scenarioPoolFor(jurisdiction)) {
+  for (const fixture of pool ?? scenarioPoolFor(jurisdiction)) {
     const display = evaluateDisplayIn(jurisdiction, fixture.facts).displays.find(
       (d) => d.lights.length > 0,
     );

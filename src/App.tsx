@@ -41,6 +41,10 @@ const Sound = lazy(() =>
   import('./modes/Sound').then((m) => ({ default: m.Sound })),
 );
 
+const Sheet = lazy(() =>
+  import('./modes/Sheet').then((m) => ({ default: m.Sheet })),
+);
+
 const Vessels = lazy(() =>
   import('./modes/Vessels').then((m) => ({ default: m.Vessels })),
 );
@@ -74,6 +78,8 @@ export function App() {
         return <Sound />;
       case 'vessels':
         return <Vessels />;
+      case 'sheet':
+        return <Sheet />;
     }
   }, [mode]);
 

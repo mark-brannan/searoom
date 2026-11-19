@@ -25,7 +25,9 @@ import {
 import type { Progress } from '../engine/quizProgress';
 import { RuleParagraphs } from '../components/RuleParagraphs';
 import { QUIZ_MODES } from '../state/urlState';
-import { usePatch, useJurisdiction, useSlice } from '../state/store';
+import { usePatch, useJurisdiction, useSituation, useSlice } from '../state/store';
+import { BoatFilter } from '../components/MyBoat';
+import { boatScenarios } from '../engine/myBoat';
 import { bearingLabel } from 'nav-wright';
 import type { QuizView } from '../state/urlState';
 import type { FactRecord } from '../engine/types';
@@ -160,7 +162,7 @@ export function Quiz() {
 
   // a new question by any route (back/forward, an edited link, the
   // jurisdiction switcher) starts unanswered
-  useEffect(() => setPicked(null), [seed, reverse, jurisdiction, quizDifficulty]);
+  useEffect(() => setPicked(null), [seed, reverse, jurisdiction, quizDifficulty, quiz.mine]);
 
   const rules = useMemo(() => rulesInPool(jurisdiction), [jurisdiction]);
 
@@ -169,10 +171,21 @@ export function Quiz() {
     mode === 'drill' ? drillDifficulty(jurisdiction, rule, quizDifficulty) : quizDifficulty;
   const level = askAt(quizRule);
 
-  const question: QuizQuestion = useMemo(
-    () => questionFor(seed, reverse, jurisdiction, level),
-    [seed, reverse, jurisdiction, level],
-  );
+  // my boat: her own situations, not the fixtures; a drill keeps to its rule
+  const { facts } = useSituation();
+  const mine = quiz.mine && mode !== 'drill';
+  const pool = useMemo(() => (mine ? boatScenarios(facts) : undefined), [mine, facts]);
+
+  // a boat whose situations make no question at all asks about every vessel
+  // rather than leaving the quiz blank
+  const question: QuizQuestion = useMemo(() => {
+    try {
+      return questionFor(seed, reverse, jurisdiction, level, pool);
+    } catch (e) {
+      if (!pool) throw e;
+      return questionFor(seed, reverse, jurisdiction, level);
+    }
+  }, [seed, reverse, jurisdiction, level, pool]);
 
   const answer = (i: number) => {
     if (picked !== null || examDone) return;
@@ -354,6 +367,15 @@ export function Quiz() {
                 </option>
               ))}
             </select>
+          )}
+          {mode !== 'drill' && (
+            <BoatFilter
+              mine={quiz.mine}
+              onMine={(m) => {
+                setPicked(null);
+                patch({ mine: m, n: 1 });
+              }}
+            />
           )}
         </div>
         <div className="theta-control">

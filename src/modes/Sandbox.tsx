@@ -15,6 +15,7 @@ import { ALL_VIEWS, Arcs, BearingAside, Scene } from '../components/Scene';
 import { DisplayChips } from '../components/DisplayChips';
 import { RulesPanel } from '../components/RulesPanel';
 import { DataDrawer } from '../components/DataDrawer';
+import { MyBoatPanel } from '../components/MyBoat';
 import { evaluateDisplayIn } from '../engine/evaluate';
 import type { SandboxView, View } from '../state/urlState';
 
@@ -254,6 +255,7 @@ function LayoutA({
         </div>
         <div className="sandbox-rest">
           {chips}
+          <MyBoatPanel />
           {rules}
           {drawer}
         </div>
@@ -296,6 +298,7 @@ function LayoutC({
       <div className="fact-row">
         <FactControls />
       </div>
+      <MyBoatPanel />
       <details className="rules-why" open>
         <summary>
           <FormattedMessage

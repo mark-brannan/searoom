@@ -451,13 +451,25 @@ function levelsFrom(difficulty: QuizDifficulty): QuizDifficulty[] {
   return QUIZ_DIFFICULTIES.slice(QUIZ_DIFFICULTIES.indexOf(difficulty));
 }
 
+/** Scenarios a question is drawn from, shaped like the fixture cases. */
+export type ScenarioPool = { name: string; facts: FactRecord }[];
+
+/**
+ * The pool a level asks from: the fixtures that level keeps, or a given pool
+ * (one boat's situations) whole, since the learner chose those vessels.
+ */
+function poolAt(jurisdiction: string, difficulty: QuizDifficulty, pool?: ScenarioPool) {
+  return pool ?? scenarioPoolAt(jurisdiction, difficulty);
+}
+
 export function makeForward(
   seed: number,
   jurisdiction: string = BASE_JURISDICTION,
   difficulty: QuizDifficulty = 'extreme',
+  pool?: ScenarioPool,
 ): ForwardQuestion {
   for (const level of levelsFrom(difficulty)) {
-    const q = forwardAt(seed, jurisdiction, level);
+    const q = forwardAt(seed, jurisdiction, level, pool);
     if (q) return q;
   }
   throw new Error('could not generate a forward question');
@@ -467,11 +479,12 @@ function forwardAt(
   seed: number,
   jurisdiction: string,
   difficulty: QuizDifficulty,
+  pool?: ScenarioPool,
 ): ForwardQuestion | null {
   const rng = mulberry32(seed);
   const level = DIFFICULTY_LEVELS[difficulty];
   const { maxDistractors } = level;
-  const scenarioPool = scenarioPoolAt(jurisdiction, difficulty);
+  const scenarioPool = poolAt(jurisdiction, difficulty, pool);
   if (scenarioPool.length === 0) return null;
   for (let attempt = 0; attempt < 40; attempt++) {
     const fixture =
@@ -532,9 +545,10 @@ export function makeReverse(
   seed: number,
   jurisdiction: string = BASE_JURISDICTION,
   difficulty: QuizDifficulty = 'extreme',
+  pool?: ScenarioPool,
 ): ReverseQuestion {
   for (const level of levelsFrom(difficulty)) {
-    const q = reverseAt(seed, jurisdiction, level);
+    const q = reverseAt(seed, jurisdiction, level, pool);
     if (q) return q;
   }
   throw new Error('could not generate a reverse question');
@@ -544,11 +558,12 @@ function reverseAt(
   seed: number,
   jurisdiction: string,
   difficulty: QuizDifficulty,
+  pool?: ScenarioPool,
 ): ReverseQuestion | null {
   const rng = mulberry32(seed ^ 0x5eed);
   const level = DIFFICULTY_LEVELS[difficulty];
   const { maxDistractors, thetas } = level;
-  const scenarioPool = scenarioPoolAt(jurisdiction, difficulty);
+  const scenarioPool = poolAt(jurisdiction, difficulty, pool);
   if (scenarioPool.length === 0) return null;
   for (let attempt = 0; attempt < 60; attempt++) {
     const fixture =
