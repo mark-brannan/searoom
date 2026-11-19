@@ -8,7 +8,7 @@ import { useMemo } from 'react';
 import { Glow, PX, PZ, selectHull } from 'nav-wright';
 import { placeLights } from '../render/navWright';
 import { lights as lightCatalog } from '../data/colregs';
-import { evaluateDisplayIn } from '../engine/evaluate';
+import { evaluateSignalsIn } from '../engine/evaluate';
 import type { FactRecord } from '../engine/types';
 
 // the hull spans x 35..405 and the lights stand above the waterline at 185;
@@ -26,7 +26,7 @@ export function PresetThumb({
 }) {
   const hull = selectHull(facts);
   const placed = useMemo(() => {
-    const display = evaluateDisplayIn(jurisdiction, facts).displays[0];
+    const display = evaluateSignalsIn(jurisdiction, facts).displays[0];
     if (!display) return [];
     return placeLights(display.lights, hull.spec, facts, lightCatalog);
   }, [jurisdiction, facts, hull.spec]);

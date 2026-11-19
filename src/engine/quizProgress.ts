@@ -4,7 +4,7 @@
 // quiz.ts stays pure; weighting works by choosing which seed to ask next,
 // so a question stays reproducible from its seed in the URL.
 
-import { evaluateDisplayIn } from './evaluate';
+import { evaluateSignalsIn } from './evaluate';
 import { QUIZ_DIFFICULTIES, citeOf, makeForward, makeReverse, scenarioPoolAt } from './quiz';
 import type { QuizDifficulty, QuizQuestion } from './quiz';
 
@@ -126,7 +126,7 @@ export function rulesInPool(
   if (hit) return hit;
   const found = new Set<string>();
   for (const c of scenarioPoolAt(jurisdiction, difficulty)) {
-    for (const d of evaluateDisplayIn(jurisdiction, c.facts).displays)
+    for (const d of evaluateSignalsIn(jurisdiction, c.facts).displays)
       for (const r of rulesOfCite(citeOf(jurisdiction, d))) found.add(r);
   }
   const list = [...found].sort((a, b) => Number(a) - Number(b));

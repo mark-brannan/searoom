@@ -7,7 +7,7 @@
 import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
 import { lights } from '../data/colregs';
 import { BASE_JURISDICTION, resolveEntries } from '../data/jurisdictions';
-import { evaluateDisplayIn } from './evaluate';
+import { evaluateSignalsIn } from './evaluate';
 import type { Display, FactRecord } from './types';
 import { bearingInArc, selectHull } from 'nav-wright';
 import { placeLights } from '../render/navWright';
@@ -476,7 +476,7 @@ function forwardAt(
   for (let attempt = 0; attempt < 40; attempt++) {
     const fixture =
       scenarioPool[Math.floor(rng() * scenarioPool.length)];
-    const evaln = evaluateDisplayIn(jurisdiction, fixture.facts);
+    const evaln = evaluateSignalsIn(jurisdiction, fixture.facts);
     if (evaln.displays.length === 0 || evaln.displays[0].lights.length === 0)
       continue;
     const correct =
@@ -490,7 +490,7 @@ function forwardAt(
     for (const { facts: miss } of missesAt(fixture.facts, level, rng)) {
       const missUnusual = isRecreational(miss) ? 0 : 1;
       if (unusual + missUnusual > level.maxUnusual) continue;
-      const missEval = evaluateDisplayIn(jurisdiction, miss);
+      const missEval = evaluateSignalsIn(jurisdiction, miss);
       for (const d of missEval.displays) {
         if (d.lights.length === 0) continue;
         // every option is drawn on the asked vessel's hull (forwardHull), so
@@ -553,7 +553,7 @@ function reverseAt(
   for (let attempt = 0; attempt < 60; attempt++) {
     const fixture =
       scenarioPool[Math.floor(rng() * scenarioPool.length)];
-    const evaln = evaluateDisplayIn(jurisdiction, fixture.facts);
+    const evaln = evaluateSignalsIn(jurisdiction, fixture.facts);
     if (evaln.displays.length === 0) continue;
     const display =
       evaln.displays[Math.floor(rng() * evaln.displays.length)];
@@ -570,7 +570,7 @@ function reverseAt(
       if (options.length > maxDistractors) break;
       const missUnusual = isRecreational(miss) ? 0 : 1;
       if (unusual + missUnusual > level.maxUnusual) continue;
-      const missEval = evaluateDisplayIn(jurisdiction, miss);
+      const missEval = evaluateSignalsIn(jurisdiction, miss);
       if (missEval.displays.length === 0) continue;
       const missTheta = thetas[Math.floor(rng() * thetas.length)];
       // a distractor must look different from the scene in every display it

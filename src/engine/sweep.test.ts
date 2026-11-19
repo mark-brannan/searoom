@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import factsJson from 'colregs/data/facts.json';
 import { applicability } from '../data/colregs';
-import { evaluateDisplayIn } from './evaluate';
+import { evaluateSignalsIn } from './evaluate';
 import type { Display, DisplayEvaluation, Entry, FactRecord } from './types';
 
 const facts = factsJson as unknown as {
@@ -211,7 +211,7 @@ describe('property sweep over the fact space (#123)', () => {
     const unreported = new Map<string, string>();
     const covered = new Set<string>();
     for (const { jurisdiction, facts: f } of grid()) {
-      const ev = evaluateDisplayIn(jurisdiction, f);
+      const ev = evaluateSignalsIn(jurisdiction, f);
       for (const v of violationsOf(ev)) {
         const key = v
           .replace(/display \d+ /, '')
