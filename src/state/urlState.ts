@@ -49,6 +49,10 @@ export interface SandboxView {
   sky: number;
   /** 3D view draws Benchy in place of her own model, at her size. */
   benchy: boolean;
+  /** 3D view without the seascape: her lights on black, no sea, sky or
+   *  hull hint (the strict exam view). Off by default: the 3D view opens
+   *  on the night sea. */
+  lightsOnly: boolean;
   /** 3D view mesh, by nav-wright file name; '' is the hull's default. */
   mesh: string;
   /** The lights-only view beside the 3D view. */
@@ -138,6 +142,7 @@ export const DEFAULT_SANDBOX: SandboxView = {
   range: 0.5,
   sky: 0,
   benchy: false,
+  lightsOnly: false,
   mesh: '',
   bearingAside: true,
   drawer: false,
@@ -290,6 +295,7 @@ export function serialize(state: AppState): string {
     if (sb.range !== d.range) params.set('rg', String(sb.range));
     if (sb.sky !== d.sky) params.set('bg', String(Math.round(sb.sky)));
     if (sb.benchy) params.set('benchy', '1');
+    if (sb.lightsOnly) params.set('lo', '1');
     if (sb.mesh) params.set('ms', sb.mesh);
     if (!sb.bearingAside) params.set('ba', '0');
     if (sb.drawer) params.set('dd', '1');
@@ -399,6 +405,7 @@ export function deserialize(hash: string): AppState {
   sb.range = rangeNm(params.get('rg')) ?? sb.range;
   sb.sky = percent(params.get('bg')) ?? sb.sky;
   if (params.get('benchy') === '1') sb.benchy = true;
+  if (params.get('lo') === '1') sb.lightsOnly = true;
   sb.mesh = params.get('ms') ?? '';
   if (params.get('ba') === '0') sb.bearingAside = false;
   if (params.get('dd') === '1') sb.drawer = true;

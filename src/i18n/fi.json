@@ -75,6 +75,7 @@
   "scene.range": "Etäisyys",
   "scene.range.value": "{range} mpk",
   "scene.sky": "Taivas",
+  "scene.lightsOnly": "Vain valot (koenäkymä)",
   "scene.aside.title": "Vain valot",
   "sandbox.displays.title": "{count, plural, one {# laillinen valoyhdistelmä} other {# laillista valoyhdistelmää}}",
   "sandbox.displays.explain": "Missä säännöt sallivat valinnan, kaikki lailliset vaihtoehdot näytetään. Valitse yksi nähdäksesi sen — ja miksi muut jäivät pois.",

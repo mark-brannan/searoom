@@ -49,7 +49,16 @@ describe('Sandbox views', () => {
 
   // one vessel, every tab draws the same controls, and one that does not
   // apply there stays in place, disabled
-  const CONTROLS = ['theta', 'tilt', 'hull-hint', 'range', 'sky', 'mesh', 'benchy'];
+  const CONTROLS = [
+    'theta',
+    'tilt',
+    'lights-only',
+    'hull-hint',
+    'range',
+    'sky',
+    'mesh',
+    'benchy',
+  ];
 
   it('the 3D view and the arcs show the same control set', () => {
     withArcsHidden(() => {
@@ -63,14 +72,25 @@ describe('Sandbox views', () => {
 
   it('a control that does not apply to the view is disabled, not hidden', () => {
     const model = render('model');
-    for (const id of ['benchy', 'mesh', 'range', 'sky', 'hull-hint'])
+    for (const id of ['lights-only', 'benchy', 'mesh', 'range', 'sky', 'hull-hint'])
       expect(disabled(model, id), id).toBe(false);
     expect(disabled(render('model', { benchy: true }), 'mesh')).toBe(true);
     withArcsHidden(() => {
       const plan = render('plan');
-      for (const id of ['tilt', 'benchy', 'mesh', 'range', 'sky', 'hull-hint'])
+      for (const id of ['tilt', 'lights-only', 'benchy', 'mesh', 'range', 'sky', 'hull-hint'])
         expect(disabled(plan, id), id).toBe(true);
     });
+  });
+
+  it('opens on the seascape; lights only parks the sea controls and keeps the rest', () => {
+    const checked = (html: string) => /id="lights-only"[^>]*checked=""/.test(html);
+    expect(checked(render('model'))).toBe(false);
+    const exam = render('model', { lightsOnly: true });
+    expect(checked(exam)).toBe(true);
+    for (const id of ['hull-hint', 'range', 'sky'])
+      expect(disabled(exam, id), id).toBe(true);
+    for (const id of ['tilt', 'mesh', 'benchy', 'lights-only'])
+      expect(disabled(exam, id), id).toBe(false);
   });
 
   it('shows the lights-only view beside the scene by default, and hides it on request', () => {
