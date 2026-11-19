@@ -25,6 +25,14 @@ const states = [
   ['sound', '#/sound'],
   ['sandbox-power-60m', '#/sandbox?p=power&a=none&pos=underway&mw=1&len=60'],
   ['sandbox-trawler', '#/sandbox?p=power&a=trawling&pos=underway&mw=0&len=30'],
+  // pseudo-locale (en-XA, #114): every string accented and ~40% longer, so a
+  // layout that clips or scrolls sideways shows here before a translation does
+  ['pseudo-sandbox', '#/sandbox?loc=en-XA'],
+  ['pseudo-identify', '#/identify?loc=en-XA'],
+  ['pseudo-quiz', '#/quiz?loc=en-XA'],
+  ['pseudo-flashcards', '#/flashcards?loc=en-XA'],
+  ['pseudo-rules', '#/rules?loc=en-XA'],
+  ['pseudo-sound', '#/sound?loc=en-XA'],
 ];
 const widths = [
   [1280, 900],
@@ -44,7 +52,9 @@ await context.addInitScript(() => {
   localStorage.setItem('searoom.introSeen', '1');
 });
 // the opening mesh is random (searoom#174); pin it to the hull's first variant
-await context.addInitScript(() => { Math.random = () => 0; });
+await context.addInitScript(() => {
+  Math.random = () => 0;
+});
 const page = await context.newPage();
 const cmp = await context.newPage();
 
@@ -107,6 +117,7 @@ async function compare(goldenPng, actualPng) {
 }
 
 let failed = 0;
+let clipped = 0;
 for (const [w, h] of widths) {
   await page.setViewportSize({ width: w, height: h });
   for (const [name, hash] of states) {
@@ -117,6 +128,17 @@ for (const [w, h] of widths) {
     // record, so a viewport shot never sees the vessel drawing or the
     // displays. Clipped to the viewport width and MAX_HEIGHT so a long page
     // (the rules list) stays a reviewable PNG.
+    if (name.startsWith('pseudo-')) {
+      const over = await page.evaluate(
+        () => document.documentElement.scrollWidth - window.innerWidth,
+      );
+      if (over > 0) {
+        console.log(
+          `CLIPPED ${name}-${w}: page is ${over}px wider than the viewport`,
+        );
+        clipped++;
+      }
+    }
     const height = await page.evaluate(
       () => document.documentElement.scrollHeight,
     );
@@ -151,7 +173,9 @@ for (const [w, h] of widths) {
 }
 
 await browser.close();
-if (failed) {
-  console.error(`${failed} golden(s) over ${MAX_DIFF_FRACTION * 100}%`);
+if (failed || clipped) {
+  console.error(
+    `${failed} golden(s) over ${MAX_DIFF_FRACTION * 100}%, ${clipped} pseudo shot(s) wider than the viewport`,
+  );
   process.exit(1);
 }

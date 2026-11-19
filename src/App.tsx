@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { FormattedMessage, IntlProvider } from 'react-intl';
 import fi from './i18n/fi.json';
-import { catalogs } from './i18n';
+import { PSEUDO_LOCALE, catalogs, pseudoCatalog } from './i18n';
 import { DEFAULT_STATE } from './state/urlState';
 import { startSync, useMode, usePrefs, useJurisdiction } from './state/store';
 import { Header } from './components/Header';
@@ -55,8 +55,12 @@ export function App() {
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   useMotionPreference(useSettings().motion);
 
+  const pseudo = uiLocale === PSEUDO_LOCALE;
   const locale = uiLocale === 'fi' ? 'fi' : 'en';
-  const messages = catalogs[locale];
+  const messages = useMemo(
+    () => (pseudo ? pseudoCatalog() : catalogs[locale]),
+    [pseudo, locale],
+  );
 
   const body = useMemo(() => {
     switch (mode) {
@@ -79,9 +83,7 @@ export function App() {
 
   return (
     <IntlProvider locale={locale} messages={messages} defaultLocale="en">
-      <CorpusContext.Provider
-        value={corpusIn(jurisdiction, corpus).id}
-      >
+      <CorpusContext.Provider value={corpusIn(jurisdiction, corpus).id}>
         <div className="app">
           <Header onSettings={() => setSettingsOpen(true)} />
           {locale === 'fi' && (
@@ -135,7 +137,9 @@ export function App() {
               </span>
             )}
           </footer>
-          {mode === 'sandbox' && !signpost && !settingsOpen && <FirstRunIntro />}
+          {mode === 'sandbox' && !signpost && !settingsOpen && (
+            <FirstRunIntro />
+          )}
           {settingsOpen && (
             <SettingsSheet onClose={closeSettings} covered={!!signpost} />
           )}
