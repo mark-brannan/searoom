@@ -7,6 +7,7 @@ const MODES: Mode[] = [
   'identify',
   'quiz',
   'flashcards',
+  'aspect',
   'rules',
   'sound',
   'vessels',

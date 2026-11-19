@@ -15,24 +15,79 @@ export interface Tally {
 /** keyed by the fixture scenario's name */
 export type Progress = Record<string, Tally>;
 
-const STORE_KEY = 'searoom.quiz.progress.v1';
-export const EXPORT_VERSION = 1;
+// v2 keeps the quiz tallies and the aspect trainer's runs side by side;
+// v1 held the tallies alone and is read once, then left behind.
+const STORE_KEY = 'searoom.progress.v2';
+const LEGACY_KEY = 'searoom.quiz.progress.v1';
+export const EXPORT_VERSION = 2;
+/** The newest runs kept: enough for a trend, small enough for localStorage. */
+export const MAX_ASPECT_RUNS = 200;
 
-export function loadProgress(): Progress {
+/** One finished aspect-trainer drill. */
+export interface AspectRun {
+  /** finish time, ms since the epoch: also the run's identity on a merge */
+  at: number;
+  scenes: number;
+  /** mean angular error over the drill, degrees */
+  meanError: number;
+  /** scenes answered within the trainer's tolerance */
+  within: number;
+}
+
+interface Store {
+  entries: Progress;
+  aspect: AspectRun[];
+}
+
+function readStore(): Store {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    return raw ? parseProgress(JSON.parse(raw)) ?? {} : {};
+    if (raw) {
+      const json: unknown = JSON.parse(raw);
+      return { entries: parseProgress(json) ?? {}, aspect: parseAspectRuns(json) };
+    }
+    const legacy = localStorage.getItem(LEGACY_KEY);
+    // v1 stored the bare tally map, not an export-shaped object
+    return {
+      entries: legacy ? parseProgress({ entries: JSON.parse(legacy) }) ?? {} : {},
+      aspect: [],
+    };
   } catch {
-    return {};
+    return { entries: {}, aspect: [] };
   }
 }
 
-export function saveProgress(p: Progress): void {
+function writeStore(s: Store): void {
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(p));
+    localStorage.setItem(
+      STORE_KEY,
+      JSON.stringify({ version: EXPORT_VERSION, entries: s.entries, aspect: s.aspect }),
+    );
   } catch {
     /* private window or blocked storage: progress lasts this visit only */
   }
+}
+
+export function loadProgress(): Progress {
+  return readStore().entries;
+}
+
+export function saveProgress(p: Progress): void {
+  writeStore({ ...readStore(), entries: p });
+}
+
+export function loadAspectRuns(): AspectRun[] {
+  return readStore().aspect;
+}
+
+export function saveAspectRuns(runs: AspectRun[]): void {
+  writeStore({ ...readStore(), aspect: runs.slice(-MAX_ASPECT_RUNS) });
+}
+
+export function recordAspectRun(run: AspectRun): AspectRun[] {
+  const runs = mergeAspectRuns(loadAspectRuns(), [run]);
+  saveAspectRuns(runs);
+  return runs.slice(-MAX_ASPECT_RUNS);
 }
 
 export function record(p: Progress, scenario: string, correct: boolean): Progress {
@@ -64,8 +119,43 @@ export function parseProgress(json: unknown): Progress | null {
   return out;
 }
 
-export function exportProgress(p: Progress): string {
-  return JSON.stringify({ app: 'searoom', version: EXPORT_VERSION, entries: p }, null, 2);
+const degrees = (v: unknown): number | null =>
+  typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 180 ? v : null;
+
+/** Untrusted input, as parseProgress: a malformed run is dropped. */
+export function parseAspectRuns(json: unknown): AspectRun[] {
+  if (typeof json !== 'object' || json === null) return [];
+  const runs = (json as { aspect?: unknown }).aspect;
+  if (!Array.isArray(runs)) return [];
+  const out: AspectRun[] = [];
+  for (const r of runs as Partial<AspectRun>[]) {
+    const at =
+      typeof r?.at === 'number' && Number.isInteger(r.at) && r.at > 0 && r.at < 1e14
+        ? r.at
+        : null;
+    const scenes = count(r?.scenes);
+    const within = count(r?.within);
+    const meanError = degrees(r?.meanError);
+    if (at === null || scenes === null || within === null || meanError === null) continue;
+    if (scenes === 0 || within > scenes) continue;
+    out.push({ at, scenes, meanError, within });
+  }
+  return out;
+}
+
+/** Oldest first; a run already held (same finish time) is not added twice. */
+export function mergeAspectRuns(a: AspectRun[], b: AspectRun[]): AspectRun[] {
+  const byAt = new Map<number, AspectRun>();
+  for (const r of [...a, ...b]) byAt.set(r.at, r);
+  return [...byAt.values()].sort((x, y) => x.at - y.at);
+}
+
+export function exportProgress(p: Progress, aspect: AspectRun[] = []): string {
+  return JSON.stringify(
+    { app: 'searoom', version: EXPORT_VERSION, entries: p, aspect },
+    null,
+    2,
+  );
 }
 
 /**
