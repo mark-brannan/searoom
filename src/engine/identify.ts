@@ -77,7 +77,8 @@ function buildPool(jurisdiction: string): FactRecord[] {
 
 const poolCache = new Map<string, FactRecord[]>();
 
-function poolFor(jurisdiction: string): FactRecord[] {
+/** Every fact record Identify considers under one jurisdiction: what "in scope" means. */
+export function candidatePool(jurisdiction: string): FactRecord[] {
   let hit = poolCache.get(jurisdiction);
   if (!hit) {
     hit = buildPool(jurisdiction);
@@ -86,7 +87,7 @@ function poolFor(jurisdiction: string): FactRecord[] {
   return hit;
 }
 
-const THETA_STEP = 5;
+export const THETA_STEP = 5;
 
 export function signatureOf(seen: SeenLight[]): string {
   return seen
@@ -110,7 +111,7 @@ const fits = (s: SeenLight, v: VisibleLight): boolean =>
  * lights may look side to side and still read as one vertical line: about
  * 2% of the hull's length.
  */
-const IN_LINE = 0.04;
+export const IN_LINE = 0.04;
 
 const inOneLine = (run: VisibleLight[]): boolean => {
   const xs = run.map((v) => v.across);
@@ -151,7 +152,7 @@ export function identifyCandidates(
 ): Candidate[] {
   if (seen.length === 0) return [];
   const out: Candidate[] = [];
-  for (const facts of poolFor(jurisdiction)) {
+  for (const facts of candidatePool(jurisdiction)) {
     const evaln = evaluateDisplayIn(jurisdiction, facts);
     for (const display of evaln.displays) {
       if (display.lights.length === 0) continue;

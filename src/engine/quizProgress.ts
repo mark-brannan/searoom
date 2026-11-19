@@ -5,7 +5,15 @@
 // so a question stays reproducible from its seed in the URL.
 
 import { evaluateDisplayIn } from './evaluate';
-import { QUIZ_DIFFICULTIES, citeOf, makeForward, makeReverse, scenarioPoolAt } from './quiz';
+import {
+  DIFFICULTY_LEVELS,
+  QUIZ_DIFFICULTIES,
+  citeOf,
+  makeForward,
+  makeReverse,
+  scenarioPoolAt,
+} from './quiz';
+import { judged } from './unlawful';
 import type { QuizDifficulty, QuizQuestion } from './quiz';
 
 export interface Tally {
@@ -101,9 +109,10 @@ export function questionFor(
   jurisdiction: string,
   difficulty: QuizDifficulty = 'extreme',
 ): QuizQuestion {
-  return reverse
-    ? makeReverse(seed, jurisdiction, difficulty)
-    : makeForward(seed, jurisdiction, difficulty);
+  if (!reverse) return makeForward(seed, jurisdiction, difficulty);
+  // a reverse question is judged first, lawful or not; some show an unlawful display
+  const q = makeReverse(seed, jurisdiction, difficulty);
+  return judged(q, seed, jurisdiction, DIFFICULTY_LEVELS[q.difficulty].thetas);
 }
 
 /** "27(a)(i), 27(b)" -> ["27"] */
