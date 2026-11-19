@@ -57,12 +57,15 @@ export interface SandboxView {
 }
 
 /** The Quiz's view state. */
+export const QUIZ_DIRECTIONS = ['forward', 'reverse', 'mixed'] as const;
+export type QuizDirection = (typeof QUIZ_DIRECTIONS)[number];
+
 export interface QuizView {
   /** Run seed; question n asks seed + n - 1, so a URL reopens it. */
   seed: number;
   /** Question number within the run, from 1. */
   n: number;
-  direction: 'forward' | 'reverse';
+  direction: QuizDirection;
   mode: QuizMode;
   /** Drill: only scenarios exercising this rule number; '' is all. */
   rule: string;
@@ -344,7 +347,8 @@ export function deserialize(hash: string): AppState {
     if (Number.isInteger(n) && n >= 1) quiz.n = n;
   }
   const params = new URLSearchParams(query);
-  if (params.get('dir') === 'reverse') quiz.direction = 'reverse';
+  const dir = QUIZ_DIRECTIONS.find((d) => d === params.get('dir'));
+  if (dir) quiz.direction = dir;
   const preset =
     state.mode === 'sandbox' && segments[1]
       ? PRESETS.find((p) => p.id === segments[1])

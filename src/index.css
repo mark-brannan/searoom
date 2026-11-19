@@ -1045,6 +1045,17 @@ details summary:hover {
   align-items: center;
 }
 
+.identify-empty {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  margin-top: 8px;
+}
+.identify-empty p {
+  margin: 0;
+}
+
 .color-btn {
   width: 34px;
   height: 34px;

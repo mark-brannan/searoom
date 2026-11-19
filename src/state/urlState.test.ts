@@ -220,6 +220,12 @@ describe('readable routes (#107)', () => {
     expect(serialize(s)).toMatch(/^#\/quiz\/7\/3\?.*dir=reverse/);
     expect(deserialize(serialize(s))).toEqual(s);
   });
+  it('a mixed run round-trips; an unknown direction reads as forward', () => {
+    const s = deserialize('#/quiz/7/3?dir=mixed');
+    expect(s.quiz.direction).toBe('mixed');
+    expect(deserialize(serialize(s))).toEqual(s);
+    expect(deserialize('#/quiz/7/3?dir=sideways').quiz.direction).toBe('forward');
+  });
   it('bare #/quiz keeps working', () => {
     const s = deserialize('#/quiz');
     expect([s.quiz.seed, s.quiz.n]).toEqual([1, 1]);

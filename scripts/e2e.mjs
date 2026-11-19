@@ -1,7 +1,8 @@
 // CI end-to-end, a gate: the default Sandbox draws a dim 3D vessel; at 360
 // and 1280 px every mode opens from the header nav and four interactions
 // (length slider across 50 m, a display chip, an identify light, a quiz
-// answer) each change the page. Chromium only, software WebGL so the 3D
+// answer) each change the page; a fresh visitor's first minute meets the
+// intro and each mode's empty state. Chromium only, software WebGL so the 3D
 // canvas draws headless; colorScheme is set to dark explicitly (the night
 // theme is the app's identity).
 // Usage: node scripts/e2e.mjs [baseUrl]   (serve the built dist first)
@@ -176,6 +177,30 @@ await page.keyboard.press('ArrowRight');
 const chipMoved = await settles(() => document.activeElement?.getAttribute('aria-checked') === 'true');
 const second = [await chipsEl.nth(1).getAttribute('aria-checked'), await chipsEl.nth(1).getAttribute('tabindex')];
 check(`display chips move by arrow key (${nChips} chips)`, nChips > 1 && chipMoved && second[0] === 'true' && second[1] === '0');
+
+// A stranger's first minute (#108), in a context that has never seen the app:
+// the intro greets them once, and each mode opens on something to do.
+const fresh = await browser.newContext({ colorScheme: 'dark', viewport: { width: 1280, height: 800 } });
+await fresh.addInitScript(() => { Math.random = () => 0; }); // the opening mesh is random (searoom#174), as above
+const first = await fresh.newPage();
+first.on('pageerror', (e) => errors.push(String(e)));
+await first.goto(base, { waitUntil: 'networkidle' });
+const intro = first.locator('.intro-card');
+// a hash change lands before the mode's lazy chunk: wait for what it draws
+const shows = (sel) => first.locator(sel).first().waitFor({ timeout: 5000 }).then(() => true, () => false);
+check('first visit: the intro card greets a stranger', await shows('.intro-card'));
+await intro.locator('button').click();
+await first.reload({ waitUntil: 'networkidle' });
+check('first visit: the intro stays dismissed after a reload', (await intro.count()) === 0);
+await first.goto(`${base}#/identify`, { waitUntil: 'networkidle' });
+check('first visit: Identify opens on a dark sea', await shows('.bearing-sea'));
+await first.locator('.identify-empty button').click();
+check('first visit: the worked example names a vessel', await shows('.candidate'));
+await first.goto(`${base}#/quiz`, { waitUntil: 'networkidle' });
+check('first visit: Quiz says how it is asked and scored', await shows('.quiz-intro'));
+await first.goto(`${base}#/rules`, { waitUntil: 'networkidle' });
+check('first visit: Rules opens on a browse tree', await shows('nav details summary'));
+await fresh.close();
 
 check('no uncaught page errors', errors.length === 0);
 await browser.close();

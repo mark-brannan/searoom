@@ -22,9 +22,9 @@ import {
   rulesInPool,
   saveProgress,
 } from '../engine/quizProgress';
-import type { Progress } from '../engine/quizProgress';
+import type { Progress, QuizWay } from '../engine/quizProgress';
 import { RuleParagraphs } from '../components/RuleParagraphs';
-import { QUIZ_MODES } from '../state/urlState';
+import { QUIZ_DIRECTIONS, QUIZ_MODES } from '../state/urlState';
 import { usePatch, useJurisdiction, useSlice } from '../state/store';
 import { bearingLabel } from 'nav-wright';
 import type { QuizView } from '../state/urlState';
@@ -136,12 +136,14 @@ export function Quiz() {
   const patch = (p: Partial<QuizView>) => patchApp({ quiz: p });
   const intl = useIntl();
   const { mode, seed: quizSeed, n: quizN, rule: quizRule, difficulty: quizDifficulty } = quiz;
-  const reverse = quiz.direction === 'reverse';
+  const way: QuizWay = quiz.direction === 'mixed' ? 'mixed' : quiz.direction === 'reverse';
   const quizIndex = quizN - 1;
   const [picked, setPicked] = useState<number | null>(null);
   const [score, setScore] = useState({ right: 0, total: 0 });
   const [progress, setProgress] = useState<Progress>(loadProgress);
   const [note, setNote] = useState<string | null>(null);
+  // the framing goes with the visit's first answer; a mode or level switch keeps it gone
+  const [answered, setAnswered] = useState(false);
   // exam run, local: it starts on the button, not on the link
   const [exam, setExam] = useState<{ deadline: number; log: boolean[] } | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -160,7 +162,7 @@ export function Quiz() {
 
   // a new question by any route (back/forward, an edited link, the
   // jurisdiction switcher) starts unanswered
-  useEffect(() => setPicked(null), [seed, reverse, jurisdiction, quizDifficulty]);
+  useEffect(() => setPicked(null), [seed, way, jurisdiction, quizDifficulty]);
 
   const rules = useMemo(() => rulesInPool(jurisdiction), [jurisdiction]);
 
@@ -170,14 +172,15 @@ export function Quiz() {
   const level = askAt(quizRule);
 
   const question: QuizQuestion = useMemo(
-    () => questionFor(seed, reverse, jurisdiction, level),
-    [seed, reverse, jurisdiction, level],
+    () => questionFor(seed, way, jurisdiction, level),
+    [seed, way, jurisdiction, level],
   );
 
   const answer = (i: number) => {
     if (picked !== null || examDone) return;
     const ok = i === question.answerIndex;
     setPicked(i);
+    setAnswered(true);
     setScore((s) => ({ right: s.right + (ok ? 1 : 0), total: s.total + 1 }));
     const nextProgress = record(progress, question.fixtureName, ok);
     saveProgress(nextProgress);
@@ -189,7 +192,7 @@ export function Quiz() {
     setPicked(null);
     if (mode === 'drill')
       patch({
-        seed: nextDrillSeed(seed, reverse, jurisdiction, progress, quizRule, level),
+        seed: nextDrillSeed(seed, way, jurisdiction, progress, quizRule, level),
         n: 1,
       });
     else patch({ n: quizN + 1 });
@@ -219,7 +222,7 @@ export function Quiz() {
       mode === 'drill'
         ? drillSeedAt(
             seed,
-            reverse,
+            way,
             jurisdiction,
             progress,
             quizRule,
@@ -288,18 +291,18 @@ export function Quiz() {
           role="radiogroup"
           aria-label={intl.formatMessage({ id: 'quiz.direction.label' })}
         >
-          {([false, true] as const).map((r) => (
+          {QUIZ_DIRECTIONS.map((d) => (
             <button
-              key={String(r)}
-              className={`chip${reverse === r ? ' active' : ''}`}
+              key={d}
+              className={`chip${quiz.direction === d ? ' active' : ''}`}
               role="radio"
-              aria-checked={reverse === r}
+              aria-checked={quiz.direction === d}
               onClick={() => {
                 setPicked(null);
-                patch({ direction: r ? 'reverse' : 'forward' });
+                patch({ direction: d });
               }}
             >
-              <FormattedMessage id={r ? 'quiz.reverse.name' : 'quiz.forward.name'} />
+              <FormattedMessage id={`quiz.${d}.name`} />
             </button>
           ))}
           {mode !== 'exam' && (
@@ -338,7 +341,7 @@ export function Quiz() {
                   n: 1,
                   seed: nextDrillSeed(
                     seed,
-                    reverse,
+                    way,
                     jurisdiction,
                     progress,
                     e.target.value,
@@ -373,6 +376,16 @@ export function Quiz() {
           <span className="theta-readout theta-readout-short">{difficultyName}</span>
         </div>
 
+        {mode !== 'exam' && !answered && (
+          <div className="quiz-intro">
+            <p>
+              <FormattedMessage id="quiz.intro.ways" />
+            </p>
+            <p className="elim">
+              <FormattedMessage id={`quiz.intro.scoring.${mode}`} />
+            </p>
+          </div>
+        )}
         {mode === 'exam' && !exam && (
           <div>
             <p>
