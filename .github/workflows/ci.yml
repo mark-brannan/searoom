@@ -19,6 +19,10 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      # The fact-space sweep (src/engine/sweep.test.ts, #123) on its own, so
+      # its seconds show on the run; it also runs inside `npm test`.
+      - name: Property sweep
+        run: npx vitest run src/engine/sweep.test.ts
       - name: i18n catalogs
         run: npm run i18n:check
       - run: npm run build
