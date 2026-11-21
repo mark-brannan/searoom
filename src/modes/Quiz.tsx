@@ -9,6 +9,9 @@ import { describeFacts } from '../components/factLabel';
 import { QUIZ_DIFFICULTIES, citeOf, forwardHull } from '../engine/quiz';
 import type { QuizDifficulty, QuizQuestion } from '../engine/quiz';
 import { evaluateDisplayIn } from '../engine/evaluate';
+import { UNLAWFUL_KINDS } from '../engine/unlawful';
+import type { UnlawfulDisplay } from '../engine/unlawful';
+import { reasonText } from '../components/unlawfulText';
 import {
   drillDifficulty,
   drillSeedAt,
@@ -28,7 +31,7 @@ import { QUIZ_MODES } from '../state/urlState';
 import { usePatch, useJurisdiction, useSlice } from '../state/store';
 import { bearingLabel } from 'nav-wright';
 import type { QuizView } from '../state/urlState';
-import type { FactRecord } from '../engine/types';
+import type { Display, FactRecord } from '../engine/types';
 
 export const EXAM_COUNT = 10;
 export const EXAM_SECONDS = 600;
@@ -49,6 +52,69 @@ function CitePanel({ cite, jurisdiction }: { cite: string; jurisdiction: string 
         .map((c) => (
           <RuleParagraphs key={c} cite={c} jurisdiction={jurisdiction} />
         ))}
+    </div>
+  );
+}
+
+/** The unlawful scene beside the lawful display it was made from, and what changed. */
+function UnlawfulReveal({
+  unlawful,
+  facts,
+  display,
+  theta,
+}: {
+  unlawful: UnlawfulDisplay;
+  facts: FactRecord;
+  display: Display;
+  theta: number;
+}) {
+  const intl = useIntl();
+  const others = unlawful.mends.filter((k) => k !== unlawful.reason.kind);
+  return (
+    <div>
+      <p>
+        {reasonText(intl, unlawful.reason)}
+        {others.length > 0 && (
+          <>
+            {' '}
+            <FormattedMessage
+              id="quiz.unlawful.alsoRight"
+              values={{
+                kinds: others
+                  .map((k) => intl.formatMessage({ id: `unlawful.kind.${k}` }))
+                  .join(' · '),
+              }}
+            />
+          </>
+        )}
+      </p>
+      <div className="quiz-why">
+        <div>
+          <h3>
+            <FormattedMessage id="quiz.unlawful.shown" />
+          </h3>
+          <Scene
+            presentation="mini"
+            facts={facts}
+            lights={unlawful.shown.lights}
+            settings={{ view: 'model', theta }}
+          />
+        </div>
+        <div>
+          <h3>
+            <FormattedMessage
+              id="quiz.unlawful.lawful"
+              values={{ facts: describeFacts(intl, facts) }}
+            />
+          </h3>
+          <Scene
+            presentation="mini"
+            facts={facts}
+            lights={display.lights}
+            settings={{ view: 'model', theta }}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -139,6 +205,14 @@ export function Quiz() {
   const reverse = quiz.direction === 'reverse';
   const quizIndex = quizN - 1;
   const [picked, setPicked] = useState<number | null>(null);
+  // a reverse question is judged first: lawful (true) or unlawful (false)
+  const [judgement, setJudgement] = useState<boolean | null>(null);
+  const [result, setResult] = useState<boolean | null>(null);
+  const clearAnswer = () => {
+    setPicked(null);
+    setJudgement(null);
+    setResult(null);
+  };
   const [score, setScore] = useState({ right: 0, total: 0 });
   const [progress, setProgress] = useState<Progress>(loadProgress);
   const [note, setNote] = useState<string | null>(null);
@@ -160,7 +234,7 @@ export function Quiz() {
 
   // a new question by any route (back/forward, an edited link, the
   // jurisdiction switcher) starts unanswered
-  useEffect(() => setPicked(null), [seed, reverse, jurisdiction, quizDifficulty]);
+  useEffect(clearAnswer, [seed, reverse, jurisdiction, quizDifficulty]);
 
   const rules = useMemo(() => rulesInPool(jurisdiction), [jurisdiction]);
 
@@ -174,10 +248,13 @@ export function Quiz() {
     [seed, reverse, jurisdiction, level],
   );
 
-  const answer = (i: number) => {
-    if (picked !== null || examDone) return;
-    const ok = i === question.answerIndex;
-    setPicked(i);
+  const unlawful = question.kind === 'reverse' ? question.unlawful : undefined;
+  const judgedRight = judgement !== null && judgement === !unlawful;
+  // practice and drill stop at a wrong judgement; an exam keeps its verdict back
+  const answered = picked !== null || (judgement !== null && !judgedRight && mode !== 'exam');
+
+  const finish = (ok: boolean) => {
+    setResult(ok);
     setScore((s) => ({ right: s.right + (ok ? 1 : 0), total: s.total + 1 }));
     const nextProgress = record(progress, question.fixtureName, ok);
     saveProgress(nextProgress);
@@ -185,8 +262,26 @@ export function Quiz() {
     if (mode === 'exam' && exam) setExam({ ...exam, log: [...exam.log, ok] });
   };
 
+  const judge = (lawful: boolean) => {
+    if (judgement !== null || examDone) return;
+    setJudgement(lawful);
+    if (lawful !== !unlawful && mode !== 'exam') finish(false);
+  };
+
+  const answer = (i: number) => {
+    if (picked !== null || examDone) return;
+    if (question.kind === 'reverse' && judgement === null) return;
+    setPicked(i);
+    if (question.kind === 'forward') return finish(i === question.answerIndex);
+    // the why: any kind of one-light change that mends the scene is right
+    const right = unlawful
+      ? unlawful.mends.includes(UNLAWFUL_KINDS[i])
+      : i === question.answerIndex;
+    finish(judgedRight && right);
+  };
+
   const next = () => {
-    setPicked(null);
+    clearAnswer();
     if (mode === 'drill')
       patch({
         seed: nextDrillSeed(seed, reverse, jurisdiction, progress, quizRule, level),
@@ -196,7 +291,7 @@ export function Quiz() {
   };
 
   const startExam = () => {
-    setPicked(null);
+    clearAnswer();
     setNow(Date.now());
     setScore({ right: 0, total: 0 });
     setExam({ deadline: Date.now() + EXAM_SECONDS * 1000, log: [] });
@@ -204,14 +299,14 @@ export function Quiz() {
   };
 
   const setMode = (m: QuizView['mode']) => {
-    setPicked(null);
+    clearAnswer();
     setExam(null);
     setScore({ right: 0, total: 0 });
     patch({ mode: m, seed: seed, n: 1 });
   };
 
   const setDifficulty = (d: QuizDifficulty) => {
-    setPicked(null);
+    clearAnswer();
     setExam(null);
     setScore({ right: 0, total: 0 });
     // a drill seed picked for the old level can ask about another rule at this one
@@ -242,19 +337,29 @@ export function Quiz() {
         )
       : chosenName;
 
-  const optionClass = (i: number) => {
+  const optionClass = (i: number, right: boolean = i === question.answerIndex) => {
     if (picked === null) return 'quiz-option';
     // an exam keeps the verdict back until the end
     if (mode === 'exam') return i === picked ? 'quiz-option selected' : 'quiz-option';
-    if (i === question.answerIndex) return 'quiz-option right';
+    if (right) return 'quiz-option right';
     if (i === picked) return 'quiz-option wrong';
     return 'quiz-option';
   };
+  const judgeClass = (lawful: boolean) => {
+    if (judgement === null) return 'quiz-option';
+    if (mode === 'exam') return judgement === lawful ? 'quiz-option selected' : 'quiz-option';
+    if (lawful === !unlawful) return 'quiz-option right';
+    if (lawful === judgement) return 'quiz-option wrong';
+    return 'quiz-option';
+  };
 
-  const wrong = picked !== null && picked !== question.answerIndex;
+  const wrong = result === false;
+  // the meaning was asked and missed: compare the two rules
+  const meaningMissed =
+    wrong && picked !== null && (question.kind === 'forward' || (!unlawful && judgedRight));
   const rightCite = question.cite;
   const chosenCite =
-    picked === null
+    !meaningMissed || picked === null
       ? ''
       : question.kind === 'forward'
         ? citeOf(jurisdiction, question.options[picked].display)
@@ -295,7 +400,7 @@ export function Quiz() {
               role="radio"
               aria-checked={reverse === r}
               onClick={() => {
-                setPicked(null);
+                clearAnswer();
                 patch({ direction: r ? 'reverse' : 'forward' });
               }}
             >
@@ -332,7 +437,7 @@ export function Quiz() {
               value={quizRule}
               aria-label={intl.formatMessage({ id: 'quiz.rule.label' })}
               onChange={(e) => {
-                setPicked(null);
+                clearAnswer();
                 patch({
                   rule: e.target.value,
                   n: 1,
@@ -442,7 +547,7 @@ export function Quiz() {
           <>
             <p>
               <FormattedMessage
-                id="quiz.reverse.prompt"
+                id="quiz.judge.prompt"
                 values={{
                   aspect: intl.formatMessage({
                     id: `aspect.${bearingLabel(question.theta)}`,
@@ -453,33 +558,67 @@ export function Quiz() {
             <Scene
               presentation="mini"
               facts={question.facts}
-              lights={question.display.lights}
+              lights={(unlawful?.shown ?? question.display).lights}
               settings={{ view: 'model', theta: question.theta }}
             />
-            <div className="quiz-options">
-              {question.options.map((o, i) => (
+            <div
+              className="quiz-options"
+              role="group"
+              aria-label={intl.formatMessage({ id: 'quiz.judge.label' })}
+            >
+              {([true, false] as const).map((lawful) => (
                 <button
-                  key={i}
-                  className={optionClass(i)}
-                  onClick={() => answer(i)}
-                  aria-pressed={picked === i}
+                  key={String(lawful)}
+                  className={judgeClass(lawful)}
+                  onClick={() => judge(lawful)}
+                  aria-pressed={judgement === lawful}
                 >
-                  <FormattedMessage
-                    id="quiz.reverse.optionAspect"
-                    values={{
-                      label: describeFacts(intl, o.facts),
-                      aspect: intl.formatMessage({
-                        id: `aspect.${bearingLabel(o.theta)}`,
-                      }),
-                    }}
-                  />
+                  <FormattedMessage id={lawful ? 'quiz.judge.lawful' : 'quiz.judge.unlawful'} />
                 </button>
               ))}
             </div>
+            {judgement !== null && (judgedRight || mode === 'exam') && (
+              <>
+                <p>
+                  <FormattedMessage id={judgement ? 'quiz.judge.meaning' : 'quiz.judge.why'} />
+                </p>
+                <div className="quiz-options">
+                  {judgement
+                    ? question.options.map((o, i) => (
+                        <button
+                          key={i}
+                          className={optionClass(i, !unlawful && i === question.answerIndex)}
+                          onClick={() => answer(i)}
+                          aria-pressed={picked === i}
+                        >
+                          <FormattedMessage
+                            id="quiz.reverse.optionAspect"
+                            values={{
+                              label: describeFacts(intl, o.facts),
+                              aspect: intl.formatMessage({
+                                id: `aspect.${bearingLabel(o.theta)}`,
+                              }),
+                            }}
+                          />
+                        </button>
+                      ))
+                    : UNLAWFUL_KINDS.map((k, i) => (
+                        <button
+                          key={k}
+                          className={optionClass(i, !!unlawful?.mends.includes(k))}
+                          onClick={() => answer(i)}
+                          aria-pressed={picked === i}
+                        >
+                          <FormattedMessage id={`unlawful.kind.${k}`} />
+                        </button>
+                      ))}
+                </div>
+              </>
+            )}
           </>
         )}
 
-        {showQuestion && picked !== null && mode !== 'exam' && (
+        {showQuestion && answered && mode !== 'exam' && (
           <p
             className={`quiz-feedback ${wrong ? 'no' : 'ok'}`}
             role="status"
@@ -490,7 +629,26 @@ export function Quiz() {
             />
           </p>
         )}
-        {showQuestion && picked !== null && mode !== 'exam' && wrong && (
+        {showQuestion && answered && mode !== 'exam' && unlawful && question.kind === 'reverse' && (
+          <UnlawfulReveal
+            unlawful={unlawful}
+            facts={question.facts}
+            display={question.display}
+            theta={question.theta}
+          />
+        )}
+        {showQuestion && answered && mode !== 'exam' && !unlawful && judgement === false && (
+          <div>
+            <p>
+              <FormattedMessage
+                id="quiz.lawful.verdict"
+                values={{ facts: describeFacts(intl, question.facts) }}
+              />
+            </p>
+            <CitePanel cite={rightCite} jurisdiction={jurisdiction} />
+          </div>
+        )}
+        {showQuestion && answered && mode !== 'exam' && meaningMissed && (
           <div className="quiz-why">
             <div>
               <h3>
@@ -506,10 +664,10 @@ export function Quiz() {
             </div>
           </div>
         )}
-        {showQuestion && picked !== null && mode !== 'exam' && (
+        {showQuestion && answered && mode !== 'exam' && (
           <p className="elim">
             <FormattedMessage
-              id="quiz.explain"
+              id={unlawful ? 'quiz.unlawful.explain' : 'quiz.explain'}
               values={{
                 ids:
                   question.kind === 'forward'
@@ -524,7 +682,7 @@ export function Quiz() {
             <button
               className="mode-tab"
               onClick={next}
-              disabled={mode === 'exam' && picked === null}
+              disabled={mode === 'exam' && !answered}
             >
               <FormattedMessage id="quiz.next" />
             </button>
