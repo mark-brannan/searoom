@@ -48,6 +48,31 @@ jobs:
           done
           node scripts/e2e.mjs
 
+  # The deploy workflow's live spot-checks (scripts/verify-live.mjs), run
+  # against this PR's own build before merge, so a regression of an
+  # acceptance check is caught here and not after the Pages deploy (#126).
+  # A measurement, not a gate, so it stays out of ci-gate's needs until it
+  # has a track record.
+  verify-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Serve dist and run the live spot-checks
+        run: |
+          npx vite preview --port 4173 > preview.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:4173/searoom/ > /dev/null && break
+            sleep 1
+          done
+          node scripts/verify-live.mjs http://localhost:4173/searoom/
+
   # Screenshot goldens (scripts/goldens.mjs): every mode's default state plus
   # three sandbox states, dark, at 1280 and 360 px. Fails when a shot differs
   # from screenshots/goldens by more than 0.1% of pixels. goldens-out/ (the
