@@ -6,7 +6,7 @@
 
 import { evaluateDisplayIn } from './evaluate';
 import { QUIZ_DIFFICULTIES, citeOf, makeForward, makeReverse, scenarioPoolAt } from './quiz';
-import type { QuizDifficulty, QuizQuestion } from './quiz';
+import type { QuizDifficulty, QuizQuestion, ScenarioPool } from './quiz';
 
 export interface Tally {
   right: number;
@@ -100,10 +100,11 @@ export function questionFor(
   reverse: boolean,
   jurisdiction: string,
   difficulty: QuizDifficulty = 'extreme',
+  pool?: ScenarioPool,
 ): QuizQuestion {
   return reverse
-    ? makeReverse(seed, jurisdiction, difficulty)
-    : makeForward(seed, jurisdiction, difficulty);
+    ? makeReverse(seed, jurisdiction, difficulty, pool)
+    : makeForward(seed, jurisdiction, difficulty, pool);
 }
 
 /** "27(a)(i), 27(b)" -> ["27"] */

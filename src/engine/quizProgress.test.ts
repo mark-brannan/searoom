@@ -90,6 +90,7 @@ describe('quiz state in the URL', () => {
       n: 4,
       rule: '27',
       difficulty: 'hard' as const,
+      mine: true,
     };
     const back = deserialize(serialize({ ...deserialize('#/quiz'), quiz }));
     expect(back.quiz).toEqual(quiz);

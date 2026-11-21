@@ -28,7 +28,8 @@ export type Mode =
   | 'flashcards'
   | 'rules'
   | 'sound'
-  | 'vessels';
+  | 'vessels'
+  | 'sheet';
 // 'profile' is unwired from the Sandbox (refs #218); the type keeps its code compiling.
 export type View = 'profile' | 'model' | 'plan';
 
@@ -68,6 +69,8 @@ export interface QuizView {
   rule: string;
   /** Difficulty; a new run starts on easy. */
   difficulty: QuizDifficulty;
+  /** Ask only about the vessel in the fact record, in her own situations (my boat). */
+  mine: boolean;
 }
 
 /** The Rules reader's view state. */
@@ -150,6 +153,7 @@ export const DEFAULT_QUIZ: QuizView = {
   mode: 'practice',
   rule: '',
   difficulty: 'easy',
+  mine: false,
 };
 
 export const DEFAULT_RULES: RulesView = { path: null };
@@ -307,6 +311,7 @@ export function serialize(state: AppState): string {
     if (q.mode !== 'practice') params.set('qm', q.mode);
     if (q.rule) params.set('qr', q.rule);
     if (q.difficulty !== 'easy') params.set('qd', q.difficulty);
+    if (q.mine) params.set('qb', '1');
     if (q.seed !== 1 || q.n !== 1) path = `/quiz/${q.seed}/${q.n}`;
   }
   const q = params.toString();
@@ -330,7 +335,16 @@ export function deserialize(hash: string): AppState {
   const path = qIndex === -1 ? h : h.slice(0, qIndex);
   const query = qIndex === -1 ? '' : h.slice(qIndex + 1);
   const segments = path.split('/').filter(Boolean);
-  const modes: Mode[] = ['sandbox', 'identify', 'quiz', 'flashcards', 'rules', 'sound', 'vessels'];
+  const modes: Mode[] = [
+    'sandbox',
+    'identify',
+    'quiz',
+    'flashcards',
+    'rules',
+    'sound',
+    'vessels',
+    'sheet',
+  ];
   if (segments[0] && (modes as string[]).includes(segments[0])) {
     state.mode = segments[0] as Mode;
   }
@@ -408,5 +422,6 @@ export function deserialize(hash: string): AppState {
   if (qr && /^\d{1,2}$/.test(qr)) quiz.rule = qr;
   const qd = params.get('qd');
   if (qd === 'medium' || qd === 'hard' || qd === 'extreme') quiz.difficulty = qd;
+  if (params.get('qb') === '1') quiz.mine = true;
   return state;
 }
