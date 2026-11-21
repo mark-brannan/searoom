@@ -1240,6 +1240,63 @@ table.corpora th {
   opacity: 0.75;
 }
 
+/* aspect trainer: the glimpse and the dial share one stage, so nothing jumps */
+.aspect {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.aspect-stage {
+  display: grid;
+  place-items: center;
+  min-height: 240px;
+}
+
+.aspect-stage .scene-svg {
+  width: 100%;
+  max-width: 440px;
+}
+
+.aspect-dial {
+  width: 220px;
+  height: 220px;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.aspect-ring {
+  fill: var(--sea-night);
+  stroke: var(--line);
+  stroke-width: 2;
+}
+
+.aspect-tick {
+  stroke: var(--dim);
+  stroke-width: 2;
+}
+
+.aspect-her {
+  fill: var(--white-light);
+}
+
+.aspect-aim {
+  stroke: var(--yellow);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.aspect-you {
+  fill: var(--dim);
+  font-size: 12px;
+}
+
+.aspect-review,
+.aspect-runs {
+  font-size: 14px;
+  color: var(--dim);
+}
+
 .signal-words {
   display: block;
   font-size: 13.5px;

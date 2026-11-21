@@ -13,13 +13,17 @@ import {
   drillDifficulty,
   drillSeedAt,
   exportProgress,
+  loadAspectRuns,
   loadProgress,
+  mergeAspectRuns,
   mergeProgress,
   nextDrillSeed,
+  parseAspectRuns,
   parseProgress,
   questionFor,
   record,
   rulesInPool,
+  saveAspectRuns,
   saveProgress,
 } from '../engine/quizProgress';
 import type { Progress } from '../engine/quizProgress';
@@ -68,7 +72,9 @@ function ProgressPanel({
     .slice(0, 5);
   const download = () => {
     const url = URL.createObjectURL(
-      new Blob([exportProgress(progress)], { type: 'application/json' }),
+      new Blob([exportProgress(progress, loadAspectRuns())], {
+        type: 'application/json',
+      }),
     );
     const a = document.createElement('a');
     a.href = url;
@@ -79,7 +85,10 @@ function ProgressPanel({
   const upload = async (file: File | undefined) => {
     if (!file) return;
     try {
-      const parsed = parseProgress(JSON.parse(await file.text()));
+      const json: unknown = JSON.parse(await file.text());
+      const parsed = parseProgress(json);
+      // the trainer's runs travel in the same file
+      if (parsed) saveAspectRuns(mergeAspectRuns(loadAspectRuns(), parseAspectRuns(json)));
       onImport(parsed, parsed ? Object.keys(parsed).length : 0);
     } catch {
       onImport(null, 0);
