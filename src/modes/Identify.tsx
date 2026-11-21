@@ -14,6 +14,13 @@ import { serialize, stateWith } from '../state/urlState';
 
 const COLORS: SeenLight['color'][] = ['white', 'red', 'green', 'yellow'];
 
+// The empty sea's worked example: red over white over red, all-round, in a line.
+export const EXAMPLE: SeenLight[] = (['red', 'white', 'red'] as const).map((color) => ({
+  color,
+  flashing: false,
+  kind: 'all_round',
+}));
+
 export function Identify() {
   const jurisdiction = useJurisdiction();
   const patch = usePatch();
@@ -105,13 +112,25 @@ export function Identify() {
         <h3 style={{ marginTop: 14 }}>
           <FormattedMessage id="identify.picked.title" />
         </h3>
+        <Scene presentation="seen" seen={seen} arrangement={arrangement} />
         {seen.length === 0 ? (
-          <p className="elim">
-            <FormattedMessage id="identify.picked.empty" />
-          </p>
+          <div className="identify-empty">
+            <p className="elim">
+              <FormattedMessage id="identify.picked.empty" />
+            </p>
+            <button
+              type="button"
+              className="chip"
+              onClick={() => {
+                setArrangement('vertical');
+                setSeen(EXAMPLE);
+              }}
+            >
+              <FormattedMessage id="identify.example" />
+            </button>
+          </div>
         ) : (
           <>
-            <Scene presentation="seen" seen={seen} arrangement={arrangement} />
             <div className="seen-list">
               {seen.map((l, i) => (
                 <button

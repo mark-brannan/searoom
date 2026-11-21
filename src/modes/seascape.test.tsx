@@ -6,6 +6,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { bearingHullOpacity } from 'nav-wright/benchy';
 import { Scene } from '../components/Scene';
 import { evaluateDisplayIn } from '../engine/evaluate';
+import { identifyCandidates } from '../engine/identify';
+import { EXAMPLE } from './Identify';
 import { DEFAULT_STATE, RANGE_MAX_NM, RANGE_MIN_NM } from '../state/urlState';
 
 describe('seascape', () => {
@@ -22,6 +24,12 @@ describe('seascape', () => {
     );
     expect(html).toContain('bearing-sea');
     expect(html).toContain('bearing-horizon');
+  });
+
+  it('the empty sea draws the sea, and its worked example names a vessel', () => {
+    const html = renderToStaticMarkup(<Scene presentation="seen" seen={[]} arrangement="free" />);
+    expect(html).toContain('bearing-sea');
+    expect(identifyCandidates(EXAMPLE, 'intl', 'vertical').length).toBeGreaterThan(0);
   });
 
   it('a vertical line of lights stays above the horizon however many are picked', () => {
