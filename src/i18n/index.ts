@@ -97,3 +97,110 @@ export const catalogs: Record<Locale, Catalog> = {
   en: catalogFor('en'),
   fi: catalogFor('fi'),
 };
+
+/**
+ * Pseudo-locale for layout testing: the English catalog accented and
+ * lengthened ~40%, so clipping and overflow show up before a real translation
+ * is in. Reached only by `?loc=en-XA`; it is not in `catalogs`, so the
+ * language picker never lists it and a stored preference never selects it.
+ * ICU placeholders (`{name}`, plural and select blocks) and tags are left
+ * intact so messages still format.
+ */
+export const PSEUDO_LOCALE = 'en-XA';
+
+const ACCENTS: Record<string, string> = {
+  a: 'à',
+  b: 'ƀ',
+  c: 'ç',
+  d: 'ð',
+  e: 'é',
+  f: 'ƒ',
+  g: 'ĝ',
+  h: 'ĥ',
+  i: 'î',
+  j: 'ĵ',
+  k: 'ķ',
+  l: 'ļ',
+  n: 'ñ',
+  o: 'ö',
+  p: 'þ',
+  r: 'ŕ',
+  s: 'š',
+  t: 'ţ',
+  u: 'ü',
+  w: 'ŵ',
+  y: 'ý',
+  z: 'ž',
+  A: 'À',
+  B: 'Ɓ',
+  C: 'Ç',
+  D: 'Ð',
+  E: 'É',
+  G: 'Ĝ',
+  H: 'Ĥ',
+  I: 'Î',
+  K: 'Ķ',
+  L: 'Ļ',
+  N: 'Ñ',
+  O: 'Ö',
+  P: 'Þ',
+  R: 'Ŕ',
+  S: 'Š',
+  T: 'Ţ',
+  U: 'Ü',
+  W: 'Ŵ',
+  Y: 'Ý',
+  Z: 'Ž',
+};
+
+/**
+ * Accent the message text, pad with ~40% filler, bracket. Argument heads
+ * (`{n, plural, one`), `#` and `<tags>` stay as they are; the text inside
+ * plural/select branches is accented like the rest.
+ */
+export function pseudoLocalize(message: string): string {
+  let i = 0;
+  // Text up to the `}` that closes the enclosing branch, or the end.
+  const text = (nested: boolean): string => {
+    let out = '';
+    while (i < message.length) {
+      const ch = message[i];
+      if (ch === '}' && nested) return out;
+      if (ch === '{') out += argument();
+      else if (ch === '<') {
+        const end = message.indexOf('>', i);
+        const stop = end < 0 ? message.length : end + 1;
+        out += message.slice(i, stop);
+        i = stop;
+      } else {
+        out += nested && ch === '#' ? ch : (ACCENTS[ch] ?? ch);
+        i++;
+      }
+    }
+    return out;
+  };
+  // `{…}` from its `{` to its `}`: head copied, each `{branch}` body as text.
+  const argument = (): string => {
+    let out = message[i++];
+    while (i < message.length) {
+      const ch = message[i++];
+      out += ch;
+      if (ch === '}') return out;
+      if (ch === '{') {
+        out += text(true);
+        if (i < message.length) out += message[i++];
+      }
+    }
+    return out;
+  };
+  const out = text(false);
+  // spaced, so the filler wraps like words instead of forcing one wide line
+  const pad = Array(Math.ceil(message.length * 0.2)).fill('~').join(' ');
+  return `[${out} ${pad}]`;
+}
+
+export function pseudoCatalog(): Catalog {
+  return Object.fromEntries(
+    Object.entries(catalogFor('en')).map(([k, v]) => [k, pseudoLocalize(v)]),
+  );
+}

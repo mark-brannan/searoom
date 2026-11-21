@@ -1,12 +1,17 @@
 // The display-catalog split (REQ-LANG-6): closed vocabularies come from the
 // colregs package, chrome stays app-side, and no key is maintained in both.
 
+import { createIntl } from 'react-intl';
 import { describe, expect, it } from 'vitest';
 import pkgEn from 'colregs/data/i18n/en.json' with { type: 'json' };
 import appEn from './en.json' with { type: 'json' };
 import appFi from './fi.json' with { type: 'json' };
 import {
   LOCALES,
+  PSEUDO_LOCALE,
+  catalogs,
+  pseudoCatalog,
+  pseudoLocalize,
   catalogDuplicates,
   catalogFor,
   flattenPackageCatalog,
@@ -73,5 +78,32 @@ describe('display catalogs', () => {
       (k) => !(k in (appFi as Record<string, string>)),
     );
     expect(missing).toEqual([]);
+  });
+});
+
+describe('pseudo-locale', () => {
+  it('accents and lengthens, and leaves ICU placeholders alone', () => {
+    const out = pseudoLocalize(
+      'Hello {name}, <b>bold</b> and {n, plural, one {a} other {b}}',
+    );
+    expect(out).toContain('Ĥéļļö {name}');
+    expect(out).toContain('<b>');
+    expect(out).toContain('{n, plural, one {à} other {ƀ}}');
+    expect(out.startsWith('[') && out.endsWith(']')).toBe(true);
+    const plain = 'Show the lights for a vessel';
+    expect(pseudoLocalize(plain).length).toBeGreaterThanOrEqual(1.4 * plain.length);
+  });
+
+  it('accents plural branch text and still formats', () => {
+    const out = pseudoLocalize('{n, plural, =0 {no dogs} one {a dog} other {# dogs}}');
+    expect(out).toContain('{n, plural, =0 {ñö ðöĝš} one {à ðöĝ} other {# ðöĝš}}');
+    const intl = createIntl({ locale: 'en', messages: { m: out } });
+    expect(intl.formatMessage({ id: 'm' }, { n: 3 })).toContain('3 ðöĝš');
+  });
+
+  it('covers every English key and stays out of the picker', () => {
+    const p = pseudoCatalog();
+    expect(Object.keys(p).sort()).toEqual(Object.keys(catalogFor('en')).sort());
+    expect(Object.keys(catalogs)).not.toContain(PSEUDO_LOCALE);
   });
 });

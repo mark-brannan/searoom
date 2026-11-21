@@ -425,9 +425,15 @@ button {
 .check-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   font-size: 13.5px;
   margin: 4px 0;
+}
+
+.check-row select {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .check-row input {

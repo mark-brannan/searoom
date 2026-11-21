@@ -1,7 +1,9 @@
 // Catalog check (#114): en and fi hold the same keys, every message id written
 // in source has an English string, and keys nothing refers to are reported.
 // Fails on parity and missing ids; unused keys only print, because ids built
-// by helpers cannot all be seen statically.
+// by helpers cannot all be seen statically. Finnish coverage of the package
+// vocabulary (colregs ships fi for only part of it) is a ratchet against
+// src/i18n/fi-coverage.json: it may rise, never fall.
 //
 //   node scripts/i18n-check.mjs
 
@@ -15,16 +17,16 @@ const en = load('../src/i18n/en.json');
 const fi = load('../src/i18n/fi.json');
 
 // Package ids come qualified as the app sees them (see src/i18n/index.ts).
-const pkgEn = JSON.parse(
-  readFileSync(
-    new URL('../node_modules/colregs/data/i18n/en.json', import.meta.url),
-    'utf8',
-  ),
-);
+const pkgEn = load('../node_modules/colregs/data/i18n/en.json');
+const pkgFi = load('../node_modules/colregs/data/i18n/fi.json');
 const pkgKeys = new Set();
+let pkgFiCount = 0;
 for (const [cat, group] of Object.entries(pkgEn.strings))
-  for (const k of Object.keys(group))
+  for (const k of Object.keys(group)) {
     pkgKeys.add(k.includes(':') ? k.replace(':', '.') : `${cat}.${k}`);
+    if (pkgFi.strings?.[cat]?.[k]) pkgFiCount++;
+  }
+const baseline = load('../src/i18n/fi-coverage.json').packageKeysInFinnish;
 
 const files = [];
 const walk = (d) => {
@@ -90,6 +92,19 @@ show('In fi.json, not en.json', onlyFi);
 show('Ids used in source with no English string', missing);
 show('Unused keys (reported only)', unused);
 
-const bad = onlyEn.length + onlyFi.length + missing.length;
+console.log(
+  `Finnish package vocabulary: ${pkgFiCount} of ${pkgKeys.size} keys (baseline ${baseline})`,
+);
+const drift = pkgFiCount !== baseline;
+if (pkgFiCount < baseline)
+  console.log(
+    'Finnish coverage fell below src/i18n/fi-coverage.json; a colregs bump dropped translations',
+  );
+else if (drift)
+  console.log(
+    `Finnish coverage rose: set packageKeysInFinnish to ${pkgFiCount} in src/i18n/fi-coverage.json`,
+  );
+
+const bad = onlyEn.length + onlyFi.length + missing.length + (drift ? 1 : 0);
 console.log(bad ? 'i18n check FAILED' : 'i18n check passed');
 process.exit(bad ? 1 : 0);
