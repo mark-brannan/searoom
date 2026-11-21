@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from 'vitest';
 import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
-import { evaluateDisplayIn } from './evaluate';
+import { evaluateSignalsIn } from './evaluate';
 import type { FactRecord } from './types';
 
 // colregs' fixture schema widened `expect` from a bare entry id to
@@ -43,7 +43,7 @@ describe('colregs applicability fixtures (verbatim replay)', () => {
 
   for (const c of fixtures.cases) {
     it(`${c.name} [${jurisdictionOf(c)}]`, () => {
-      const result = evaluateDisplayIn(jurisdictionOf(c), c.facts);
+      const result = evaluateSignalsIn(jurisdictionOf(c), c.facts);
       expect([...result.applied].sort()).toEqual(c.expect.map(entryOf).sort());
       for (const e of c.expect) {
         if (typeof e === 'string') continue;

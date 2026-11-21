@@ -13,6 +13,8 @@ import imagesJson from 'colregs/data/images.json' with { type: 'json' };
 import lightsJson from 'colregs/data/lights.json' with { type: 'json' };
 import rulesJson from 'colregs/data/rules.json' with { type: 'json' };
 import colregsPkg from 'colregs/package.json' with { type: 'json' };
+import enginePkg from 'colregs-engine/package.json' with { type: 'json' };
+import navWrightPkg from 'nav-wright/package.json' with { type: 'json' };
 
 import type {
   ApplicabilityData,
@@ -82,4 +84,8 @@ export const editions = editionsJson as unknown as {
 };
 
 export const colregsVersion: string = (colregsPkg as { version: string })
+  .version;
+export const engineVersion: string = (enginePkg as { version: string })
+  .version;
+export const navWrightVersion: string = (navWrightPkg as { version: string })
   .version;

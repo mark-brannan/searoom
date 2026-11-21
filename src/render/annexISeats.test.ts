@@ -3,7 +3,7 @@ import { selectHull } from 'nav-wright';
 import type { PlacedLight } from 'nav-wright';
 import { profileHullModel } from 'nav-wright/profile';
 import type { FactRecord } from '../engine/types';
-import { evaluateDisplayIn } from '../engine/evaluate';
+import { evaluateSignalsIn } from '../engine/evaluate';
 import { lights as lightCatalog } from '../data/colregs';
 import { PRESETS } from '../data/presets';
 import { placeLights } from './navWright';
@@ -94,7 +94,7 @@ describe('meshOnlyBreaches', () => {
 async function meshDrawn(facts: FactRecord, mesh = ''): Promise<boolean> {
   const hull = selectHull(facts);
   const length = facts['fact:length_m'] as number;
-  const display = evaluateDisplayIn('intl', facts).displays[0];
+  const display = evaluateSignalsIn('intl', facts).displays[0];
   const placed = placeLights(display.lights, hull.spec, facts, lightCatalog);
   const scene = await loadHullScene(modelUrlForVariant(facts, mesh));
   const profile = profileHullModel(scene, length, hull.spec);

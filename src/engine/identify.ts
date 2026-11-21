@@ -5,7 +5,7 @@
 
 import fixturesJson from 'colregs/fixtures/applicability-fixtures.json';
 import { BASE_JURISDICTION } from '../data/jurisdictions';
-import { evaluateDisplayIn } from './evaluate';
+import { evaluateSignalsIn } from './evaluate';
 import { placedVisibility } from './quiz';
 import type { VisibleLight } from './quiz';
 import type { Display, FactRecord } from './types';
@@ -152,7 +152,7 @@ export function identifyCandidates(
   if (seen.length === 0) return [];
   const out: Candidate[] = [];
   for (const facts of poolFor(jurisdiction)) {
-    const evaln = evaluateDisplayIn(jurisdiction, facts);
+    const evaln = evaluateSignalsIn(jurisdiction, facts);
     for (const display of evaln.displays) {
       if (display.lights.length === 0) continue;
       const thetas: number[] = [];

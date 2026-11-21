@@ -15,7 +15,7 @@ import { ALL_VIEWS, Arcs, BearingAside, Scene } from '../components/Scene';
 import { DisplayChips } from '../components/DisplayChips';
 import { RulesPanel } from '../components/RulesPanel';
 import { DataDrawer } from '../components/DataDrawer';
-import { evaluateDisplayIn } from '../engine/evaluate';
+import { evaluateSignalsIn } from '../engine/evaluate';
 import type { SandboxView, View } from '../state/urlState';
 
 const ARCS_KEY = 'searoom.arcs';
@@ -70,7 +70,7 @@ export function Sandbox() {
   );
   const layout = useVariant('layout');
   const evaln = useMemo(
-    () => evaluateDisplayIn(jurisdiction, facts),
+    () => evaluateSignalsIn(jurisdiction, facts),
     [jurisdiction, facts],
   );
   const current = Math.max(

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { bearingHullOpacity } from 'nav-wright/benchy';
 import { Scene } from '../components/Scene';
-import { evaluateDisplayIn } from '../engine/evaluate';
+import { evaluateSignalsIn } from '../engine/evaluate';
 import { DEFAULT_STATE, RANGE_MAX_NM, RANGE_MIN_NM } from '../state/urlState';
 
 describe('seascape', () => {
@@ -42,7 +42,7 @@ describe('seascape', () => {
 
   it('a quiz reverse card stays lights only: no sea, no horizon', () => {
     const { facts, jurisdiction } = DEFAULT_STATE;
-    const display = evaluateDisplayIn(jurisdiction, facts).displays[0]!;
+    const display = evaluateSignalsIn(jurisdiction, facts).displays[0]!;
     const html = renderToStaticMarkup(
       <Scene
         presentation="mini"

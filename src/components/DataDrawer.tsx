@@ -1,6 +1,10 @@
 import { FormattedMessage } from 'react-intl';
 import { entryById } from './entryById';
-import { colregsVersion } from '../data/colregs';
+import {
+  colregsVersion,
+  engineVersion,
+  navWrightVersion,
+} from '../data/colregs';
 import { corpusHandle } from '../data/corpusText';
 import { useCorpus } from '../state/corpusContext';
 import type { DisplayEvaluation, FactRecord } from '../engine/types';
@@ -37,6 +41,8 @@ export function DataDrawer({
             id="drawer.packageLine"
             values={{
               version: colregsVersion,
+              engine: engineVersion,
+              navWright: navWrightVersion,
               jurisdiction: jurisdiction,
               corpus: `${corpusHandle(corpus)} ${corpus.edition}`,
               tier: corpus.tier,

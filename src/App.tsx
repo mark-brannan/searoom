@@ -16,7 +16,11 @@ import { SettingsSheet } from './components/SettingsSheet';
 import { reducesMotion, useSettings } from './state/settings';
 import { FirstRunIntro } from './components/FirstRunIntro';
 import { OpenSignpost } from './components/SignpostPanel';
-import { colregsVersion } from './data/colregs';
+import {
+  colregsVersion,
+  engineVersion,
+  navWrightVersion,
+} from './data/colregs';
 import { corpusIn } from './data/corpusText';
 import { CorpusContext } from './state/corpusContext';
 import { EXPERIMENTS, setVariant, useVariant } from './state/experiments';
@@ -107,6 +111,8 @@ export function App() {
                 id="app.poweredBy"
                 values={{
                   version: colregsVersion,
+                  engine: engineVersion,
+                  navWright: navWrightVersion,
                   jurisdiction: jurisdiction,
                 }}
               />

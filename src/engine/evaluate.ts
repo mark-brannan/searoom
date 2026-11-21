@@ -9,7 +9,7 @@ import { applicability, colregsVersion } from '../data/colregs';
 import type { DisplayEvaluation, FactRecord } from './types';
 
 /** Every lawful display for `facts` under one jurisdiction. */
-export function evaluateDisplayIn(
+export function evaluateSignalsIn(
   jurisdiction: string,
   facts: FactRecord,
 ): DisplayEvaluation {

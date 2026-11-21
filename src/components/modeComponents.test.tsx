@@ -9,11 +9,11 @@ import { DisplayChips } from './DisplayChips';
 import { RulesPanel } from './RulesPanel';
 import { DataDrawer } from './DataDrawer';
 import { catalogs } from '../i18n';
-import { evaluateDisplayIn } from '../engine/evaluate';
+import { evaluateSignalsIn } from '../engine/evaluate';
 import { DEFAULT_STATE } from '../state/urlState';
 
 const { facts, jurisdiction } = DEFAULT_STATE;
-const evaln = evaluateDisplayIn(jurisdiction, facts);
+const evaln = evaluateSignalsIn(jurisdiction, facts);
 const lights = evaln.displays[0]!.lights;
 const html = (n: ReactNode) =>
   renderToStaticMarkup(

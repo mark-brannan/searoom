@@ -9,7 +9,7 @@ import { meshCatalog, selectHull } from 'nav-wright';
 import type { MeshRecord } from 'nav-wright';
 import { BearingModelView } from 'nav-wright/benchy';
 import { lights as lightCatalog } from '../data/colregs';
-import { evaluateDisplayIn } from '../engine/evaluate';
+import { evaluateSignalsIn } from '../engine/evaluate';
 import type { FactRecord } from '../engine/types';
 import { placeLights } from '../render/navWright';
 import { shippedModelUrl } from '../render/hullModels';
@@ -57,7 +57,7 @@ function Vessel({ vessel }: { vessel: TracedVessel }) {
   );
   const hull = useMemo(() => selectHull(facts), [facts]);
   const placed = useMemo(() => {
-    const display = evaluateDisplayIn(jurisdiction, facts).displays[0];
+    const display = evaluateSignalsIn(jurisdiction, facts).displays[0];
     return display
       ? placeLights(display.lights, hull.spec, facts, lightCatalog)
       : [];

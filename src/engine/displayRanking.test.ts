@@ -6,7 +6,7 @@
 // only upstream.
 
 import { describe, expect, it } from 'vitest';
-import { evaluateDisplayIn } from './evaluate';
+import { evaluateSignalsIn } from './evaluate';
 import type { FactRecord } from './types';
 
 interface Row {
@@ -138,7 +138,7 @@ const ROWS: Row[] = [
 describe('displays[] is ranked, concession first', () => {
   for (const row of ROWS) {
     it(row.name, () => {
-      const evaln = evaluateDisplayIn(row.jurisdiction, row.facts);
+      const evaln = evaluateSignalsIn(row.jurisdiction, row.facts);
       expect([...(evaln.displays[0]?.entries ?? [])].sort()).toEqual(
         [...row.display0].sort(),
       );
@@ -146,7 +146,7 @@ describe('displays[] is ranked, concession first', () => {
   }
 
   it('the base rule is still lawful, just not first', () => {
-    const anchored = evaluateDisplayIn('intl', {
+    const anchored = evaluateSignalsIn('intl', {
       'fact:propulsion': 'propulsion:sail',
       'fact:activity': 'activity:none',
       'fact:position': 'position:anchored',
@@ -156,7 +156,7 @@ describe('displays[] is ranked, concession first', () => {
   });
 
   it("sail 6 m underway keeps 25(d)(i)'s torch last", () => {
-    const evaln = evaluateDisplayIn('intl', {
+    const evaln = evaluateSignalsIn('intl', {
       'fact:propulsion': 'propulsion:sail',
       'fact:activity': 'activity:none',
       'fact:position': 'position:underway',

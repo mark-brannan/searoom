@@ -8,7 +8,7 @@ import { Presets } from './Presets';
 import { FactControls } from './FactControls';
 import { catalogs } from '../i18n';
 import { PRESETS } from '../data/presets';
-import { evaluateDisplayIn } from '../engine/evaluate';
+import { evaluateSignalsIn } from '../engine/evaluate';
 import { selectHull } from 'nav-wright';
 import { placeLights } from '../render/navWright';
 import { lights } from '../data/colregs';
@@ -28,7 +28,7 @@ const glows = (markup: string) =>
 describe('presets gallery', () => {
   for (const p of PRESETS) {
     it(`${p.id}: the thumbnail carries every light of her first display`, () => {
-      const display = evaluateDisplayIn('intl', p.facts).displays[0]!;
+      const display = evaluateSignalsIn('intl', p.facts).displays[0]!;
       const placed = placeLights(
         display.lights,
         selectHull(p.facts).spec,

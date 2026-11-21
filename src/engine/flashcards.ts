@@ -3,7 +3,7 @@
 // cite -> scene. Ids are stable (fixture name + direction) so the Leitner
 // boxes keyed on them survive reloads. Pure: no storage, no React.
 
-import { evaluateDisplayIn } from './evaluate';
+import { evaluateSignalsIn } from './evaluate';
 import { scenarioPoolFor, citeOf } from './quiz';
 import type { Display, FactRecord } from './types';
 
@@ -30,7 +30,7 @@ export function ruleOf(cite: string): string {
 export function buildDeck(jurisdiction: string): Card[] {
   const out: Card[] = [];
   for (const fixture of scenarioPoolFor(jurisdiction)) {
-    const display = evaluateDisplayIn(jurisdiction, fixture.facts).displays.find(
+    const display = evaluateSignalsIn(jurisdiction, fixture.facts).displays.find(
       (d) => d.lights.length > 0,
     );
     if (!display) continue;
