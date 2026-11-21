@@ -101,6 +101,10 @@ export interface VisibleLight {
    * fore and aft line up only from ahead or astern.
    */
   across: number;
+  /** fore-aft seat in the hull's units, larger is further forward */
+  along: number;
+  /** athwartships seat, so a pair of sidelights can be told apart */
+  py: number;
 }
 
 /** Place a display once; callers then ask what shows from each bearing. */
@@ -122,6 +126,8 @@ export function placedVisibility(
         centreline: l.py === 0,
         z: l.z,
         across: l.fx * Math.sin((theta * Math.PI) / 180),
+        along: l.fx,
+        py: l.py,
       }));
 }
 

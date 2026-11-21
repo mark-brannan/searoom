@@ -5,16 +5,18 @@
 import type { IntlShape } from 'react-intl';
 import type { FactRecord } from '../engine/types';
 
+/** The catalog's word for an enum fact value such as `activity:trawling`. */
+export function enumLabel(intl: IntlShape, v: unknown): string | undefined {
+  if (typeof v !== 'string') return undefined;
+  const [prefix, suffix] = v.split(':');
+  return intl.formatMessage({ id: `${prefix}.${suffix}` });
+}
+
 export function describeFacts(intl: IntlShape, facts: FactRecord): string {
   const parts: string[] = [];
-  const enumLabel = (v: unknown) => {
-    if (typeof v !== 'string') return undefined;
-    const [prefix, suffix] = v.split(':');
-    return intl.formatMessage({ id: `${prefix}.${suffix}` });
-  };
-  const p = enumLabel(facts['fact:propulsion']);
-  const a = enumLabel(facts['fact:activity']);
-  const pos = enumLabel(facts['fact:position']);
+  const p = enumLabel(intl, facts['fact:propulsion']);
+  const a = enumLabel(intl, facts['fact:activity']);
+  const pos = enumLabel(intl, facts['fact:position']);
   if (a && facts['fact:activity'] !== 'activity:none') parts.push(a);
   if (p) parts.push(p.toLowerCase());
   if (typeof facts['fact:length_m'] === 'number')
